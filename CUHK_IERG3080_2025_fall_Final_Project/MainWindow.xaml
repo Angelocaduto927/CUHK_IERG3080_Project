@@ -4,9 +4,13 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project"
+        xmlns:vm="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.ViewModel"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
+    <Window.DataContext>
+        <vm:NavigationVM/>
+    </Window.DataContext>
     <Grid>
-        
+        <ContentControl Content="{Binding CurrentViewModel}"/>
     </Grid>
 </Window>

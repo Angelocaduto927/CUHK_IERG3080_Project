@@ -4,6 +4,18 @@
              xmlns:local="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+
+        <ResourceDictionary>
+
+            <ResourceDictionary.MergedDictionaries>
+
+                <ResourceDictionary Source="Style/Button.xaml"/>
+                <ResourceDictionary Source="Utility/DataTemplate.xaml"/>
+
+            </ResourceDictionary.MergedDictionaries>
+
+        </ResourceDictionary>
+            
     </Application.Resources>
+    
 </Application>

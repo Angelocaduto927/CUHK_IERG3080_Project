@@ -6,11 +6,178 @@
              xmlns:local="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.View"
              xmlns:vm="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.ViewModel"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800"  
+             Background="#1E1E1E"
+             Padding="16">
     <Grid>
-        <TextBlock Text="Song Selection Screen:"
-                   Foreground="#DBDBDB"
-                   FontSize="36"
-                   />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />  <!-- Title -->
+            <RowDefinition Height="*" />     <!-- Center cards -->
+            <RowDefinition Height="Auto" />  <!-- Footer (Back / Play) -->
+        </Grid.RowDefinitions>
+
+        <!-- Title -->
+        <TextBlock Grid.Row="0"
+                   Text="Song Selection"
+                   Foreground="#FFFFFF"
+                   FontSize="24"
+                   FontWeight="SemiBold"
+                   HorizontalAlignment="Center"
+                   Margin="0,4,0,12" />
+
+        <!-- Centered cards -->
+        <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+            <!-- Left card: image used as card background -->
+            <Border Width="140"
+                    Height="280"
+                    Margin="0,0,16,0"
+                    CornerRadius="8"
+                    Padding="12"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <Border.Background>
+                    <!-- Image asset not present yet. Placeholder used to avoid XAML load failures. -->
+                    <!-- Original: <ImageBrush ImageSource="/Assets/Images/songA.jpg" Stretch="UniformToFill" /> -->
+                    <SolidColorBrush Color="#2D2D2D" />
+                </Border.Background>
+
+                <!-- Overlay + content -->
+                <Grid>
+                    <!-- Dark overlay so text/buttons are readable over image -->
+                    <Rectangle Fill="#40000000" RadiusX="6" RadiusY="6" />
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0"
+                                   Text="Song Title A"
+                                   Foreground="#FFFFFF"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,8" />
+
+                        <!-- Spacer (image is background of the card) -->
+                        <Grid Grid.Row="1" />
+                        <StackPanel Grid.Row="2"
+                                    Orientation="Vertical"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,8,0,0">
+
+                            <ToggleButton Content="Easy"
+                                          Width="96"
+                                          Margin="0,0,0,8"
+                                          Padding="6,4"
+                                          IsChecked="{Binding IsEasyASelected, Mode=TwoWay}" />
+
+                            <ToggleButton Content="Hard"
+                                          Width="96"
+                                          Padding="6,4"
+                                          IsChecked="{Binding IsHardASelected, Mode=TwoWay}" />
+                        </StackPanel>
+
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- Right card: image background -->
+            <Border Width="140"
+                    Height="280"
+                    Margin="0"
+                    CornerRadius="8"
+                    Padding="12"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <Border.Background>
+                    <!-- Image asset not present yet. Placeholder used to avoid XAML load failures. -->
+                    <!-- Original: <ImageBrush ImageSource="/Assets/Images/songB.jpg" Stretch="UniformToFill" /> -->
+                    <SolidColorBrush Color="#2D2D2D" />
+                </Border.Background>
+
+                <Grid>
+                    <Rectangle Fill="#40000000" RadiusX="6" RadiusY="6" />
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0"
+                                   Text="Song Title B"
+                                   Foreground="#FFFFFF"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,8" />
+
+                        <Grid Grid.Row="1" />
+
+                        <StackPanel Grid.Row="2"
+                                Orientation="Vertical"
+                                HorizontalAlignment="Center"
+                                Margin="0,8,0,0">
+
+                        <ToggleButton Content="Easy"
+                                      Width="96"
+                                      Margin="0,0,0,8"
+                                      Padding="6,4"
+                                      IsChecked="{Binding IsEasyBSelected, Mode=TwoWay}" />
+
+                        <ToggleButton Content="Hard"
+                                      Width="96"
+                                      Padding="6,4"
+                                      IsChecked="{Binding IsHardBSelected, Mode=TwoWay}" />
+</StackPanel>
+
+                    </Grid>
+                </Grid>
+            </Border>
+        </StackPanel>
+
+        <!-- Footer with Back and Play buttons bound to NavigationVM commands on the window DataContext -->
+        <Grid Grid.Row="2" Margin="0,12,0,0">
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+
+    <!-- Empty Spacer Grid to center the buttons -->
+    <Grid Grid.Column="0" />
+
+    <!-- Centered StackPanel with buttons -->
+    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <!-- Back Button -->
+        <Button Content="Back"
+                Width="96"
+                Height="36"
+                Margin="0,0,16,0"
+                HorizontalAlignment="Center"
+                Command="{Binding DataContext.TitleScreenCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                ToolTip="Back to title" />
+
+        <!-- Play Button -->
+        <Button Content="Play"
+                Width="96"
+                Height="36"
+                HorizontalAlignment="Center"
+                Command="{Binding DataContext.InGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                ToolTip="Start game" />
+    </StackPanel>
+
+    <!-- Empty Spacer Grid to balance the layout -->
+    <Grid Grid.Column="3" />
+</Grid>
+
     </Grid>
 </UserControl>

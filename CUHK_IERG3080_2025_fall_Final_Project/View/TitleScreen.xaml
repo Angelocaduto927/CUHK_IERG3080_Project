@@ -7,9 +7,40 @@
              xmlns:vm="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.ViewModel"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-        <Button Content="Back" Width="75" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10"
-                    Command="{Binding DataContext.SongSelectionCommand, RelativeSource= {RelativeSource AncestorType=Window}}"/>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
 
-    </Grid>
+		<StackPanel Grid.Row="0"
+                    Orientation="Vertical"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+			<StackPanel.RenderTransform>
+				<TranslateTransform Y="60"/>
+			</StackPanel.RenderTransform>
+
+			<Button Content="Singleplayer"
+                    Width="140" Height="40"
+                    Margin="0,6"
+                    Command="{Binding DataContext.SongSelectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+			<Button Content="Local Multiplayer"
+                    Width="140" Height="40"
+                    Margin="0,6"
+                    Command="{Binding DataContext.SongSelectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+			<Button Content="Online multiplayer"
+                    Width="140" Height="40"
+                    Margin="0,6"
+                    Command="{Binding DataContext.SongSelectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+		</StackPanel>
+
+		<Button Grid.Row="1"
+                Content="Settings"
+                Width="140" Height="40"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Margin="0,12,0,12"
+                Command="{Binding DataContext.SettingCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+	</Grid>
 </UserControl>

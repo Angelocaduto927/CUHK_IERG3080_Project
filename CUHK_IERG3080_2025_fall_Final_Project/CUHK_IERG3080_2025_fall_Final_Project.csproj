@@ -164,8 +164,14 @@
     <Resource Include="Assets\Image\InGameBG.png" />
     <Resource Include="Assets\Image\SongSelectBG.png" />
     <Resource Include="Assets\Image\TitleBG.png" />
-    <Content Include="Assets\Sound\background.mp3" />
-    <Content Include="Assets\Sound\click.wav" />
+	  <Content Include="Assets\Sound\background.mp3">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+
+	  <Content Include="Assets\Sound\click.wav">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,24 +1,19 @@
 ﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:sys="clr-namespace:System;assembly=mscorlib"
     xmlns:local="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.Utility">
+
 	<!-- Default style for all Buttons -->
 	<Style TargetType="Button">
 		<!-- Font -->
 		<Setter Property="FontFamily" Value="Segoe UI Black"/>
-		<!-- strong, game-like font -->
 		<Setter Property="FontSize" Value="12"/>
 		<Setter Property="FontWeight" Value="Bold"/>
 		<!-- Colors -->
 		<Setter Property="Background" Value="#FF1E3A8A"/>
-		<!-- deep royal blue -->
 		<Setter Property="Foreground" Value="#FFFFD700"/>
-		<!-- bright gold text -->
 		<Setter Property="BorderBrush" Value="#FFFFD700"/>
-		<!-- gold border -->
 		<Setter Property="BorderThickness" Value="3"/>
-		<!-- thicker border -->
 		<!-- Layout -->
 		<Setter Property="Padding" Value="10,6"/>
 		<Setter Property="Cursor" Value="Hand"/>
@@ -29,7 +24,7 @@
 			</Setter.Value>
 		</Setter>
 
-		<!-- Enable click sound via AudioManager -->
+		<!-- Button Click Sound -->
 		<Setter Property="local:AudioManager.EnableClickSound" Value="True"/>
 
 		<!-- Sharp edges: no CornerRadius -->
@@ -53,14 +48,13 @@
 				</ControlTemplate>
 			</Setter.Value>
 		</Setter>
-		<!-- Triggers -->
+
+		<!-- Button Triggers -->
 		<Style.Triggers>
 			<!-- Hover -->
 			<Trigger Property="IsMouseOver" Value="True">
 				<Setter Property="Background" Value="#FF3B82F6"/>
-				<!-- lighter blue -->
 				<Setter Property="Foreground" Value="#FFFFFFE0"/>
-				<!-- brighter gold-white -->
 				<Setter Property="BorderBrush" Value="#FFFFFFE0"/>
 				<Setter Property="Effect">
 					<Setter.Value>
@@ -84,8 +78,7 @@
 						<ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
 					</Setter.Value>
 				</Setter>
-				<Setter Property="Background" Value="#FF0F245C"/>
-				<!-- darker royal blue -->
+				<Setter Property="Background" Value="#FF1E3A8A"/>
 			</Trigger>
 			<!-- Disabled -->
 			<Trigger Property="IsEnabled" Value="False">

@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using CUHK_IERG3080_2025_fall_Final_Project.ViewModel;
+using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.View
 {
@@ -18,6 +19,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
         public Setting()
         {
             InitializeComponent();
+            AudioManager.PlayBackgroundMusic();
             Loaded += Setting_Loaded;
             Unloaded += Setting_Unloaded;
         }

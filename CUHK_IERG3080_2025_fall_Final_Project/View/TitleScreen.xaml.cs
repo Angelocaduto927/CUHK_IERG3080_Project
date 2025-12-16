@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.View
 {
@@ -23,6 +24,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
         public TitleScreen()
         {
             InitializeComponent();
+            AudioManager.PlayBackgroundMusic();
         }
     }
 }

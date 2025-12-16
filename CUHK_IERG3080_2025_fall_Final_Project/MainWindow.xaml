@@ -6,11 +6,17 @@
         xmlns:local="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project"
         xmlns:vm="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.ViewModel"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Window.DataContext>
-        <vm:NavigationVM/>
-    </Window.DataContext>
-    <Grid>
-        <ContentControl Content="{Binding CurrentViewModel}"/>
-    </Grid>
+        Title="MainWindow"
+        Width="800"
+        Height="450"
+        MinWidth="800"
+        MinHeight="450">
+
+	<Window.DataContext>
+		<vm:NavigationVM/>
+	</Window.DataContext>
+
+	<Grid>
+		<ContentControl Content="{Binding CurrentViewModel}" />
+	</Grid>
 </Window>

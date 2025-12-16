@@ -31,7 +31,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
                     note.SpawnTime = note.HitTime - (Hyperparameters.Length / note.Speed);
                 }
             }
-            _engine.StartGame(_players);
+            _engine.Initialize(_players);
         }
         public OnlineMultiPlayerMode()
         {

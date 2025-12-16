@@ -44,7 +44,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         // ✅ 开始游戏（只管理时间和状态）
         public void StartGame()
         {
-            if (State != GameState.NotStarted && State != GameState.Paused)
+            if (State != GameState.NotStarted)
                 return;
 
             _stopwatch.Start();

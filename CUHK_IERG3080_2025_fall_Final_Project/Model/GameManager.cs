@@ -53,6 +53,19 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
     public class DifficultyManager
     {
         public string CurrentDifficulty { get; set; }
+        public DifficultyManager()
+        {
+            CurrentDifficulty = "Easy";
+        }
+    }
+
+    public class SpeedManager
+    {
+        public int CurrentSpeed { get; set; }
+        public SpeedManager()
+        {
+            CurrentSpeed = 1;
+        }
     }
 
     public static class  KeyManager
@@ -145,6 +158,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public bool IsLocalPlayer { get; set; }
         public string CurrentSong => SongManager.CurrentSong;
         public DifficultyManager Difficulty {  get; private set; }
+        public SpeedManager Speed { get; private set; }
         public PlayerManager(int playIndex)
         {
             PlayerIndex = playIndex;
@@ -152,6 +166,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             PlayerName = $"Player {playIndex + 1}";
             IsLocalPlayer = true;
             Difficulty = new DifficultyManager();
+            Speed = new SpeedManager();
         }
         public void Reset()
         {

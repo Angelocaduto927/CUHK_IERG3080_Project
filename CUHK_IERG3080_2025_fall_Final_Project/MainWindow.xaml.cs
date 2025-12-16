@@ -18,18 +18,33 @@ namespace CUHK_IERG3080_2025_fall_Final_Project
 {
     public partial class MainWindow : Window
     {
+        private const double AspectRatio = 16.0 / 9.0;
+        private bool _resizing = false;
+
         public MainWindow()
         {
             InitializeComponent();
-
-            // Handle window closing to cleanup audio resources
             this.Closing += MainWindow_Closing;
         }
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            // Cleanup audio resources when closing the application
             AudioManager.Cleanup();
+        }
+
+        // This is the handler referenced in XAML
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (_resizing) return;
+            _resizing = true;
+
+            if (e.WidthChanged)
+                this.Height = this.Width / AspectRatio;
+            else if (e.HeightChanged)
+                this.Width = this.Height * AspectRatio;
+
+            _resizing = false;
         }
     }
 }
+

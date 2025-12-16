@@ -10,7 +10,9 @@
         Width="800"
         Height="450"
         MinWidth="800"
-        MinHeight="450">
+        MinHeight="450"
+	    SizeChanged="Window_SizeChanged">
+
 
 	<Window.DataContext>
 		<vm:NavigationVM/>

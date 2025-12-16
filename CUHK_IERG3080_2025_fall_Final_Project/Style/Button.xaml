@@ -3,61 +3,73 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
-	<Style x:Key="GlowingButtonStyle" TargetType="Button">
-		<!-- Base appearance -->
-		<Setter Property="Background" Value="#FF1E3A8A"/>
-		<!-- Deep blue -->
-		<Setter Property="Foreground" Value="#FFD4AF37"/>
-		<!-- Gold text -->
-		<Setter Property="BorderBrush" Value="#FFD4AF37"/>
-		<!-- Gold border -->
-		<Setter Property="BorderThickness" Value="2"/>
-		<Setter Property="Padding" Value="8,4"/>
-		<Setter Property="Cursor" Value="Hand"/>
-		<Setter Property="Effect" Value="{x:Null}"/>
-		<Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+	<!-- Default style for all Buttons -->
+	<Style TargetType="Button">
+		<!-- Font -->
+		<Setter Property="FontFamily" Value="Segoe UI Black"/>
+		<!-- strong, game-like font -->
+		<Setter Property="FontSize" Value="12"/>
+		<Setter Property="FontWeight" Value="Bold"/>
 
+		<!-- Colors -->
+		<Setter Property="Background" Value="#FF1E3A8A"/>
+		<!-- deep royal blue -->
+		<Setter Property="Foreground" Value="#FFFFD700"/>
+		<!-- bright gold text -->
+		<Setter Property="BorderBrush" Value="#FFFFD700"/>
+		<!-- gold border -->
+		<Setter Property="BorderThickness" Value="3"/>
+		<!-- thicker border -->
+
+		<!-- Layout -->
+		<Setter Property="Padding" Value="10,6"/>
+		<Setter Property="Cursor" Value="Hand"/>
+		<Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
 		<Setter Property="RenderTransform">
 			<Setter.Value>
 				<ScaleTransform ScaleX="1" ScaleY="1"/>
 			</Setter.Value>
 		</Setter>
 
-		<!-- Button template -->
+		<!-- Sharp edges: no CornerRadius -->
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="Button">
 					<Border x:Name="Bd"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6"
-                            Padding="{TemplateBinding Padding}">
+							Background="{TemplateBinding Background}"
+							BorderBrush="{TemplateBinding BorderBrush}"
+							BorderThickness="{TemplateBinding BorderThickness}"
+							CornerRadius="0"
+							Padding="{TemplateBinding Padding}">
 						<ContentPresenter
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            RecognizesAccessKey="True"/>
+							HorizontalAlignment="Center"
+							VerticalAlignment="Center"
+							Margin="0"
+							RecognizesAccessKey="True"
+							Content="{TemplateBinding Content}"
+							ContentTemplate="{TemplateBinding ContentTemplate}"/>
 					</Border>
 				</ControlTemplate>
 			</Setter.Value>
 		</Setter>
 
-		<Style.Triggers>
 
-			<!-- Hover highlight -->
+		<!-- Triggers -->
+		<Style.Triggers>
+			<!-- Hover -->
 			<Trigger Property="IsMouseOver" Value="True">
 				<Setter Property="Background" Value="#FF3B82F6"/>
-				<!-- Lighter blue -->
-				<Setter Property="Foreground" Value="#FFFFE08A"/>
-				<!-- Brighter gold -->
-				<Setter Property="BorderBrush" Value="#FFFFE08A"/>
+				<!-- lighter blue -->
+				<Setter Property="Foreground" Value="#FFFFFFE0"/>
+				<!-- brighter gold-white -->
+				<Setter Property="BorderBrush" Value="#FFFFFFE0"/>
 				<Setter Property="Effect">
 					<Setter.Value>
 						<DropShadowEffect
-                            Color="#803B82F6"
-                            BlurRadius="18"
+                            Color="#FFFFD700"
+                            BlurRadius="15"
                             ShadowDepth="0"
-                            Opacity="0.9"/>
+                            Opacity="0.8"/>
 					</Setter.Value>
 				</Setter>
 				<Setter Property="RenderTransform">
@@ -71,9 +83,11 @@
 			<Trigger Property="IsPressed" Value="True">
 				<Setter Property="RenderTransform">
 					<Setter.Value>
-						<ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+						<ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
 					</Setter.Value>
 				</Setter>
+				<Setter Property="Background" Value="#FF0F245C"/>
+				<!-- darker royal blue -->
 			</Trigger>
 
 			<!-- Disabled -->
@@ -82,7 +96,7 @@
 				<Setter Property="Cursor" Value="Arrow"/>
 			</Trigger>
 
-			<!-- Click sound effect -->
+			<!-- Click sound -->
 			<EventTrigger RoutedEvent="PreviewMouseLeftButtonDown">
 				<BeginStoryboard>
 					<Storyboard>
@@ -92,8 +106,6 @@
 					</Storyboard>
 				</BeginStoryboard>
 			</EventTrigger>
-
 		</Style.Triggers>
 	</Style>
-
 </ResourceDictionary>

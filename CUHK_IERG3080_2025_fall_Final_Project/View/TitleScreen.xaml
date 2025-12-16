@@ -4,21 +4,24 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.View"
-             xmlns:vm="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.ViewModel"
+             xmlns:model="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.Model"
              mc:Ignorable="d" 
              d:DesignHeight="450"
              d:DesignWidth="800">
 
     <Grid>
         <!-- Background image -->
-        <Image Source="pack://application:,,,/Assets/TitleBackground.png"
-               Stretch="UniformToFill"
-               Panel.ZIndex="0"/>
+		<Image Source="/CUHK_IERG3080_2025_fall_Final_Project;component/Assets/Image/TitleBG.png"
+			   Stretch="UniformToFill"
+			   HorizontalAlignment="Center"
+			   VerticalAlignment="Top"
+			   Panel.ZIndex="0"/>
 
-        <!-- Foreground content -->
+
+		<!-- Foreground content -->
         <Grid Panel.ZIndex="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
@@ -29,20 +32,20 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center">
 
-                <Button Content="Singleplayer"
-                        Width="160"
-                        Height="42"
-                        Margin="0,6"
-                        Command="{Binding SinglePlayerCommand}"
-                        CommandParameter="{x:Static vm:GameModeManager.Mode.SinglePlayer}"/>
+				<Button Content="SINGLEPLAYER"
+						Width="160"
+						Height="42"
+						Margin="0,6"
+						Command="{Binding SinglePlayerCommand}"
+						CommandParameter="{x:Static model:GameModeManager+Mode.SinglePlayer}"/>
 
-                <Button Content="Local Multiplayer"
+				<Button Content="LOCAL MULTIPLAYER"
                         Width="160"
                         Height="42"
                         Margin="0,6"
                         Command="{Binding LocalMultiPlayerCommand}"/>
 
-                <Button Content="Online Multiplayer"
+                <Button Content="ONLINE MULTIPLAYER"
                         Width="160"
                         Height="42"
                         Margin="0,6"
@@ -51,8 +54,8 @@
 
             <!-- Settings button -->
             <Button Grid.Row="2"
-                    Content="Settings"
-                    Width="140"
+                    Content="SETTINGS"
+                    Width="160"
                     Height="40"
                     HorizontalAlignment="Center"
                     Margin="0,12,0,24"

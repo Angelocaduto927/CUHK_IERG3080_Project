@@ -41,7 +41,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
             try
             {
                 // Load the background music file
-                var uri = new Uri("pack://application:,,,/Assets/Sound/background.mp3");
+                var uri = new Uri("pack://application:,,,/CUHK_IERG3080_2025_fall_Final_Project;component/Assets/Sound/background.mp3");
                 _backgroundMusicPlayer.Open(uri);
                 _backgroundMusicPlayer.Volume = BackgroundVolume;
                 _backgroundMusicPlayer.Play();

@@ -7,6 +7,10 @@
              xmlns:vm="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.ViewModel"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
+	<UserControl.Background>
+		<ImageBrush ImageSource="/Assets/Images/InGameBG.png"
+                    Stretch="UniformToFill" />
+	</UserControl.Background>
     <Grid>
             
     </Grid>

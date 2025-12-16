@@ -10,8 +10,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
     public static class GameManager
     {
-        
-        
     }
 
     public static class GameModeManager
@@ -75,6 +73,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 
     public class ScoreManager
     {
+        private ScoreSet _scoreset;
         public int Score { get; private set; }
         public int PerfectHit { get; private set; }
         public int GoodHit { get; private set; }
@@ -85,8 +84,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public int Combo {  get; private set; }
         public int MaxCombo { get; private set; }
 
-        public ScoreManager()
+        public ScoreManager(ScoreSet scoreset)
         {
+            _scoreset = scoreset;
             Score = 0;
             PerfectHit = 0;
             GoodHit = 0;
@@ -104,21 +104,22 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             {
                 case HitResult.Perfect:
                     PerfectHit++;
-                    Score += ;
+                    Score += _scoreset.PerfectHitScore;
                     Combo++;
                     break;
                 case HitResult.Good:
                     GoodHit++;
-                    Score += ;
+                    Score += _scoreset.GoodHitScore;
                     Combo++;
                     break;
                 case HitResult.Bad:
                     BadHit++;
-                    Score += ;
+                    Score += _scoreset.BadHitScore;
                     Combo++;
                     break;
                 case HitResult.Miss:
                     MissHit++;
+                    Score += _scoreset.MissHitScore;
                     Combo = 0;
                     break;
             }
@@ -128,8 +129,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             MaxCombo = Math.Max(Combo, MaxCombo);
         }
 
-        public void Reset()
+        public void Reset(ScoreSet scoreset)
         {
+            _scoreset = scoreset;
             Score = 0;
             GoodHit = 0;
             PerfectHit = 0;
@@ -153,24 +155,24 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
     public class PlayerManager
     {
         public int PlayerIndex { get; private set; }
-        public ScoreManager Score {  get; private set; }
         public string PlayerName { get; set; }
         public bool IsLocalPlayer { get; set; }
         public string CurrentSong => SongManager.CurrentSong;
+        public ScoreManager Score { get; private set; }
         public DifficultyManager Difficulty {  get; private set; }
         public SpeedManager Speed { get; private set; }
-        public PlayerManager(int playIndex)
+        public PlayerManager(int playerIndex, bool isLocalPlayer = true)
         {
-            PlayerIndex = playIndex;
-            Score =  new ScoreManager();
-            PlayerName = $"Player {playIndex + 1}";
-            IsLocalPlayer = true;
+            PlayerIndex = playerIndex;
+            IsLocalPlayer = isLocalPlayer;
+            PlayerName = $"Player {playerIndex + 1}";
+            Score =  new ScoreManager(new ScoreSet());
             Difficulty = new DifficultyManager();
             Speed = new SpeedManager();
         }
         public void Reset()
         {
-            Score.Reset();
+            Score.Reset(new ScoreSet());
         }
         public void ProcessHit(HitResult result, bool isEarly = false, bool isLate = false)
         {

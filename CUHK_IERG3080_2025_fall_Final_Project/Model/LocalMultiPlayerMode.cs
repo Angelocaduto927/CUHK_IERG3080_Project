@@ -6,20 +6,20 @@ using System.Threading.Tasks;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
-    public class SinglePlayerMode : IGameMode
+    public class LocalMultiPlayerMode : IGameMode
     {
         public int PlayerCount { get; }
         public List<PlayerManager> _players;
         private GameEngine _engine;
-        public string ModeName => "Single Player";
+        public string ModeName => "Local Multi Player";
         public void Initialize()
         {
             _engine = new GameEngine();
-            // Additional initialization for single player mode can be added here
+            // Additional initialization for local multiplayer mode can be added here
         }
-        public SinglePlayerMode()
+        public LocalMultiPlayerMode()
         {
-            PlayerCount = 1;
+            PlayerCount = 2; // Default to 2 players for local multiplayer
             _players = new List<PlayerManager>();
             CreatePlayers();
         }

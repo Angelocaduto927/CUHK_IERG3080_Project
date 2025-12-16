@@ -6,20 +6,20 @@ using System.Threading.Tasks;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
-    public class SinglePlayerMode : IGameMode
+    public class OnlineMultiPlayerMode : IGameMode
     {
         public int PlayerCount { get; }
         public List<PlayerManager> _players;
         private GameEngine _engine;
-        public string ModeName => "Single Player";
+        public string ModeName => "Online Multi Player";
         public void Initialize()
         {
             _engine = new GameEngine();
-            // Additional initialization for single player mode can be added here
+            // Additional initialization for online multiplayer mode can be added here
         }
-        public SinglePlayerMode()
+        public OnlineMultiPlayerMode()
         {
-            PlayerCount = 1;
+            PlayerCount = 2; // Default to 2 players for online multiplayer
             _players = new List<PlayerManager>();
             CreatePlayers();
         }
@@ -27,7 +27,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         {
             for (int i = 0; i < PlayerCount; i++)
             {
-                PlayerManager player = new PlayerManager(playerIndex: i + 1, isLocalPlayer: true);
+                PlayerManager player = new PlayerManager(playerIndex: i + 1, isLocalPlayer: false);
                 _players.Add(player);
             }
         }

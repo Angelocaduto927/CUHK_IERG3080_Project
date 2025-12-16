@@ -60,7 +60,11 @@
     <Compile Include="Model\GameEngine.cs" />
     <Compile Include="Model\GameManager.cs" />
     <Compile Include="Model\IGameMode.cs" />
+    <Compile Include="Model\JsonLoader.cs" />
+    <Compile Include="Model\LocalMultiPlayerMode.cs" />
     <Compile Include="Model\Note.cs" />
+    <Compile Include="Model\OnlineMultiPlayerMode.cs" />
+    <Compile Include="Model\ScoreSet.cs" />
     <Compile Include="Model\SinglePlayerMode.cs" />
     <Compile Include="Utility\RelayCommand.cs" />
     <Compile Include="Utility\ViewModelBase.cs" />
@@ -153,7 +157,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Image\" />
     <Folder Include="Music\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

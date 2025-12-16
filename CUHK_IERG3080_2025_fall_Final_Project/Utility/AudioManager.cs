@@ -1,20 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
+using System.Windows.Controls;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
 {
     public static class AudioManager
     {
         private static MediaPlayer _backgroundMusicPlayer;
+        private static MediaPlayer _effectPlayer = new MediaPlayer();
         private static bool _isInitialized = false;
 
         // Volume settings
         private const double BackgroundVolume = 0.3; // 30% volume for background music
-        private const double GameVolume = 1.0; // 100% volume for game music
+        private const double EffectVolume = 0.8; // 80% volume for sound effects
 
         public static void Initialize()
         {
@@ -94,7 +93,60 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
                 _backgroundMusicPlayer.Close();
                 _backgroundMusicPlayer = null;
             }
+            if (_effectPlayer != null)
+            {
+                _effectPlayer.Close();
+                _effectPlayer = null;
+            }
             _isInitialized = false;
+        }
+
+        // --- Attached property for click sound ---
+        public static readonly DependencyProperty EnableClickSoundProperty =
+            DependencyProperty.RegisterAttached(
+                "EnableClickSound",
+                typeof(bool),
+                typeof(AudioManager),
+                new PropertyMetadata(false, OnEnableClickSoundChanged));
+
+        public static void SetEnableClickSound(UIElement element, bool value)
+        {
+            element.SetValue(EnableClickSoundProperty, value);
+        }
+
+        public static bool GetEnableClickSound(UIElement element)
+        {
+            return (bool)element.GetValue(EnableClickSoundProperty);
+        }
+
+        private static void OnEnableClickSoundChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is Button button)
+            {
+                if ((bool)e.NewValue)
+                {
+                    button.Click += PlayClickSound;
+                }
+                else
+                {
+                    button.Click -= PlayClickSound;
+                }
+            }
+        }
+
+        private static void PlayClickSound(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var uri = new Uri("pack://application:,,,/CUHK_IERG3080_2025_fall_Final_Project;component/Assets/Sound/click.wav");
+                _effectPlayer.Open(uri);
+                _effectPlayer.Volume = EffectVolume;
+                _effectPlayer.Play();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to play click sound: {ex.Message}");
+            }
         }
     }
 }

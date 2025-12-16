@@ -24,7 +24,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public ICommand SongSelectionCommand { get; set; }
         public ICommand SettingCommand { get; set; }
         public ICommand InGameCommand { get; set; }
-        //public ICommand GameOverCommand { get; set; }
+        public ICommand GameOverCommand { get; set; }
 
         private void TitleScreen(object obj)
         {
@@ -53,7 +53,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             SongSelectionCommand = new RelayCommand(SongSelection);
             SettingCommand = new RelayCommand(Setting);
             InGameCommand = new RelayCommand(InGame);
-            //GameOverCommand = new RelayCommand(GameOver);
+            GameOverCommand = new RelayCommand(GameOver);
             CurrentViewModel = new TitleScreenVM();
         }
 

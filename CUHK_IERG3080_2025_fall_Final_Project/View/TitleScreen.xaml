@@ -22,17 +22,20 @@
 			</StackPanel.RenderTransform>
 
 			<Button Content="Singleplayer"
-                    Width="140" Height="40"
-                    Margin="0,6"
-                    Command="{Binding DataContext.SongSelectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+					Width="140" Height="40"
+					Margin="0,6"
+					Command="{Binding SinglePlayerCommand}"
+					CommandParameter="{x:Static vm:GameModeManager.Mode.SinglePlayer}"/>
 			<Button Content="Local Multiplayer"
-                    Width="140" Height="40"
-                    Margin="0,6"
-                    Command="{Binding DataContext.SongSelectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+					Width="140" Height="40"
+					Margin="0,6"
+					Command="{Binding LocalMultiPlayerCommand}" />
+
 			<Button Content="Online multiplayer"
-                    Width="140" Height="40"
-                    Margin="0,6"
-                    Command="{Binding DataContext.SongSelectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+					Width="140" Height="40"
+					Margin="0,6"
+					Command="{Binding OnlineMultiPlayerCommand}" />
+
 		</StackPanel>
 
 		<Button Grid.Row="1"

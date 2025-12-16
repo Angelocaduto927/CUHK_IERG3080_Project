@@ -12,7 +12,8 @@
 	</UserControl.DataContext>
 
 	<UserControl.Background>
-		<SolidColorBrush Color="#FF0D0D0D"/>
+		<ImageBrush ImageSource="/Assets/Image/InGameBG.png"
+                    Stretch="UniformToFill" />
 	</UserControl.Background>
 
 	<Grid>
@@ -33,7 +34,7 @@
                        Text="Settings"
                        FontSize="20"
                        FontWeight="SemiBold"
-                       Foreground="LightGray"
+                       Foreground="#FF1E1E1E"
                        HorizontalAlignment="Center"
                        Margin="0,0,0,8"/>
 
@@ -48,7 +49,7 @@
 				<Border Grid.Column="0"
                         Margin="6"
                         Background="#FF1E1E1E"
-                        BorderBrush="#FF444444"
+                        BorderBrush="#FFFFD700"
                         BorderThickness="2"
                         CornerRadius="6"
                         Padding="12">
@@ -59,7 +60,7 @@
 						</Grid.RowDefinitions>
 
 						<TextBlock Text="Player 1"
-                                   Foreground="LightGray"
+                                   Foreground="#FFFFD700"
                                    FontWeight="SemiBold"
                                    FontSize="14"
                                    Grid.Row="0"
@@ -72,7 +73,7 @@
 
 							<StackPanel Orientation="Horizontal">
 								<TextBlock Text="Speed: "
-                                           Foreground="LightGray"
+                                           Foreground="#FFFFD700"
                                            Margin="4,0,4,6"/>
 								<TextBlock Text="{Binding Player1Speed}"
                                            Foreground="LightBlue"
@@ -89,14 +90,14 @@
 							<Rectangle Height="12" Fill="Transparent" />
 
 							<!-- Key-bind rows (label + bind button) -->
-							<Grid Margin="0,6" Height="36">
+							<Grid Margin="0,6,6,0" Height="36">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition />
 									<ColumnDefinition Width="120" />
 								</Grid.ColumnDefinitions>
 								<TextBlock Text="Blue Key 1"
                                            VerticalAlignment="Center"
-                                           Foreground="LightGray" />
+                                           Foreground="#FFFFD700" />
 								<Button x:Name="KeyBindActionA"
                                         Grid.Column="1"
                                         Content="Unassigned"
@@ -104,14 +105,14 @@
                                         HorizontalAlignment="Stretch" />
 							</Grid>
 
-							<Grid Margin="0,6" Height="36">
+							<Grid Margin="0,6,6,0" Height="36">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition />
 									<ColumnDefinition Width="120" />
 								</Grid.ColumnDefinitions>
 								<TextBlock Text="Blue Key 2"
                                            VerticalAlignment="Center"
-                                           Foreground="LightGray" />
+                                           Foreground="#FFFFD700" />
 								<Button x:Name="KeyBindActionB"
                                         Grid.Column="1"
                                         Content="Unassigned"
@@ -119,14 +120,14 @@
                                         HorizontalAlignment="Stretch" />
 							</Grid>
 
-							<Grid Margin="0,6" Height="36">
+							<Grid Margin="0,6,6,0" Height="36">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition />
 									<ColumnDefinition Width="120" />
 								</Grid.ColumnDefinitions>
 								<TextBlock Text="Red Key 1"
                                            VerticalAlignment="Center"
-                                           Foreground="LightGray" />
+                                           Foreground="#FFFFD700" />
 								<Button x:Name="KeyBindActionC"
                                         Grid.Column="1"
                                         Content="Unassigned"
@@ -134,14 +135,14 @@
                                         HorizontalAlignment="Stretch" />
 							</Grid>
 
-							<Grid Margin="0,6" Height="36">
+							<Grid Margin="0,6,6,0" Height="36">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition />
 									<ColumnDefinition Width="120" />
 								</Grid.ColumnDefinitions>
 								<TextBlock Text="Red Key 2"
                                            VerticalAlignment="Center"
-                                           Foreground="LightGray" />
+                                           Foreground="#FFFFD700" />
 								<Button x:Name="KeyBindActionD"
                                         Grid.Column="1"
                                         Content="Unassigned"
@@ -156,7 +157,7 @@
 				<Border Grid.Column="1"
                         Margin="6"
                         Background="#FF1E1E1E"
-                        BorderBrush="#FF444444"
+                        BorderBrush="#FFFFD700"
                         BorderThickness="2"
                         CornerRadius="6"
                         Padding="12">
@@ -167,7 +168,7 @@
 						</Grid.RowDefinitions>
 
 						<TextBlock Text="Player 2"
-                                   Foreground="LightGray"
+                                   Foreground="#FFFFD700"
                                    FontWeight="SemiBold"
                                    FontSize="14"
                                    Grid.Row="0"
@@ -180,7 +181,7 @@
 
 							<StackPanel Orientation="Horizontal">
 								<TextBlock Text="Speed: "
-                                           Foreground="LightGray"
+                                           Foreground="#FFFFD700"
                                            Margin="4,0,4,6"/>
 								<TextBlock Text="{Binding Player2Speed}"
                                            Foreground="LightBlue"
@@ -197,14 +198,14 @@
 							<Rectangle Height="12" Fill="Transparent" />
 
 							<!-- Key-bind rows for Player 2 (label + bind button) -->
-							<Grid Margin="0,6" Height="36">
+							<Grid Margin="0,6,6,0" Height="36">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition />
 									<ColumnDefinition Width="120" />
 								</Grid.ColumnDefinitions>
 								<TextBlock Text="Blue Key 1"
                                            VerticalAlignment="Center"
-                                           Foreground="LightGray" />
+                                           Foreground="#FFFFD700" />
 								<Button x:Name="KeyBindActionA2"
                                         Grid.Column="1"
                                         Content="Unassigned"
@@ -212,14 +213,14 @@
                                         HorizontalAlignment="Stretch" />
 							</Grid>
 
-							<Grid Margin="0,6" Height="36">
+							<Grid Margin="0,6,6,0" Height="36">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition />
 									<ColumnDefinition Width="120" />
 								</Grid.ColumnDefinitions>
 								<TextBlock Text="Blue Key 2"
                                            VerticalAlignment="Center"
-                                           Foreground="LightGray" />
+                                           Foreground="#FFFFD700" />
 								<Button x:Name="KeyBindActionB2"
                                         Grid.Column="1"
                                         Content="Unassigned"
@@ -227,14 +228,14 @@
                                         HorizontalAlignment="Stretch" />
 							</Grid>
 
-							<Grid Margin="0,6" Height="36">
+							<Grid Margin="0,6,6,0" Height="36">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition />
 									<ColumnDefinition Width="120" />
 								</Grid.ColumnDefinitions>
 								<TextBlock Text="Red Key 1"
                                            VerticalAlignment="Center"
-                                           Foreground="LightGray" />
+                                           Foreground="#FFFFD700" />
 								<Button x:Name="KeyBindActionC2"
                                         Grid.Column="1"
                                         Content="Unassigned"
@@ -242,14 +243,14 @@
                                         HorizontalAlignment="Stretch" />
 							</Grid>
 
-							<Grid Margin="0,6" Height="36">
+							<Grid Margin="0,6,6,0" Height="36">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition />
 									<ColumnDefinition Width="120" />
 								</Grid.ColumnDefinitions>
 								<TextBlock Text="Red Key 2"
                                            VerticalAlignment="Center"
-                                           Foreground="LightGray" />
+                                           Foreground="#FFFFD700" />
 								<Button x:Name="KeyBindActionD2"
                                         Grid.Column="1"
                                         Content="Unassigned"

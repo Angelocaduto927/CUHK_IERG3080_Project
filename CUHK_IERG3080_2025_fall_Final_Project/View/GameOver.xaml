@@ -9,7 +9,7 @@
              d:DesignWidth="800"
              Padding="16">
 	<UserControl.Background>
-		<ImageBrush ImageSource="/Assets/Images/GameOverBG.png"
+		<ImageBrush ImageSource="/Assets/Image/GameOverBG.png"
                     Stretch="UniformToFill" />
 	</UserControl.Background>
 
@@ -229,7 +229,6 @@
 			<Button Content="Home"
                     Width="120"
                     Height="40"
-                    Style="{StaticResource GlowingButtonStyle}"
                     Command="{Binding DataContext.TitleScreenCommand,
                                       RelativeSource={RelativeSource AncestorType=Window}}"
                     ToolTip="Return to title screen" />

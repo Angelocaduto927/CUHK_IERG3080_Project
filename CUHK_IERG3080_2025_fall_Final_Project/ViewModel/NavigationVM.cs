@@ -57,13 +57,13 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void InGame(object obj)
         {
-            // Ensure a game mode is selected before starting game  
-            if (GameModeManager.CurrentMode == null)
-            {
-                // If no mode selected, go back to title screen  
-                TitleScreen(null);
-                return;
-            }
+            //// Ensure a game mode is selected before starting game  
+            //if (GameModeManager.CurrentMode == null)
+            //{
+            //    // If no mode selected, go back to title screen  
+            //    TitleScreen(null);
+            //    return;
+            //}
 
             CurrentViewModel = new InGameVM();
         }

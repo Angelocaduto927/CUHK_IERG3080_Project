@@ -1,66 +1,101 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
-  <!-- Glowing Button style (used for keybind buttons, navigation, etc.) -->
-  <Style x:Key="GlowingButtonStyle" TargetType="Button">
-    <Setter Property="Background" Value="#FF2D2D30"/>
-    <Setter Property="Foreground" Value="LightGray"/>
-    <Setter Property="BorderBrush" Value="#FF444444"/>
-    <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="Padding" Value="6,3"/>
-    <Setter Property="Cursor" Value="Hand"/>
-    <Setter Property="Effect" Value="{x:Null}"/>
-    <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
-    <Setter Property="RenderTransform">
-      <Setter.Value>
-        <ScaleTransform ScaleX="1" ScaleY="1"/>
-      </Setter.Value>
-    </Setter>
-    <Setter Property="Template">
-      <Setter.Value>
-        <ControlTemplate TargetType="Button">
-          <Border x:Name="Bd"
-                  Background="{TemplateBinding Background}"
-                  BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="{TemplateBinding BorderThickness}"
-                  CornerRadius="4"
-                  Padding="{TemplateBinding Padding}">
-            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
-          </Border>
-        </ControlTemplate>
-      </Setter.Value>
-    </Setter>
+	<!-- ========================= -->
+	<!-- Glowing Button Style      -->
+	<!-- ========================= -->
+	<Style x:Key="GlowingButtonStyle" TargetType="Button">
 
-    <Style.Triggers>
-      <Trigger Property="IsMouseOver" Value="True">
-        <Setter Property="Background" Value="#FF3A86FF"/>
-        <Setter Property="Foreground" Value="White"/>
-        <Setter Property="BorderBrush" Value="#FF73A8FF"/>
-        <Setter Property="Effect">
-          <Setter.Value>
-            <DropShadowEffect Color="#803A86FF" BlurRadius="16" ShadowDepth="0" Opacity="0.9"/>
-          </Setter.Value>
-        </Setter>
-        <Setter Property="RenderTransform">
-          <Setter.Value>
-            <ScaleTransform ScaleX="1.03" ScaleY="1.03"/>
-          </Setter.Value>
-        </Setter>
-      </Trigger>
+		<!-- Default appearance -->
+		<Setter Property="Background" Value="#FF2D2D30"/>
+		<Setter Property="Foreground" Value="LightGray"/>
+		<Setter Property="BorderBrush" Value="#FF444444"/>
+		<Setter Property="BorderThickness" Value="1"/>
+		<Setter Property="Padding" Value="6,3"/>
+		<Setter Property="Cursor" Value="Hand"/>
+		<Setter Property="Effect" Value="{x:Null}"/>
+		<Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
 
-      <Trigger Property="IsPressed" Value="True">
-        <Setter Property="RenderTransform">
-          <Setter.Value>
-            <ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
-          </Setter.Value>
-        </Setter>
-      </Trigger>
+		<Setter Property="RenderTransform">
+			<Setter.Value>
+				<ScaleTransform ScaleX="1" ScaleY="1"/>
+			</Setter.Value>
+		</Setter>
 
-      <Trigger Property="IsEnabled" Value="False">
-        <Setter Property="Opacity" Value="0.5"/>
-        <Setter Property="Cursor" Value="Arrow"/>
-      </Trigger>
-    </Style.Triggers>
-  </Style>
+		<!-- Control template -->
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="Button">
+					<Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4"
+                            Padding="{TemplateBinding Padding}">
+						<ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+					</Border>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+
+		<!-- ========================= -->
+		<!-- Triggers                  -->
+		<!-- ========================= -->
+		<Style.Triggers>
+
+			<!-- Hover glow -->
+			<Trigger Property="IsMouseOver" Value="True">
+				<Setter Property="Background" Value="#FF3A86FF"/>
+				<Setter Property="Foreground" Value="White"/>
+				<Setter Property="BorderBrush" Value="#FF73A8FF"/>
+				<Setter Property="Effect">
+					<Setter.Value>
+						<DropShadowEffect Color="#803A86FF"
+                                          BlurRadius="16"
+                                          ShadowDepth="0"
+                                          Opacity="0.9"/>
+					</Setter.Value>
+				</Setter>
+				<Setter Property="RenderTransform">
+					<Setter.Value>
+						<ScaleTransform ScaleX="1.03" ScaleY="1.03"/>
+					</Setter.Value>
+				</Setter>
+			</Trigger>
+
+			<!-- Pressed animation -->
+			<Trigger Property="IsPressed" Value="True">
+				<Setter Property="RenderTransform">
+					<Setter.Value>
+						<ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
+					</Setter.Value>
+				</Setter>
+			</Trigger>
+
+			<!-- Disabled -->
+			<Trigger Property="IsEnabled" Value="False">
+				<Setter Property="Opacity" Value="0.5"/>
+				<Setter Property="Cursor" Value="Arrow"/>
+			</Trigger>
+
+			<!-- ========================= -->
+			<!-- CLICK SOUND (VALID WPF)   -->
+			<!-- ========================= -->
+			<EventTrigger RoutedEvent="PreviewMouseLeftButtonDown">
+				<BeginStoryboard>
+					<Storyboard>
+						<MediaTimeline
+                            Source="pack://application:,,,/Assets/Sounds/click.wav"
+                            BeginTime="{x:Static sys:TimeSpan.Zero}" />
+					</Storyboard>
+				</BeginStoryboard>
+			</EventTrigger>
+
+		</Style.Triggers>
+	</Style>
 
 </ResourceDictionary>

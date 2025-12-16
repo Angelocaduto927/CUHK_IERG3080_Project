@@ -76,8 +76,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 
     public class PlayerManager
     {
-        string SelectedSong { get; set; };
-        
+        string SelectedSong { get; set; }       
 
     }
 }

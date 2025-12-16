@@ -15,7 +15,27 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public void Initialize()
         {
             _engine = new GameEngine();
-            // Additional initialization for local multiplayer mode can be added here
+            foreach (PlayerManager player in _players)
+            {
+                (player.Chart, player.ScoreSet) = new JsonLoader().LoadFromJson($"{SongManager.CurrentSong}_{player.Difficulty}.json");
+                player.Score.SetScoreSet(player.ScoreSet);
+                for (int i = 0; i < player.Chart.Count; i++)
+                {
+                    Note note = player.Chart[i];
+                    note.X = Hyperparameters.SpawnZoneXCoordinate;
+                    if (player.PlayerIndex == 1)
+                    {
+                        note.Y = Hyperparameters.MultiPlayerUpperYCoordinate;
+                    }
+                    else
+                    {
+                        note.Y = Hyperparameters.MultiPlayerLowerYCoordinate;
+                    }
+                    note.Speed = player.Speed;
+                    note.SpawnTime = note.HitTime - (Hyperparameters.Length / note.Speed);
+                }
+            }
+            _engine.StartGame(_players);
         }
         public LocalMultiPlayerMode()
         {

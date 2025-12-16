@@ -9,10 +9,6 @@ using System.Windows.Controls;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
-    public static class GameManager
-    {
-    }
-
     public static class GameModeManager
     {
         //the current game mode
@@ -58,20 +54,56 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         }
     }
 
-    /*
-    public class SpeedManager
+    public class PlayerSettings
     {
-        public int CurrentSpeed { get; set; }
-        public SpeedManager()
+        public double Speed { get; set; }
+        public Dictionary<string, System.Windows.Input.Key> KeyBindings { get; set; }
+        public PlayerSettings()
         {
-            CurrentSpeed = 1;
+            Speed = Hyperparameters.DefaultSpeed;
+            KeyBindings = new Dictionary<string, System.Windows.Input.Key>();
         }
     }
-    */
 
-    public static class  KeyManager
+    public class PlayerSettingsManager
     {
-       
+        private static Dictionary<int, PlayerSettings> _playerSettings = new Dictionary<int, PlayerSettings>();
+        public PlayerSettingsManager()
+        {
+            _playerSettings[0] = new PlayerSettings
+            {
+                KeyBindings = new Dictionary<string, System.Windows.Input.Key>
+                {
+                    { "Red1", System.Windows.Input.Key.D },
+                    { "Red2", System.Windows.Input.Key.F },
+                    { "Blue1", System.Windows.Input.Key.J },
+                    { "Blue2", System.Windows.Input.Key.K }
+                }
+            };
+            _playerSettings[1] = new PlayerSettings
+            {
+                Speed = 1.0,
+                KeyBindings = new Dictionary<string, System.Windows.Input.Key>
+                {
+                    { "Red1", System.Windows.Input.Key.Q },
+                    { "Red2", System.Windows.Input.Key.W },
+                    { "Blue1", System.Windows.Input.Key.O },
+                    { "Blue2", System.Windows.Input.Key.P }
+                }
+            };
+        }
+        public static PlayerSettings GetSettings(int playerIndex)
+        {
+            return _playerSettings.ContainsKey(playerIndex)
+                ? _playerSettings[playerIndex]
+                : new PlayerSettings();
+        }
+
+        public static void UpdateSettings(int playerIndex, PlayerSettings settings)
+        {
+            _playerSettings[playerIndex] = settings;
+        }
+
     }
 
     public class ScoreManager
@@ -169,6 +201,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public DifficultyManager Difficulty {  get; private set; }
         public ScoreSet ScoreSet { get; set; }
         public List<Note> Chart { get; set; }
+        public NoteManager NoteManager { get; set; }
         public PlayerManager(int playerIndex, bool isLocalPlayer = true)
         {
             PlayerIndex = playerIndex;
@@ -179,10 +212,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             Difficulty = new DifficultyManager();
             Speed = Hyperparameters.DefaultSpeed;
             Chart = new List<Note>();
-        }
-        public void ProcessHit(HitResult result, bool isEarly = false, bool isLate = false)
-        {
-            Score.Update(result, isEarly, isLate);
+            NoteManager = new NoteManager(Chart, this);
         }
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
-    internal class Note
+    public class Note
     {
         public enum NoteType { Red, Blue }
         public NoteType Type { get; set; }
@@ -15,5 +15,23 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public double Size { get; set; }
         public double HitTime { get; set; }
 
+    }
+    public class NoteEvent
+    {
+        public void NoteAppear
+        {
+
+        }
+        public void NoteDisappear
+        {
+        }
+        public void NoteMove
+        {
+
+        }
+        public void NoteHit
+        {
+
+        }
     }
 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
@@ -51,10 +52,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 
     public class DifficultyManager
     {
-        public string CurrentDifficulty { get; private set; }
-        public void SetDifficulty(string difficulty) {
-            CurrentDifficulty = difficulty;
-        }
+        public string CurrentDifficulty { get; set; }
     }
 
     public static class  KeyManager
@@ -71,13 +69,97 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public int MissHit { get; private set; }
         public int EarlyHit { get; private set; }
         public int LateHit { get; private set; }
-        
+        public int Combo {  get; private set; }
+        public int MaxCombo { get; private set; }
+
+        public ScoreManager()
+        {
+            Score = 0;
+            PerfectHit = 0;
+            GoodHit = 0;
+            BadHit = 0;
+            MissHit = 0;
+            EarlyHit = 0;
+            LateHit = 0;
+            Combo = 0;
+            MaxCombo = 0;
+        }
+
+        public void Update(HitResult result, bool isEarly, bool isLate)
+        {
+            switch (result)
+            {
+                case HitResult.Perfect:
+                    PerfectHit++;
+                    Score += ;
+                    Combo++;
+                    break;
+                case HitResult.Good:
+                    GoodHit++;
+                    Score += ;
+                    Combo++;
+                    break;
+                case HitResult.Bad:
+                    BadHit++;
+                    Score += ;
+                    Combo++;
+                    break;
+                case HitResult.Miss:
+                    MissHit++;
+                    Combo = 0;
+                    break;
+            }
+            if (isEarly) EarlyHit++;
+            if (isLate) LateHit++;
+
+            MaxCombo = Math.Max(Combo, MaxCombo);
+        }
+
+        public void Reset()
+        {
+            Score = 0;
+            GoodHit = 0;
+            PerfectHit = 0;
+            BadHit = 0;
+            MissHit = 0;
+            EarlyHit = 0;
+            LateHit = 0;
+            Combo = 0;
+            MaxCombo = 0;
+        }
+    }
+
+    public enum HitResult
+    {
+        Perfect,
+        Good,
+        Bad,
+        Miss
     }
 
     public class PlayerManager
     {
-        string SelectedSong { get; set; };
-        
-
+        public int PlayerIndex { get; private set; }
+        public ScoreManager Score {  get; private set; }
+        public string PlayerName { get; set; }
+        public bool IsLocalPlayer { get; set; }
+        public string CurrentSong => SongManager.CurrentSong;
+        public DifficultyManager Difficulty {  get; private set; }
+        public PlayerManager(int playIndex)
+        {
+            PlayerIndex = playIndex;
+            Score =  new ScoreManager();
+            PlayerName = $"Player {playIndex + 1}";
+            IsLocalPlayer = true;
+            Difficulty = new DifficultyManager();
+        }
+        public void Reset()
+        {
+            Score.Reset();
+        }
+        public void ProcessHit(HitResult result, bool isEarly = false, bool isLate = false)
+        {
+            Score.Update(result, isEarly, isLate);
+        }
     }
 }

@@ -8,7 +8,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
     public interface IGameMode
     {
-        string ModeName { get; }
+        string ModeName { get; };
         void Initialize(GameEngine engine);
 
     }

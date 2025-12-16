@@ -8,7 +8,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
 	<UserControl.Background>
-		<ImageBrush ImageSource="/Assets/Images/InGameBG.png"
+		<ImageBrush ImageSource="/Assets/Image/InGameBG.png"
                     Stretch="UniformToFill" />
 	</UserControl.Background>
     <Grid>

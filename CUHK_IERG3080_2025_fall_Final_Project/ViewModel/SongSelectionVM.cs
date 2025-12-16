@@ -4,12 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel;
+using CUHK_IERG3080_2025_fall_Final_Project.Model;
+using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
-    internal class SongSelectionVM : INotifyPropertyChanged
+    internal class SongSelectionVM : ViewModelBase
     {
         // Store the selected difficulty globally (for all cards)
+        // Format: "SongName_Difficulty" (e.g., "Song1_Easy", "Song2_Hard")
         private string _selectedDifficulty;
         public string SelectedDifficulty
         {
@@ -20,37 +23,91 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 {
                     _selectedDifficulty = value;
                     OnPropertyChanged(nameof(SelectedDifficulty));
-
                     // Notify all buttons to reflect the new selection
+                    RaiseAll();
+                    // Update the model
+                    UpdateModel();
+                }
+            }
+        }
+
+        /* -------- Card A (Song1) -------- */
+        public bool IsEasyASelected
+        {
+            get => SelectedDifficulty == "Song1_Easy";
+            set { if (value) SelectedDifficulty = "Song1_Easy"; }
+        }
+
+        public bool IsHardASelected
+        {
+            get => SelectedDifficulty == "Song1_Hard";
+            set { if (value) SelectedDifficulty = "Song1_Hard"; }
+        }
+
+        /* -------- Card B (Song2) -------- */
+        public bool IsEasyBSelected
+        {
+            get => SelectedDifficulty == "Song2_Easy";
+            set { if (value) SelectedDifficulty = "Song2_Easy"; }
+        }
+
+        public bool IsHardBSelected
+        {
+            get => SelectedDifficulty == "Song2_Hard";
+            set { if (value) SelectedDifficulty = "Song2_Hard"; }
+        }
+
+        public SongSelectionVM()
+        {
+            // Load current selection from model if available
+            LoadFromModel();
+        }
+
+        private void LoadFromModel()
+        {
+            // Try to load existing song and difficulty from current mode
+            if (GameModeManager.CurrentMode != null &&
+                GameModeManager.CurrentMode.Players != null &&
+                GameModeManager.CurrentMode.Players.Count > 0)
+            {
+                var player = GameModeManager.CurrentMode.Players[0];
+                string currentSong = SongManager.CurrentSong;
+                string currentDifficulty = player.Difficulty.CurrentDifficulty;
+
+                if (!string.IsNullOrEmpty(currentSong) && !string.IsNullOrEmpty(currentDifficulty))
+                {
+                    // Reconstruct the selection string
+                    _selectedDifficulty = $"{currentSong}_{currentDifficulty}";
                     RaiseAll();
                 }
             }
         }
 
-        /* -------- Card A -------- */
-        public bool IsEasyASelected
+        private void UpdateModel()
         {
-            get => SelectedDifficulty == "A_Easy";
-            set { if (value) SelectedDifficulty = "A_Easy"; }
-        }
+            if (string.IsNullOrEmpty(_selectedDifficulty))
+                return;
 
-        public bool IsHardASelected
-        {
-            get => SelectedDifficulty == "A_Hard";
-            set { if (value) SelectedDifficulty = "A_Hard"; }
-        }
+            // Parse the selection: "SongName_Difficulty"
+            var parts = _selectedDifficulty.Split('_');
+            if (parts.Length != 2)
+                return;
 
-        /* -------- Card B -------- */
-        public bool IsEasyBSelected
-        {
-            get => SelectedDifficulty == "B_Easy";
-            set { if (value) SelectedDifficulty = "B_Easy"; }
-        }
+            string songName = parts[0];      // "Song1" or "Song2"
+            string difficulty = parts[1];    // "Easy" or "Hard"
 
-        public bool IsHardBSelected
-        {
-            get => SelectedDifficulty == "B_Hard";
-            set { if (value) SelectedDifficulty = "B_Hard"; }
+            // Update SongManager with selected song
+            SongManager.SetSong(songName);
+
+            // Update all players in current mode with the selected difficulty
+            if (GameModeManager.CurrentMode != null && GameModeManager.CurrentMode.Players != null)
+            {
+                foreach (var player in GameModeManager.CurrentMode.Players)
+                {
+                    // Directly set the CurrentDifficulty property (no need for SetDifficulty method)
+                    player.Difficulty.CurrentDifficulty = difficulty;
+                }
+            }
         }
 
         /* -------- Notify all buttons -------- */
@@ -61,10 +118,5 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             OnPropertyChanged(nameof(IsEasyBSelected));
             OnPropertyChanged(nameof(IsHardBSelected));
         }
-
-        // INotifyPropertyChanged implementation
-        public event PropertyChangedEventHandler PropertyChanged;
-        private void OnPropertyChanged(string name)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

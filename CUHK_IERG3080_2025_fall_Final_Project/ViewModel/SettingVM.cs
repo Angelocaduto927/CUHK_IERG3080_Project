@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Windows.Input;
 using CUHK_IERG3080_2025_fall_Final_Project.Utility;
+using CUHK_IERG3080_2025_fall_Final_Project.Model;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
@@ -10,18 +11,49 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
     {
         // backing store for bindings (actionName -> (Key, Modifiers))
         private readonly Dictionary<string, Tuple<Key, ModifierKeys>> _bindings;
-        private readonly Dictionary<string, Tuple<Key, ModifierKeys>> _defaults =
-            new Dictionary<string, Tuple<Key, ModifierKeys>>()
+        private readonly Dictionary<string, Tuple<Key, ModifierKeys>> _defaults = new Dictionary<string, Tuple<Key, ModifierKeys>>()
+        {
+            { "KeyBindActionA", Tuple.Create(Key.Space, ModifierKeys.None) },
+            { "KeyBindActionB", Tuple.Create(Key.LeftCtrl, ModifierKeys.None) },
+            { "KeyBindActionC", Tuple.Create(Key.LeftShift, ModifierKeys.None) },
+            { "KeyBindActionD", Tuple.Create(Key.E, ModifierKeys.None) },
+            { "KeyBindActionA2", Tuple.Create(Key.Enter, ModifierKeys.None) },
+            { "KeyBindActionB2", Tuple.Create(Key.RightCtrl, ModifierKeys.None) },
+            { "KeyBindActionC2", Tuple.Create(Key.RightShift, ModifierKeys.None) },
+            { "KeyBindActionD2", Tuple.Create(Key.R, ModifierKeys.None) }
+        };
+
+        // Speed properties
+        private int _player1Speed = 2;
+        private int _player2Speed = 2;
+
+        public int Player1Speed
+        {
+            get => _player1Speed;
+            set
             {
-                { "KeyBindActionA", Tuple.Create(Key.Space, ModifierKeys.None) },
-                { "KeyBindActionB", Tuple.Create(Key.LeftCtrl, ModifierKeys.None) },
-                { "KeyBindActionC", Tuple.Create(Key.LeftShift, ModifierKeys.None) },
-                { "KeyBindActionD", Tuple.Create(Key.E, ModifierKeys.None) },
-                { "KeyBindActionA2", Tuple.Create(Key.Enter, ModifierKeys.None) },
-                { "KeyBindActionB2", Tuple.Create(Key.RightCtrl, ModifierKeys.None) },
-                { "KeyBindActionC2", Tuple.Create(Key.RightShift, ModifierKeys.None) },
-                { "KeyBindActionD2", Tuple.Create(Key.R, ModifierKeys.None) }
-            };
+                if (_player1Speed != value)
+                {
+                    _player1Speed = value;
+                    OnPropertyChanged(nameof(Player1Speed));
+                    UpdatePlayerSpeed(0, value); // 0-based index
+                }
+            }
+        }
+
+        public int Player2Speed
+        {
+            get => _player2Speed;
+            set
+            {
+                if (_player2Speed != value)
+                {
+                    _player2Speed = value;
+                    OnPropertyChanged(nameof(Player2Speed));
+                    UpdatePlayerSpeed(1, value); // 0-based index
+                }
+            }
+        }
 
         public SettingVM()
         {
@@ -29,6 +61,39 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             _bindings = new Dictionary<string, Tuple<Key, ModifierKeys>>();
             foreach (var kv in _defaults)
                 _bindings[kv.Key] = Tuple.Create(kv.Value.Item1, kv.Value.Item2);
+
+            // Load speed settings from current mode
+            LoadSpeedSettings();
+        }
+
+        private void LoadSpeedSettings()
+        {
+            if (GameModeManager.CurrentMode != null && GameModeManager.CurrentMode.Players != null)
+            {
+                var players = GameModeManager.CurrentMode.Players;
+                if (players.Count > 0)
+                {
+                    _player1Speed = players[0].Speed.CurrentSpeed;
+                    OnPropertyChanged(nameof(Player1Speed));
+                }
+                if (players.Count > 1)
+                {
+                    _player2Speed = players[1].Speed.CurrentSpeed;
+                    OnPropertyChanged(nameof(Player2Speed));
+                }
+            }
+        }
+
+        private void UpdatePlayerSpeed(int playerIndex, int speed)
+        {
+            if (GameModeManager.CurrentMode != null && GameModeManager.CurrentMode.Players != null)
+            {
+                var players = GameModeManager.CurrentMode.Players;
+                if (playerIndex < players.Count)
+                {
+                    players[playerIndex].Speed.CurrentSpeed = speed;
+                }
+            }
         }
 
         // Return a copy of bindings for the view to display
@@ -85,6 +150,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             _bindings.Clear();
             foreach (var kv in _defaults)
                 _bindings[kv.Key] = Tuple.Create(kv.Value.Item1, kv.Value.Item2);
+
+            // Reset speeds to default
+            Player1Speed = 2;
+            Player2Speed = 2;
 
             // TODO: persist defaults
             OnPropertyChanged(nameof(GetBindings));

@@ -12,17 +12,24 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project
 {
-    /// <summary>
-    /// MainWindow.xaml 的交互逻辑
-    /// </summary>
     public partial class MainWindow : Window
     {
         public MainWindow()
         {
             InitializeComponent();
+
+            // Handle window closing to cleanup audio resources
+            this.Closing += MainWindow_Closing;
+        }
+
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // Cleanup audio resources when closing the application
+            AudioManager.Cleanup();
         }
     }
 }

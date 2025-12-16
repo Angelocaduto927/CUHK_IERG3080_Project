@@ -12,10 +12,13 @@
 		<ImageBrush ImageSource="/Assets/Images/GameOverBG.png"
                     Stretch="UniformToFill" />
 	</UserControl.Background>
+
 	<Grid>
 		<Grid.RowDefinitions>
-			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
 			<!-- Title -->
+			<RowDefinition Height="*" />
+			<!-- Score Display -->
 			<RowDefinition Height="Auto" />
 			<!-- Button -->
 		</Grid.RowDefinitions>
@@ -27,16 +30,206 @@
                    FontSize="36"
                    FontWeight="SemiBold"
                    HorizontalAlignment="Center"
-                   VerticalAlignment="Top" />
+                   Margin="0,20,0,0" />
+
+		<!-- Score Display Container -->
+		<Border Grid.Row="1"
+                Width="500"
+                Margin="0,40,0,20"
+                Background="#CC1E1E1E"
+                BorderBrush="#FFD4AF37"
+                BorderThickness="2"
+                CornerRadius="8"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+			<Border.Effect>
+				<DropShadowEffect Color="#803B82F6"
+                                  BlurRadius="20"
+                                  ShadowDepth="0"
+                                  Opacity="0.6"/>
+			</Border.Effect>
+
+			<Grid Margin="30">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<!-- Grade -->
+					<RowDefinition Height="Auto" />
+					<!-- Accuracy -->
+					<RowDefinition Height="Auto" />
+					<!-- Score -->
+					<RowDefinition Height="20" />
+					<!-- Spacer -->
+					<RowDefinition Height="Auto" />
+					<!-- Stats Title -->
+					<RowDefinition Height="Auto" />
+					<!-- Perfect -->
+					<RowDefinition Height="Auto" />
+					<!-- Good -->
+					<RowDefinition Height="Auto" />
+					<!-- Bad -->
+					<RowDefinition Height="Auto" />
+					<!-- Miss -->
+					<RowDefinition Height="20" />
+					<!-- Spacer -->
+					<RowDefinition Height="Auto" />
+					<!-- Max Combo -->
+				</Grid.RowDefinitions>
+
+				<!-- Grade Display -->
+				<StackPanel Grid.Row="0"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Margin="0,0,0,10">
+					<TextBlock Text="Grade: "
+                               Foreground="#FFFFFF"
+                               FontSize="32"
+                               FontWeight="Bold"/>
+					<TextBlock Text="{Binding Grade}"
+                               Foreground="{Binding GradeColor}"
+                               FontSize="48"
+                               FontWeight="Bold"
+                               Margin="10,0,0,0">
+						<TextBlock.Effect>
+							<DropShadowEffect Color="{Binding GradeColor}"
+                                              BlurRadius="15"
+                                              ShadowDepth="0"
+                                              Opacity="0.8"/>
+						</TextBlock.Effect>
+					</TextBlock>
+				</StackPanel>
+
+				<!-- Accuracy -->
+				<StackPanel Grid.Row="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Margin="0,0,0,5">
+					<TextBlock Text="Accuracy: "
+                               Foreground="#FFFFE08A"
+                               FontSize="18"
+                               FontWeight="SemiBold"/>
+					<TextBlock Text="{Binding Accuracy}"
+                               Foreground="#FFD4AF37"
+                               FontSize="18"
+                               FontWeight="Bold"/>
+				</StackPanel>
+
+				<!-- Total Score -->
+				<StackPanel Grid.Row="2"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Margin="0,0,0,15">
+					<TextBlock Text="Score: "
+                               Foreground="#FFFFE08A"
+                               FontSize="24"
+                               FontWeight="SemiBold"/>
+					<TextBlock Text="{Binding TotalScore}"
+                               Foreground="#FFD4AF37"
+                               FontSize="24"
+                               FontWeight="Bold"/>
+				</StackPanel>
+
+				<!-- Stats Title -->
+				<TextBlock Grid.Row="4"
+                           Text="Hit Statistics"
+                           Foreground="#FF3B82F6"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,10"/>
+
+				<!-- Perfect Hits -->
+				<Grid Grid.Row="5" Margin="0,3">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="2*"/>
+						<ColumnDefinition Width="*"/>
+					</Grid.ColumnDefinitions>
+					<TextBlock Grid.Column="0"
+                               Text="Perfect:"
+                               Foreground="#FFD4AF37"
+                               FontSize="16"/>
+					<TextBlock Grid.Column="1"
+                               Text="{Binding PerfectHits}"
+                               Foreground="#FFFFFF"
+                               FontSize="16"
+                               HorizontalAlignment="Right"/>
+				</Grid>
+
+				<!-- Good Hits -->
+				<Grid Grid.Row="6" Margin="0,3">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="2*"/>
+						<ColumnDefinition Width="*"/>
+					</Grid.ColumnDefinitions>
+					<TextBlock Grid.Column="0"
+                               Text="Good:"
+                               Foreground="#FF3B82F6"
+                               FontSize="16"/>
+					<TextBlock Grid.Column="1"
+                               Text="{Binding GoodHits}"
+                               Foreground="#FFFFFF"
+                               FontSize="16"
+                               HorizontalAlignment="Right"/>
+				</Grid>
+
+				<!-- Bad Hits -->
+				<Grid Grid.Row="7" Margin="0,3">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="2*"/>
+						<ColumnDefinition Width="*"/>
+					</Grid.ColumnDefinitions>
+					<TextBlock Grid.Column="0"
+                               Text="Bad:"
+                               Foreground="#FF6B7280"
+                               FontSize="16"/>
+					<TextBlock Grid.Column="1"
+                               Text="{Binding BadHits}"
+                               Foreground="#FFFFFF"
+                               FontSize="16"
+                               HorizontalAlignment="Right"/>
+				</Grid>
+
+				<!-- Miss Hits -->
+				<Grid Grid.Row="8" Margin="0,3">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="2*"/>
+						<ColumnDefinition Width="*"/>
+					</Grid.ColumnDefinitions>
+					<TextBlock Grid.Column="0"
+                               Text="Miss:"
+                               Foreground="#FF991B1B"
+                               FontSize="16"/>
+					<TextBlock Grid.Column="1"
+                               Text="{Binding MissHits}"
+                               Foreground="#FFFFFF"
+                               FontSize="16"
+                               HorizontalAlignment="Right"/>
+				</Grid>
+
+				<!-- Max Combo -->
+				<StackPanel Grid.Row="10"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Margin="0,5,0,0">
+					<TextBlock Text="Max Combo: "
+                               Foreground="#FFFFE08A"
+                               FontSize="18"
+                               FontWeight="SemiBold"/>
+					<TextBlock Text="{Binding MaxCombo}"
+                               Foreground="#FFD4AF37"
+                               FontSize="18"
+                               FontWeight="Bold"/>
+				</StackPanel>
+			</Grid>
+		</Border>
 
 		<!-- Bottom Home button -->
-		<StackPanel Grid.Row="1"
+		<StackPanel Grid.Row="2"
                     HorizontalAlignment="Center"
-                    Margin="0,24,0,0">
-
+                    Margin="0,0,0,24">
 			<Button Content="Home"
                     Width="120"
                     Height="40"
+                    Style="{StaticResource GlowingButtonStyle}"
                     Command="{Binding DataContext.TitleScreenCommand,
                                       RelativeSource={RelativeSource AncestorType=Window}}"
                     ToolTip="Return to title screen" />

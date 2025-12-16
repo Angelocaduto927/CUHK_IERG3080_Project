@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CUHK_IERG3080_2025_fall_Final_Project.Utility;
+using CUHK_IERG3080_2025_fall_Final_Project.Model;
 using System.Windows.Input;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
@@ -18,8 +19,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 _currentViewModel = value;
                 OnPropertyChanged();
+
+                // Handle background music based on current view
+                HandleBackgroundMusic(value);
             }
         }
+
         public ICommand TitleScreenCommand { get; set; }
         public ICommand SongSelectionCommand { get; set; }
         public ICommand SettingCommand { get; set; }
@@ -30,21 +35,56 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             CurrentViewModel = new TitleScreenVM();
         }
+
         private void SongSelection(object obj)
         {
+            // Ensure a game mode is selected before going to song selection
+            if (GameModeManager.CurrentMode == null)
+            {
+                // If no mode selected, go back to title screen
+                TitleScreen(null);
+                return;
+            }
+
             CurrentViewModel = new SongSelectionVM();
         }
+
         private void Setting(object obj)
         {
+            // Recreate SettingVM each time to reload current speeds from model
             CurrentViewModel = new SettingVM();
         }
+
         private void InGame(object obj)
         {
+            // Ensure a game mode is selected before starting game
+            if (GameModeManager.CurrentMode == null)
+            {
+                // If no mode selected, go back to title screen
+                TitleScreen(null);
+                return;
+            }
+
             CurrentViewModel = new InGameVM();
         }
+
         private void GameOver(object obj)
         {
             CurrentViewModel = new GameOverVM();
+        }
+
+        private void HandleBackgroundMusic(object viewModel)
+        {
+            // Stop background music when entering InGame view
+            if (viewModel is InGameVM)
+            {
+                AudioManager.StopBackgroundMusic();
+            }
+            // Resume/play background music for all other views
+            else
+            {
+                AudioManager.PlayBackgroundMusic();
+            }
         }
 
         public NavigationVM()
@@ -54,8 +94,13 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             SettingCommand = new RelayCommand(Setting);
             InGameCommand = new RelayCommand(InGame);
             GameOverCommand = new RelayCommand(GameOver);
-            CurrentViewModel = new TitleScreenVM();
-        }
 
+            // Initialize audio system
+            AudioManager.Initialize();
+
+            // Start with title screen and background music
+            CurrentViewModel = new TitleScreenVM();
+            AudioManager.PlayBackgroundMusic();
+        }
     }
 }

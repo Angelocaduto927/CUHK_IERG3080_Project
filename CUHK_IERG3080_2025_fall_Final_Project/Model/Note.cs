@@ -16,22 +16,4 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public double HitTime { get; set; }
 
     }
-    public class NoteEvent
-    {
-        public void NoteAppear
-        {
-
-        }
-        public void NoteDisappear
-        {
-        }
-        public void NoteMove
-        {
-
-        }
-        public void NoteHit
-        {
-
-        }
-    }
 }

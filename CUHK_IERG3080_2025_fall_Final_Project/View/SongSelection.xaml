@@ -9,7 +9,7 @@
              Padding="16">
 
 	<UserControl.Background>
-		<ImageBrush ImageSource="/Assets/Images/SongSelectBG.png"
+		<ImageBrush ImageSource="/Assets/Image/SongSelectBG.png"
                     Stretch="UniformToFill" />
 	</UserControl.Background>
 	

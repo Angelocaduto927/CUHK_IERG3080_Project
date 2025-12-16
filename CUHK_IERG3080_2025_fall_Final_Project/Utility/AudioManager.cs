@@ -138,15 +138,21 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
         {
             try
             {
-                var uri = new Uri("pack://application:,,,/CUHK_IERG3080_2025_fall_Final_Project;component/Assets/Sound/click.wav");
-                _effectPlayer.Open(uri);
-                _effectPlayer.Volume = EffectVolume;
-                _effectPlayer.Play();
+                var uri = new Uri("pack://application:,,,/CUHK_IERG3080_2025_fall_Final_Project;component/Assets/Sound/background.mp3");
+                System.Diagnostics.Debug.WriteLine("Attempting to open the file...");
+
+                _backgroundMusicPlayer.Open(uri);
+                _backgroundMusicPlayer.Volume = BackgroundVolume;
+                _backgroundMusicPlayer.Play();
+
+                System.Diagnostics.Debug.WriteLine("Background music started playing.");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to play click sound: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Failed to play background music: {ex.Message}");
             }
+
+
         }
     }
 }

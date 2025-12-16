@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -8,16 +7,12 @@ using CUHK_IERG3080_2025_fall_Final_Project.ViewModel;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.View
 {
-    /// <summary>
-    /// Setting.xaml interaction logic (UI listens for key and delegates state to SettingVM)
-    /// </summary>
     public partial class Setting : UserControl
     {
         private Button _listeningButton;
         private string _previousContent;
         private Brush _previousBackground;
         private Window _hostWindow;
-
         private SettingVM _vm;
 
         public Setting()
@@ -33,11 +28,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
             if (_vm == null)
                 return;
 
-            // populate UI from VM bindings
             ApplyBindingsFromVM();
         }
 
-        // click a bind button to start listening
         private void RebindKey_Click(object sender, RoutedEventArgs e)
         {
             if (_listeningButton != null)
@@ -59,7 +52,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
             if (_hostWindow != null)
             {
                 _hostWindow.PreviewKeyDown += HostWindow_PreviewKeyDown;
-                _hostWindow.PreviewMouseDown += HostWindow_PreviewMouseDown; // cancel on mouse click outside
+                _hostWindow.PreviewMouseDown += HostWindow_PreviewMouseDown;
             }
 
             _hostWindow?.Focus();
@@ -67,17 +60,16 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
 
         private void HostWindow_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (_listeningButton == null || _vm == null) return;
+            if (_listeningButton == null || _vm == null)
+                return;
 
             var mods = Keyboard.Modifiers;
             var key = e.Key == Key.System ? e.SystemKey : e.Key;
 
-            // Ask VM to try to save binding (non-forced). If a collision exists, vm returns the existing action name.
             string existing = _vm.SaveBinding(_listeningButton.Name, key, mods, force: false);
 
             if (!string.IsNullOrEmpty(existing) && existing != _listeningButton.Name)
             {
-                // Prompt user — view handles UI decision
                 var conflictMsg = string.Format("The key {0} is already bound to \"{1}\".\nDo you want to overwrite it?",
                     SettingVM.FormatBindingText(key, mods), existing);
 
@@ -89,22 +81,13 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
                     return;
                 }
 
-                // User chose to overwrite -> call VM with force
                 _vm.SaveBinding(_listeningButton.Name, key, mods, force: true);
 
-                // Clear previous UI label for the overwritten action if present
                 var oldBtn = FindName(existing) as Button;
                 if (oldBtn != null)
                     oldBtn.Content = "Unassigned";
             }
 
-            // If no existing collision, binding has already been saved by the non-forced call above.
-            if (string.IsNullOrEmpty(existing))
-            {
-                // nothing more to do
-            }
-
-            // Update UI and restore background
             _listeningButton.Content = SettingVM.FormatBindingText(key, mods);
             _listeningButton.Background = _previousBackground;
 
@@ -122,7 +105,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
 
         private void CancelListening()
         {
-            if (_listeningButton == null) return;
+            if (_listeningButton == null)
+                return;
 
             _listeningButton.Content = _previousContent;
             _listeningButton.Background = _previousBackground;
@@ -136,6 +120,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
                 _hostWindow.PreviewKeyDown -= HostWindow_PreviewKeyDown;
                 _hostWindow.PreviewMouseDown -= HostWindow_PreviewMouseDown;
             }
+
             _listeningButton = null;
             _previousContent = null;
             _previousBackground = null;
@@ -147,17 +132,24 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
             StopListening();
         }
 
-        // Apply bindings provided by VM to UI buttons
+        private void ResetDefaults_Click(object sender, RoutedEventArgs e)
+        {
+            _vm?.ResetToDefaults();
+            ApplyBindingsFromVM();
+        }
+
         private void ApplyBindingsFromVM()
         {
-            if (_vm == null) return;
+            if (_vm == null)
+                return;
 
             var dict = _vm.GetBindings();
             foreach (var kv in dict)
             {
-                var btn = FindName(kv.Key) as Button;
-                if (btn != null)
+                if (FindName(kv.Key) is Button btn)
+                {
                     btn.Content = SettingVM.FormatBindingText(kv.Value.Item1, kv.Value.Item2);
+                }
             }
         }
     }

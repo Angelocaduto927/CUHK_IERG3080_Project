@@ -13,21 +13,21 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         public TitleScreenVM()
         {
-            SinglePlayerCommand = new RelayCommand(() =>
+            SinglePlayerCommand = new RelayCommand(_ =>
             {
                 SetMode(GameModeManager.Mode.SinglePlayer);
             });
 
-            LocalMultiPlayerCommand = new RelayCommand(() =>
+            LocalMultiPlayerCommand = new RelayCommand(_ =>
             {
                 SetMode(GameModeManager.Mode.LocalMultiPlayer);
             });
 
-            OnlineMultiPlayerCommand = new RelayCommand(() =>
+            OnlineMultiPlayerCommand = new RelayCommand(_ =>
             {
                 SetMode(GameModeManager.Mode.OnlineMultiPlayer);
             });
-        }
+        }  
 
         private void SetMode(GameModeManager.Mode mode)
         {

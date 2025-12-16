@@ -1,15 +1,15 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Windows.Input;
+using System.Reflection;
 using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 using CUHK_IERG3080_2025_fall_Final_Project.Model;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
-    // ViewModel for Settings: holds bindings, defaults and simple persistence hooks.
     internal class SettingVM : ViewModelBase
     {
-        // backing store for bindings (actionName -> (Key, Modifiers))
         private readonly Dictionary<string, Tuple<Key, ModifierKeys>> _bindings;
         private readonly Dictionary<string, Tuple<Key, ModifierKeys>> _defaults = new Dictionary<string, Tuple<Key, ModifierKeys>>()
         {
@@ -23,7 +23,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             { "KeyBindActionD2", Tuple.Create(Key.R, ModifierKeys.None) }
         };
 
-        // Speed properties
         private int _player1Speed = 2;
         private int _player2Speed = 2;
 
@@ -36,7 +35,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 {
                     _player1Speed = value;
                     OnPropertyChanged(nameof(Player1Speed));
-                    UpdatePlayerSpeed(0, value); // 0-based index
+                    UpdatePlayerSpeed(0, value);
                 }
             }
         }
@@ -50,35 +49,33 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 {
                     _player2Speed = value;
                     OnPropertyChanged(nameof(Player2Speed));
-                    UpdatePlayerSpeed(1, value); // 0-based index
+                    UpdatePlayerSpeed(1, value);
                 }
             }
         }
 
         public SettingVM()
         {
-            // initialize from defaults (replace with persisted load when available)
             _bindings = new Dictionary<string, Tuple<Key, ModifierKeys>>();
             foreach (var kv in _defaults)
                 _bindings[kv.Key] = Tuple.Create(kv.Value.Item1, kv.Value.Item2);
 
-            // Load speed settings from current mode
             LoadSpeedSettings();
         }
 
         private void LoadSpeedSettings()
         {
-            if (GameModeManager.CurrentMode != null && GameModeManager.CurrentMode.Players != null)
+            var players = GetCurrentModePlayers();
+            if (players != null && players.Count > 0)
             {
-                var players = GameModeManager.CurrentMode.Players;
-                if (players.Count > 0)
-                {
-                    _player1Speed = players[0].Speed.CurrentSpeed;
-                    OnPropertyChanged(nameof(Player1Speed));
-                }
+                dynamic player0 = players[0];
+                _player1Speed = (int)player0?.Speed?.CurrentSpeed;
+                OnPropertyChanged(nameof(Player1Speed));
+
                 if (players.Count > 1)
                 {
-                    _player2Speed = players[1].Speed.CurrentSpeed;
+                    dynamic player1 = players[1];
+                    _player2Speed = (int)player1?.Speed?.CurrentSpeed;
                     OnPropertyChanged(nameof(Player2Speed));
                 }
             }
@@ -86,17 +83,27 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void UpdatePlayerSpeed(int playerIndex, int speed)
         {
-            if (GameModeManager.CurrentMode != null && GameModeManager.CurrentMode.Players != null)
+            var players = GetCurrentModePlayers();
+            if (players != null && playerIndex < players.Count)
             {
-                var players = GameModeManager.CurrentMode.Players;
-                if (playerIndex < players.Count)
+                dynamic player = players[playerIndex];
+                if (player?.Speed != null)
                 {
-                    players[playerIndex].Speed.CurrentSpeed = speed;
+                    player.Speed.CurrentSpeed = speed;
                 }
             }
         }
 
-        // Return a copy of bindings for the view to display
+        private IList GetCurrentModePlayers()
+        {
+            var mode = GameModeManager.CurrentMode;
+            if (mode == null)
+                return null;
+
+            var property = mode.GetType().GetProperty("Players", BindingFlags.Instance | BindingFlags.Public);
+            return property?.GetValue(mode) as IList;
+        }
+
         public Dictionary<string, Tuple<Key, ModifierKeys>> GetBindings()
         {
             var copy = new Dictionary<string, Tuple<Key, ModifierKeys>>();
@@ -105,16 +112,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             return copy;
         }
 
-        // Save a binding. If force==false and another action already uses the same key+mods,
-        // the method returns the actionName that currently holds that binding (collision).
-        // If force==true the existing mapping will be removed and the new binding applied.
-        // Returns null when save succeeded (no collision or overwrite applied), or the existing action name on collision when not forced.
         public string SaveBinding(string actionName, Key key, ModifierKeys mods, bool force = false)
         {
             if (string.IsNullOrEmpty(actionName))
                 throw new ArgumentNullException(nameof(actionName));
 
-            // find existing binding that uses the same key+mods (excluding the same action)
             string existing = null;
             foreach (var kv in _bindings)
             {
@@ -127,20 +129,15 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
             if (existing != null && !force)
             {
-                // collision detected, caller should decide (prompt) — do not overwrite here.
                 return existing;
             }
 
-            // If forced and a different existing mapping was found, remove it
             if (existing != null && force)
             {
                 _bindings.Remove(existing);
             }
 
-            // Apply binding (overwrite any previous binding for actionName)
             _bindings[actionName] = Tuple.Create(key, mods);
-
-            // TODO: persist to file / settings here
             OnPropertyChanged(nameof(GetBindings));
             return null;
         }
@@ -151,15 +148,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             foreach (var kv in _defaults)
                 _bindings[kv.Key] = Tuple.Create(kv.Value.Item1, kv.Value.Item2);
 
-            // Reset speeds to default
             Player1Speed = 2;
             Player2Speed = 2;
 
-            // TODO: persist defaults
             OnPropertyChanged(nameof(GetBindings));
         }
 
-        // Find an action currently using this key+mods, or null if none
         public string FindExistingBinding(Key key, ModifierKeys mods)
         {
             foreach (var kv in _bindings)
@@ -170,7 +164,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             return null;
         }
 
-        // Helper: human-friendly text for a binding
         public static string FormatBindingText(Key key, ModifierKeys mods)
         {
             var parts = new List<string>();

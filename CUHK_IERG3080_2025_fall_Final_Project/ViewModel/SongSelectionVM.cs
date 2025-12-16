@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections;
 using System.ComponentModel;
+using System.Reflection;
 using CUHK_IERG3080_2025_fall_Final_Project.Model;
 using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 
@@ -11,8 +9,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
     internal class SongSelectionVM : ViewModelBase
     {
-        // Store the selected difficulty globally (for all cards)
-        // Format: "SongName_Difficulty" (e.g., "Song1_Easy", "Song2_Hard")
         private string _selectedDifficulty;
         public string SelectedDifficulty
         {
@@ -23,15 +19,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 {
                     _selectedDifficulty = value;
                     OnPropertyChanged(nameof(SelectedDifficulty));
-                    // Notify all buttons to reflect the new selection
                     RaiseAll();
-                    // Update the model
                     UpdateModel();
                 }
             }
         }
 
-        /* -------- Card A (Song1) -------- */
         public bool IsEasyASelected
         {
             get => SelectedDifficulty == "Song1_Easy";
@@ -44,7 +37,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             set { if (value) SelectedDifficulty = "Song1_Hard"; }
         }
 
-        /* -------- Card B (Song2) -------- */
         public bool IsEasyBSelected
         {
             get => SelectedDifficulty == "Song2_Easy";
@@ -59,27 +51,23 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         public SongSelectionVM()
         {
-            // Load current selection from model if available
             LoadFromModel();
         }
 
         private void LoadFromModel()
         {
-            // Try to load existing song and difficulty from current mode
-            if (GameModeManager.CurrentMode != null &&
-                GameModeManager.CurrentMode.Players != null &&
-                GameModeManager.CurrentMode.Players.Count > 0)
-            {
-                var player = GameModeManager.CurrentMode.Players[0];
-                string currentSong = SongManager.CurrentSong;
-                string currentDifficulty = player.Difficulty.CurrentDifficulty;
+            var players = GetCurrentModePlayers();
+            if (players == null || players.Count == 0)
+                return;
 
-                if (!string.IsNullOrEmpty(currentSong) && !string.IsNullOrEmpty(currentDifficulty))
-                {
-                    // Reconstruct the selection string
-                    _selectedDifficulty = $"{currentSong}_{currentDifficulty}";
-                    RaiseAll();
-                }
+            dynamic player = players[0];
+            string currentSong = SongManager.CurrentSong;
+            string currentDifficulty = player?.Difficulty?.CurrentDifficulty;
+
+            if (!string.IsNullOrEmpty(currentSong) && !string.IsNullOrEmpty(currentDifficulty))
+            {
+                _selectedDifficulty = $"{currentSong}_{currentDifficulty}";
+                RaiseAll();
             }
         }
 
@@ -88,29 +76,39 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (string.IsNullOrEmpty(_selectedDifficulty))
                 return;
 
-            // Parse the selection: "SongName_Difficulty"
             var parts = _selectedDifficulty.Split('_');
             if (parts.Length != 2)
                 return;
 
-            string songName = parts[0];      // "Song1" or "Song2"
-            string difficulty = parts[1];    // "Easy" or "Hard"
+            string songName = parts[0];
+            string difficulty = parts[1];
 
-            // Update SongManager with selected song
             SongManager.SetSong(songName);
 
-            // Update all players in current mode with the selected difficulty
-            if (GameModeManager.CurrentMode != null && GameModeManager.CurrentMode.Players != null)
+            var players = GetCurrentModePlayers();
+            if (players == null)
+                return;
+
+            foreach (var playerObj in players)
             {
-                foreach (var player in GameModeManager.CurrentMode.Players)
+                dynamic player = playerObj;
+                if (player?.Difficulty != null)
                 {
-                    // Directly set the CurrentDifficulty property (no need for SetDifficulty method)
                     player.Difficulty.CurrentDifficulty = difficulty;
                 }
             }
         }
 
-        /* -------- Notify all buttons -------- */
+        private IList GetCurrentModePlayers()
+        {
+            var mode = GameModeManager.CurrentMode;
+            if (mode == null)
+                return null;
+
+            var property = mode.GetType().GetProperty("Players", BindingFlags.Instance | BindingFlags.Public);
+            return property?.GetValue(mode) as IList;
+        }
+
         private void RaiseAll()
         {
             OnPropertyChanged(nameof(IsEasyASelected));

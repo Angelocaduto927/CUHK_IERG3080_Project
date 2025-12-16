@@ -20,7 +20,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 _currentViewModel = value;
                 OnPropertyChanged();
 
-                // Handle background music based on current view
+                // Handle background music based on current view  
                 HandleBackgroundMusic(value);
             }
         }
@@ -38,10 +38,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void SongSelection(object obj)
         {
-            // Ensure a game mode is selected before going to song selection
+            // Ensure a game mode is selected before going to song selection  
             if (GameModeManager.CurrentMode == null)
             {
-                // If no mode selected, go back to title screen
+                // If no mode selected, go back to title screen  
                 TitleScreen(null);
                 return;
             }
@@ -51,16 +51,16 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void Setting(object obj)
         {
-            // Recreate SettingVM each time to reload current speeds from model
+            // Recreate SettingVM each time to reload current speeds from model  
             CurrentViewModel = new SettingVM();
         }
 
         private void InGame(object obj)
         {
-            // Ensure a game mode is selected before starting game
+            // Ensure a game mode is selected before starting game  
             if (GameModeManager.CurrentMode == null)
             {
-                // If no mode selected, go back to title screen
+                // If no mode selected, go back to title screen  
                 TitleScreen(null);
                 return;
             }
@@ -75,15 +75,15 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void HandleBackgroundMusic(object viewModel)
         {
-            // Stop background music when entering InGame view
+            // Stop background music when entering InGame view  
             if (viewModel is InGameVM)
             {
-                AudioManager.StopBackgroundMusic();
+                CUHK_IERG3080_2025_fall_Final_Project.Utility.AudioManager.StopBackgroundMusic();
             }
-            // Resume/play background music for all other views
+            // Resume/play background music for all other views  
             else
             {
-                AudioManager.PlayBackgroundMusic();
+                CUHK_IERG3080_2025_fall_Final_Project.Utility.AudioManager.PlayBackgroundMusic();
             }
         }
 
@@ -95,12 +95,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             InGameCommand = new RelayCommand(InGame);
             GameOverCommand = new RelayCommand(GameOver);
 
-            // Initialize audio system
-            AudioManager.Initialize();
+            // Initialize audio system  
+            CUHK_IERG3080_2025_fall_Final_Project.Utility.AudioManager.Initialize();
 
-            // Start with title screen and background music
+            // Start with title screen and background music  
             CurrentViewModel = new TitleScreenVM();
-            AudioManager.PlayBackgroundMusic();
+            CUHK_IERG3080_2025_fall_Final_Project.Utility.AudioManager.PlayBackgroundMusic();
         }
     }
 }

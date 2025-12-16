@@ -3,13 +3,16 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
-	<!-- Glowing Button style (used for keybind buttons, navigation, etc.) -->
 	<Style x:Key="GlowingButtonStyle" TargetType="Button">
-		<Setter Property="Background" Value="#FF2D2D30"/>
-		<Setter Property="Foreground" Value="LightGray"/>
-		<Setter Property="BorderBrush" Value="#FF444444"/>
-		<Setter Property="BorderThickness" Value="1"/>
-		<Setter Property="Padding" Value="6,3"/>
+		<!-- Base appearance -->
+		<Setter Property="Background" Value="#FF1E3A8A"/>
+		<!-- Deep blue -->
+		<Setter Property="Foreground" Value="#FFD4AF37"/>
+		<!-- Gold text -->
+		<Setter Property="BorderBrush" Value="#FFD4AF37"/>
+		<!-- Gold border -->
+		<Setter Property="BorderThickness" Value="2"/>
+		<Setter Property="Padding" Value="8,4"/>
 		<Setter Property="Cursor" Value="Hand"/>
 		<Setter Property="Effect" Value="{x:Null}"/>
 		<Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
@@ -20,6 +23,7 @@
 			</Setter.Value>
 		</Setter>
 
+		<!-- Button template -->
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="Button">
@@ -27,11 +31,12 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4"
+                            CornerRadius="6"
                             Padding="{TemplateBinding Padding}">
-						<ContentPresenter HorizontalAlignment="Center"
-                                          VerticalAlignment="Center"
-                                          RecognizesAccessKey="True"/>
+						<ContentPresenter
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            RecognizesAccessKey="True"/>
 					</Border>
 				</ControlTemplate>
 			</Setter.Value>
@@ -39,49 +44,50 @@
 
 		<Style.Triggers>
 
-			<!-- Hover glow -->
+			<!-- Hover highlight -->
 			<Trigger Property="IsMouseOver" Value="True">
-				<Setter Property="Background" Value="#FF3A86FF"/>
-				<Setter Property="Foreground" Value="White"/>
-				<Setter Property="BorderBrush" Value="#FF73A8FF"/>
+				<Setter Property="Background" Value="#FF3B82F6"/>
+				<!-- Lighter blue -->
+				<Setter Property="Foreground" Value="#FFFFE08A"/>
+				<!-- Brighter gold -->
+				<Setter Property="BorderBrush" Value="#FFFFE08A"/>
 				<Setter Property="Effect">
 					<Setter.Value>
-						<DropShadowEffect Color="#803A86FF"
-                                          BlurRadius="16"
-                                          ShadowDepth="0"
-                                          Opacity="0.9"/>
+						<DropShadowEffect
+                            Color="#803B82F6"
+                            BlurRadius="18"
+                            ShadowDepth="0"
+                            Opacity="0.9"/>
 					</Setter.Value>
 				</Setter>
 				<Setter Property="RenderTransform">
 					<Setter.Value>
-						<ScaleTransform ScaleX="1.03" ScaleY="1.03"/>
+						<ScaleTransform ScaleX="1.05" ScaleY="1.05"/>
 					</Setter.Value>
 				</Setter>
 			</Trigger>
 
-			<!-- Pressed animation -->
+			<!-- Pressed -->
 			<Trigger Property="IsPressed" Value="True">
 				<Setter Property="RenderTransform">
 					<Setter.Value>
-						<ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
+						<ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
 					</Setter.Value>
 				</Setter>
 			</Trigger>
 
 			<!-- Disabled -->
 			<Trigger Property="IsEnabled" Value="False">
-				<Setter Property="Opacity" Value="0.5"/>
+				<Setter Property="Opacity" Value="0.45"/>
 				<Setter Property="Cursor" Value="Arrow"/>
 			</Trigger>
 
-			<!-- ========================= -->
-			<!-- CLICK SOUND EFFECT        -->
-			<!-- ========================= -->
+			<!-- Click sound effect -->
 			<EventTrigger RoutedEvent="PreviewMouseLeftButtonDown">
 				<BeginStoryboard>
 					<Storyboard>
 						<MediaTimeline
-                            Source="pack://application:,,,/Assets/Sounds/click.wav"
+                            Source="pack://application:,,,/Assets/Sound/click.wav"
                             BeginTime="{x:Static sys:TimeSpan.Zero}" />
 					</Storyboard>
 				</BeginStoryboard>

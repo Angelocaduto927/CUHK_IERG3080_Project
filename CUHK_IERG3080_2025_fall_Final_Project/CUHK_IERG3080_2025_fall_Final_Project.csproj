@@ -55,10 +55,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Model\ChartData.cs" />
-    <Compile Include="Model\ChartLoader.cs" />
     <Compile Include="Model\GameEngine.cs" />
     <Compile Include="Model\GameManager.cs" />
+    <Compile Include="Model\Hyperparameters.cs" />
     <Compile Include="Model\IGameMode.cs" />
     <Compile Include="Model\JsonLoader.cs" />
     <Compile Include="Model\LocalMultiPlayerMode.cs" />

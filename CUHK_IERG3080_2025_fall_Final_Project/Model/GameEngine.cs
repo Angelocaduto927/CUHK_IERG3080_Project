@@ -9,7 +9,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
     public class GameEngine
     {
-        
+        public void StartGame()
+        {
+        }
     }
 
 }

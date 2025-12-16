@@ -15,6 +15,19 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public void Initialize()
         {
             _engine = new GameEngine();
+
+            foreach (PlayerManager player in _players)
+            {
+                (player.Chart, player.ScoreSet)= new JsonLoader().LoadFromJson($"{SongManager.CurrentSong}_{player.Difficulty}.json");
+                player.Score.SetScoreSet(player.ScoreSet);
+                foreach (Note note in player.Chart)
+                {
+                    note.X = Hyperparameters.SpawnZoneXCoordinate;
+                    note.Y = Hyperparameters.SinglePlayerYCoordinate;
+                    note.SpawnTime = note.HitTime - (Hyperparameters.Length / player.Speed);
+                }
+            }
+            _engine.StartGame();
             // Additional initialization for single player mode can be added here
         }
         public SinglePlayerMode()

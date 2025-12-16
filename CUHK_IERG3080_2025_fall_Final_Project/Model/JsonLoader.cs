@@ -10,25 +10,14 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
     internal class JsonLoader
     {
-        public List<Note> Chart;
-        public ScoreSet ScoreSet;
-        public JsonLoader() { }
-        public void LoadFromJson(string filePath)
+        public (List<Note>, ScoreSet) LoadFromJson(string filePath)
         {
             if (!File.Exists(filePath))
             {
                 throw new FileNotFoundException("Chart file not found.", filePath);
             }
             string json = File.ReadAllText(filePath);
-            (Chart, ScoreSet) = ParseJson(json);
-        }
-        public List<Note> GetChart()
-        {
-            return Chart;
-        }
-        public ScoreSet GetScoreSet()
-        {
-            return ScoreSet;
+            return ParseJson(json);
         }
         private static (List<Note>, ScoreSet) ParseJson(string json)
         {

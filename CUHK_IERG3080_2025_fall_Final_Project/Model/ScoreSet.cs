@@ -15,10 +15,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public ScoreSet()
         {
             //default values
-            PerfectHitScore = 300;
-            GoodHitScore = 100;
-            BadHitScore = 50;
-            MissHitScore = 0;
+            PerfectHitScore = Hyperparameters.DefaultPerfectScore;
+            GoodHitScore = Hyperparameters.DefaultGoodScore;
+            BadHitScore = Hyperparameters.DefaultBadScore;
+            MissHitScore = Hyperparameters.DefaultMissScore;
         }
     }
 }

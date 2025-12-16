@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
@@ -57,6 +58,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         }
     }
 
+    /*
     public class SpeedManager
     {
         public int CurrentSpeed { get; set; }
@@ -65,6 +67,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             CurrentSpeed = 1;
         }
     }
+    */
 
     public static class  KeyManager
     {
@@ -97,7 +100,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             Combo = 0;
             MaxCombo = 0;
         }
-
+        public void SetScoreSet(ScoreSet scoreset)
+        {
+            _scoreset = scoreset;
+        }
         public void Update(HitResult result, bool isEarly, bool isLate)
         {
             switch (result)
@@ -157,22 +163,22 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public int PlayerIndex { get; private set; }
         public string PlayerName { get; set; }
         public bool IsLocalPlayer { get; set; }
+        public double Speed { get; set; }
         public string CurrentSong => SongManager.CurrentSong;
         public ScoreManager Score { get; private set; }
         public DifficultyManager Difficulty {  get; private set; }
-        public SpeedManager Speed { get; private set; }
+        public ScoreSet ScoreSet { get; set; }
+        public List<Note> Chart { get; set; }
         public PlayerManager(int playerIndex, bool isLocalPlayer = true)
         {
             PlayerIndex = playerIndex;
             IsLocalPlayer = isLocalPlayer;
             PlayerName = $"Player {playerIndex + 1}";
-            Score =  new ScoreManager(new ScoreSet());
+            ScoreSet = new ScoreSet();
+            Score =  new ScoreManager(ScoreSet);
             Difficulty = new DifficultyManager();
-            Speed = new SpeedManager();
-        }
-        public void Reset()
-        {
-            Score.Reset(new ScoreSet());
+            Speed = Hyperparameters.DefaultSpeed;
+            Chart = new List<Note>();
         }
         public void ProcessHit(HitResult result, bool isEarly = false, bool isLate = false)
         {

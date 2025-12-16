@@ -66,6 +66,7 @@
     <Compile Include="Model\OnlineMultiPlayerMode.cs" />
     <Compile Include="Model\ScoreSet.cs" />
     <Compile Include="Model\SinglePlayerMode.cs" />
+    <Compile Include="Utility\AudioManager.cs" />
     <Compile Include="Utility\RelayCommand.cs" />
     <Compile Include="Utility\ViewModelBase.cs" />
     <Compile Include="ViewModel\GameOverVM.cs" />
@@ -158,6 +159,14 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Music\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\Image\GameOverBG.png" />
+    <Resource Include="Assets\Image\InGameBG.png" />
+    <Resource Include="Assets\Image\SongSelectBG.png" />
+    <Resource Include="Assets\Image\TitleBG.png" />
+    <Content Include="Assets\Sound\background.mp3" />
+    <Content Include="Assets\Sound\click.wav" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

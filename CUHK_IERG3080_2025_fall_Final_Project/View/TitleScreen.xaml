@@ -59,7 +59,7 @@
                     Height="40"
                     HorizontalAlignment="Center"
                     Margin="0,12,0,24"
-                    Command="{Binding DataContext.SettingCommand,
+                    Command="{Binding DataContext.SongSelectionCommand,
                                       RelativeSource={RelativeSource AncestorType=Window}}"/>
         </Grid>
     </Grid>

@@ -1,52 +1,54 @@
-﻿using System;
-using System.Collections;
-using System.ComponentModel;
-using System.Reflection;
+﻿using System.ComponentModel;
 using CUHK_IERG3080_2025_fall_Final_Project.Model;
-using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
-    internal class SongSelectionVM : ViewModelBase
+    internal class SongSelectionVM : INotifyPropertyChanged
     {
-        private string _selectedDifficulty;
-        public string SelectedDifficulty
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        // Property for EasyA selection (Song1, Easy)
+        public bool IsEasyASelected
         {
-            get => _selectedDifficulty;
+            get => SongManager.CurrentSong == "Song1" && GetCurrentDifficulty() == "Easy";
             set
             {
-                if (_selectedDifficulty != value)
-                {
-                    _selectedDifficulty = value;
-                    OnPropertyChanged(nameof(SelectedDifficulty));
-                    RaiseAll();
-                    UpdateModel();
-                }
+                if (value)
+                    SetSongAndDifficulty("Song1", "Easy");
             }
         }
 
-        public bool IsEasyASelected
-        {
-            get => SelectedDifficulty == "Song1_Easy";
-            set { if (value) SelectedDifficulty = "Song1_Easy"; }
-        }
-
+        // Property for HardA selection (Song1, Hard)
         public bool IsHardASelected
         {
-            get => SelectedDifficulty == "Song1_Hard";
-            set { if (value) SelectedDifficulty = "Song1_Hard"; }
+            get => SongManager.CurrentSong == "Song1" && GetCurrentDifficulty() == "Hard";
+            set
+            {
+                if (value)
+                    SetSongAndDifficulty("Song1", "Hard");
+            }
         }
 
+        // Property for EasyB selection (Song2, Easy)
         public bool IsEasyBSelected
         {
-            get => SelectedDifficulty == "Song2_Easy";
-            set { if (value) SelectedDifficulty = "Song2_Easy"; }
+            get => SongManager.CurrentSong == "Song2" && GetCurrentDifficulty() == "Easy";
+            set
+            {
+                if (value)
+                    SetSongAndDifficulty("Song2", "Easy");
+            }
         }
 
+        // Property for HardB selection (Song2, Hard)
         public bool IsHardBSelected
         {
-            get => SelectedDifficulty == "Song2_Hard";
-            set { if (value) SelectedDifficulty = "Song2_Hard"; }
+            get => SongManager.CurrentSong == "Song2" && GetCurrentDifficulty() == "Hard";
+            set
+            {
+                if (value)
+                    SetSongAndDifficulty("Song2", "Hard");
+            }
         }
 
         public SongSelectionVM()
@@ -54,67 +56,69 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             LoadFromModel();
         }
 
+        // Directly sets the song and difficulty without any intermediary variable
+        private void SetSongAndDifficulty(string song, string difficulty)
+        {
+            // Set the song
+            SongManager.SetSong(song);
+
+            // Set the difficulty for all players
+            var players = GetCurrentModePlayers();
+            foreach (var player in players)
+            {
+                player.Difficulty.CurrentDifficulty = difficulty;
+            }
+
+            RaiseAll(); // Update UI for all difficulty selections
+        }
+
+        // Retrieves the current difficulty of the first player in the game mode
+        private string GetCurrentDifficulty()
+        {
+            var players = GetCurrentModePlayers();
+            return players.Count > 0 ? players[0]?.Difficulty?.CurrentDifficulty : null;
+        }
+
+        // Gets the list of players from the current game mode
+        private System.Collections.Generic.List<PlayerManager> GetCurrentModePlayers()
+        {
+            var mode = GameModeManager.CurrentMode;
+            var property = mode.GetType().GetProperty("Players");
+            return property?.GetValue(mode) as System.Collections.Generic.List<PlayerManager>;
+        }
+
+        // Initializes the view model based on the current game mode and selected song
         private void LoadFromModel()
         {
             var players = GetCurrentModePlayers();
-            if (players == null || players.Count == 0)
-                return;
+            if (players == null || players.Count == 0) return;
 
-            dynamic player = players[0];
             string currentSong = SongManager.CurrentSong;
-            string currentDifficulty = player?.Difficulty?.CurrentDifficulty;
+            string currentDifficulty = players[0]?.Difficulty?.CurrentDifficulty;
 
+            // Set the button states based on the current song and difficulty
             if (!string.IsNullOrEmpty(currentSong) && !string.IsNullOrEmpty(currentDifficulty))
             {
-                _selectedDifficulty = $"{currentSong}_{currentDifficulty}";
-                RaiseAll();
+                if (currentSong == "Song1" && currentDifficulty == "Easy") IsEasyASelected = true;
+                else if (currentSong == "Song1" && currentDifficulty == "Hard") IsHardASelected = true;
+                else if (currentSong == "Song2" && currentDifficulty == "Easy") IsEasyBSelected = true;
+                else if (currentSong == "Song2" && currentDifficulty == "Hard") IsHardBSelected = true;
             }
         }
 
-        private void UpdateModel()
-        {
-            if (string.IsNullOrEmpty(_selectedDifficulty))
-                return;
-
-            var parts = _selectedDifficulty.Split('_');
-            if (parts.Length != 2)
-                return;
-
-            string songName = parts[0];
-            string difficulty = parts[1];
-
-            SongManager.SetSong(songName);
-
-            var players = GetCurrentModePlayers();
-            if (players == null)
-                return;
-
-            foreach (var playerObj in players)
-            {
-                dynamic player = playerObj;
-                if (player?.Difficulty != null)
-                {
-                    player.Difficulty.CurrentDifficulty = difficulty;
-                }
-            }
-        }
-
-        private IList GetCurrentModePlayers()
-        {
-            var mode = GameModeManager.CurrentMode;
-            if (mode == null)
-                return null;
-
-            var property = mode.GetType().GetProperty("Players", BindingFlags.Instance | BindingFlags.Public);
-            return property?.GetValue(mode) as IList;
-        }
-
+        // Updates the UI for all selection buttons
         private void RaiseAll()
         {
             OnPropertyChanged(nameof(IsEasyASelected));
             OnPropertyChanged(nameof(IsHardASelected));
             OnPropertyChanged(nameof(IsEasyBSelected));
             OnPropertyChanged(nameof(IsHardBSelected));
+        }
+
+        // Notifies that a property has changed
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

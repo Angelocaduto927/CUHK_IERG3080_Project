@@ -12,12 +12,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
     {
         public (List<Note>, ScoreSet) LoadFromJson(string filePath)
         {
-            if (!File.Exists(filePath))
-            {
-                throw new FileNotFoundException("Chart file not found.", filePath);
-            }
-            string json = File.ReadAllText(filePath);
-            return ParseJson(json);
+            //if (!File.Exists(filePath))
+            //{
+            //    throw new FileNotFoundException("Chart file not found.", filePath);
+            //}
+            //string json = File.ReadAllText(filePath);
+            //return ParseJson(json);
         }
         private static (List<Note>, ScoreSet) ParseJson(string json)
         {

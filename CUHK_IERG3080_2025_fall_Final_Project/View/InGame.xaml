@@ -1,17 +1,180 @@
 ﻿<UserControl x:Class="CUHK_IERG3080_2025_fall_Final_Project.View.InGame"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.View"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.ViewModel"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             mc:Ignorable="d"
+             d:DesignHeight="900" d:DesignWidth="1600"
+             Focusable="True">
+
+	<UserControl.Resources>
+		<vm:BoolToVisibilityConverter x:Key="BoolToVis"/>
+	</UserControl.Resources>
+
+	<UserControl.DataContext>
+		<vm:InGameVM/>
+	</UserControl.DataContext>
+
+	<UserControl.InputBindings>
+		<KeyBinding Key="D" Command="{Binding KeyPressCommand}" CommandParameter="D"/>
+		<KeyBinding Key="F" Command="{Binding KeyPressCommand}" CommandParameter="F"/>
+		<KeyBinding Key="J" Command="{Binding KeyPressCommand}" CommandParameter="J"/>
+		<KeyBinding Key="K" Command="{Binding KeyPressCommand}" CommandParameter="K"/>
+		<KeyBinding Key="Q" Command="{Binding KeyPressCommand}" CommandParameter="Q"/>
+		<KeyBinding Key="W" Command="{Binding KeyPressCommand}" CommandParameter="W"/>
+		<KeyBinding Key="O" Command="{Binding KeyPressCommand}" CommandParameter="O"/>
+		<KeyBinding Key="P" Command="{Binding KeyPressCommand}" CommandParameter="P"/>
+	</UserControl.InputBindings>
+
 	<UserControl.Background>
-		<ImageBrush ImageSource="/Assets/Image/InGameBG.png"
-                    Stretch="UniformToFill" />
+		<ImageBrush ImageSource="/Assets/Image/InGameBG.png" Stretch="UniformToFill"/>
 	</UserControl.Background>
-    <Grid>
-            
-    </Grid>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="100"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
+
+		<!-- Header -->
+		<Border Background="#CC000000" BorderBrush="#FF6B4E" BorderThickness="0,0,0,3">
+			<Grid Margin="30,0">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="2*"/>
+					<ColumnDefinition Width="*"/>
+				</Grid.ColumnDefinitions>
+
+				<StackPanel VerticalAlignment="Center">
+					<TextBlock Text="{Binding Players[0].PlayerName}" FontSize="18" FontWeight="Bold" Foreground="#FF6B4E"/>
+					<StackPanel Orientation="Horizontal">
+						<TextBlock Text="Score: " FontSize="14" Foreground="White"/>
+						<TextBlock Text="{Binding Players[0].Score.Score}" FontSize="24" FontWeight="Bold" Foreground="#FFD700"/>
+					</StackPanel>
+					<StackPanel Orientation="Horizontal">
+						<TextBlock Text="Combo: " FontSize="12" Foreground="White"/>
+						<TextBlock Text="{Binding Players[0].Score.Combo}" FontSize="16" FontWeight="Bold" Foreground="#FF6B4E"/>
+					</StackPanel>
+				</StackPanel>
+
+				<StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+					<TextBlock Text="{Binding SongName}" FontSize="20" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+					<TextBlock Text="{Binding CurrentTime, StringFormat={}{0:F2}s}" FontSize="28" FontWeight="Bold" Foreground="#FFD700" HorizontalAlignment="Center"/>
+				</StackPanel>
+
+				<StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right"
+                           Visibility="{Binding IsMultiplayer, Converter={StaticResource BoolToVis}}">
+					<TextBlock Text="{Binding Players[1].PlayerName}" FontSize="18" FontWeight="Bold" Foreground="#4E9AFF" HorizontalAlignment="Right"/>
+					<StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+						<TextBlock Text="Score: " FontSize="14" Foreground="White"/>
+						<TextBlock Text="{Binding Players[1].Score.Score}" FontSize="24" FontWeight="Bold" Foreground="#FFD700"/>
+					</StackPanel>
+					<StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+						<TextBlock Text="Combo: " FontSize="12" Foreground="White"/>
+						<TextBlock Text="{Binding Players[1].Score.Combo}" FontSize="16" FontWeight="Bold" Foreground="#4E9AFF"/>
+					</StackPanel>
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<!-- Game Area -->
+		<Grid Grid.Row="1">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="*"/>
+				<RowDefinition Height="*"/>
+			</Grid.RowDefinitions>
+
+			<!-- Player 1 Lane -->
+			<Border Background="#11000000" BorderBrush="#FF6B4E" BorderThickness="0,2" Margin="0,20,0,10">
+				<Canvas ClipToBounds="True">
+					<Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
+                              Fill="#FF6B4E" Canvas.Left="200"/>
+					<Ellipse Width="120" Height="120" Stroke="#FF6B4E" StrokeThickness="6" Fill="#44FF6B4E"
+                            Canvas.Left="140" Canvas.Top="115">
+						<Ellipse.Effect>
+							<DropShadowEffect Color="#FF6B4E" BlurRadius="20" ShadowDepth="0"/>
+						</Ellipse.Effect>
+					</Ellipse>
+
+					<ItemsControl ItemsSource="{Binding Player1Notes}">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<Canvas/>
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.ItemContainerStyle>
+							<Style>
+								<Setter Property="Canvas.Left" Value="{Binding X}"/>
+								<Setter Property="Canvas.Top" Value="{Binding Y}"/>
+							</Style>
+						</ItemsControl.ItemContainerStyle>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Grid Width="90" Height="90">
+									<Ellipse>
+										<Ellipse.Fill>
+											<RadialGradientBrush>
+												<GradientStop Color="{Binding Inner}" Offset="0.3"/>
+												<GradientStop Color="{Binding Outer}" Offset="1"/>
+											</RadialGradientBrush>
+										</Ellipse.Fill>
+									</Ellipse>
+									<Ellipse Stroke="{Binding Border}" StrokeThickness="4"/>
+									<TextBlock Text="{Binding Icon}" FontSize="50" FontWeight="Bold" Foreground="White"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+								</Grid>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</Canvas>
+			</Border>
+
+			<!-- Player 2 Lane -->
+			<Border Grid.Row="1" Background="#11000000" BorderBrush="#4E9AFF" BorderThickness="0,2" Margin="0,10,0,20"
+                   Visibility="{Binding IsMultiplayer, Converter={StaticResource BoolToVis}}">
+				<Canvas ClipToBounds="True">
+					<Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
+                              Fill="#4E9AFF" Canvas.Left="200"/>
+					<Ellipse Width="120" Height="120" Stroke="#4E9AFF" StrokeThickness="6" Fill="#444E9AFF"
+                            Canvas.Left="140" Canvas.Top="115">
+						<Ellipse.Effect>
+							<DropShadowEffect Color="#4E9AFF" BlurRadius="20" ShadowDepth="0"/>
+						</Ellipse.Effect>
+					</Ellipse>
+
+					<ItemsControl ItemsSource="{Binding Player2Notes}">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<Canvas/>
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.ItemContainerStyle>
+							<Style>
+								<Setter Property="Canvas.Left" Value="{Binding X}"/>
+								<Setter Property="Canvas.Top" Value="{Binding Y}"/>
+							</Style>
+						</ItemsControl.ItemContainerStyle>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Grid Width="90" Height="90">
+									<Ellipse>
+										<Ellipse.Fill>
+											<RadialGradientBrush>
+												<GradientStop Color="{Binding Inner}" Offset="0.3"/>
+												<GradientStop Color="{Binding Outer}" Offset="1"/>
+											</RadialGradientBrush>
+										</Ellipse.Fill>
+									</Ellipse>
+									<Ellipse Stroke="{Binding Border}" StrokeThickness="4"/>
+									<TextBlock Text="{Binding Icon}" FontSize="50" FontWeight="Bold" Foreground="White"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+								</Grid>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</Canvas>
+			</Border>
+		</Grid>
+	</Grid>
 </UserControl>

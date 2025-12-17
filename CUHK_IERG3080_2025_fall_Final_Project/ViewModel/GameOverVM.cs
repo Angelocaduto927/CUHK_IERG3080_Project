@@ -8,6 +8,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
     internal class GameOverVM : ViewModelBase
     {
+        private readonly Action _navigateToTitleScreen;
         public int TotalScore { get; private set; }
         public int PerfectHits { get; private set; }
         public int GoodHits { get; private set; }
@@ -19,8 +20,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public string GradeColor { get; private set; }
         public string Accuracy { get; private set; }
 
-        public GameOverVM()
+        public GameOverVM(Action navigateToTitleScreen)
         {
+            _navigateToTitleScreen = navigateToTitleScreen;
+
             LoadScoreData();
             CalculateGrade();
         }

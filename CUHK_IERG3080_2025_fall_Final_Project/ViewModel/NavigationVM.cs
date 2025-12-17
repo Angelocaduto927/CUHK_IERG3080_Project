@@ -33,7 +33,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void TitleScreen(object obj)
         {
-            CurrentViewModel = new TitleScreenVM();
+            CurrentViewModel = new TitleScreenVM(() => SongSelection(null));
         }
 
         private void SongSelection(object obj)
@@ -65,12 +65,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             //    return;
             //}
 
-            CurrentViewModel = new InGameVM();
+            CurrentViewModel = new InGameVM(() => GameOver(null));
         }
 
         private void GameOver(object obj)
         {
-            CurrentViewModel = new GameOverVM();
+            CurrentViewModel = new GameOverVM(() => TitleScreen(null));
         }
 
         private void HandleBackgroundMusic(object viewModel)
@@ -99,7 +99,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             CUHK_IERG3080_2025_fall_Final_Project.Utility.AudioManager.Initialize();
 
             // Start with title screen and background music  
-            CurrentViewModel = new TitleScreenVM();
+            CurrentViewModel = new TitleScreenVM(() => SongSelection(null));
             CUHK_IERG3080_2025_fall_Final_Project.Utility.AudioManager.PlayBackgroundMusic();
         }
     }

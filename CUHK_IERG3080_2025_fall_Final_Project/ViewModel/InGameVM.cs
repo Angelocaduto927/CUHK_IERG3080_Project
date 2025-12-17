@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Data;
@@ -15,6 +16,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
     {
         private GameEngine _engine;
         private DispatcherTimer _timer;
+        private readonly Action _navigateToGameOver;
 
         public ICommand KeyPressCommand { get; }
         public ObservableCollection<NoteVM> Player1Notes { get; } = new ObservableCollection<NoteVM>();
@@ -25,16 +27,28 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public System.Collections.Generic.IReadOnlyList<PlayerManager> Players => _engine?.Players;
         public bool IsMultiplayer => Players?.Count > 1;
 
-        public InGameVM()
+        public InGameVM(Action navigateToGameOver)
         {
+            _navigateToGameOver = navigateToGameOver;
+
             KeyPressCommand = new RelayCommand<string>(OnKeyPress);
             _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
             _timer.Tick += (s, e) => Update();
+
+            Initialize();
         }
 
-        public void Initialize(GameEngine engine)
+        public void Initialize()
         {
-            _engine = engine;
+            // Initialize the mode
+            if (GameModeManager.CurrentMode == null)
+            { 
+                return;
+            }
+            GameModeManager.CurrentMode.Initialize();
+            var players = GameModeManager.CurrentMode.GetType().GetField("_players").GetValue(GameModeManager.CurrentMode) as System.Collections.Generic.List<PlayerManager>;
+            _engine = new GameEngine();
+            _engine.Initialize(players);
             _engine.StartGame();
             _timer.Start();
             OnPropertyChanged("");
@@ -55,6 +69,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 _timer.Stop();
                 _engine.StopGame();
+                _navigateToGameOver();
             }
         }
 

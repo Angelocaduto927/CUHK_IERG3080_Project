@@ -8,15 +8,11 @@
              d:DesignHeight="900" d:DesignWidth="1600"
              Focusable="True">
 
-	<UserControl.Resources>
-		<vm:BoolToVisibilityConverter x:Key="BoolToVis"/>
-	</UserControl.Resources>
+    <UserControl.Resources>
+        <vm:BoolToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
 
-	<UserControl.DataContext>
-		<vm:InGameVM/>
-	</UserControl.DataContext>
-
-	<UserControl.InputBindings>
+    <UserControl.InputBindings>
 		<!-- Dynamically map key bindings -->
 		<KeyBinding Key="{Binding KeyBindings[0]}" Command="{Binding KeyPressCommand}" CommandParameter="0"/>
 		<KeyBinding Key="{Binding KeyBindings[1]}" Command="{Binding KeyPressCommand}" CommandParameter="1"/>
@@ -53,46 +49,47 @@
                                FontSize="36" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#FFD700" Margin="0,0,0,10"/>
 
 					<!-- Small Stats Grid -->
-					<Grid HorizontalAlignment="Center">
-						<Grid.ColumnDefinitions>
-							<ColumnDefinition Width="130"/>
-							<ColumnDefinition Width="130"/>
-						</Grid.ColumnDefinitions>
+                    <Grid HorizontalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                        </Grid.ColumnDefinitions>
 
-						<!-- Left Column -->
-						<StackPanel Grid.Column="0">
-							<StackPanel Orientation="Horizontal">
-								<TextBlock Text="PERFECT: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
-								<TextBlock Text="{Binding Players[0].Score.PerfectHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
-							</StackPanel>
-							<StackPanel Orientation="Horizontal">
-								<TextBlock Text="GOOD: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
-								<TextBlock Text="{Binding Players[0].Score.GoodHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
-							</StackPanel>
-							<StackPanel Orientation="Horizontal">
-								<TextBlock Text="BAD: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
-								<TextBlock Text="{Binding Players[0].Score.BadHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
-							</StackPanel>
-						</StackPanel>
+                        <!-- Left Column -->
+                        <StackPanel Grid.Column="0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="PERFECT: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+                                <TextBlock Text="{Binding Players[0].Score.PerfectHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="GOOD: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+                                <TextBlock Text="{Binding Players[0].Score.GoodHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="BAD: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+                                <TextBlock Text="{Binding Players[0].Score.BadHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+                            </StackPanel>
+                        </StackPanel>
 
-						<!-- Right Column -->
-						<StackPanel Grid.Column="1">
-							<StackPanel Orientation="Horizontal">
-								<TextBlock Text="MAX COMBO: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
-								<TextBlock Text="{Binding Players[0].Score.MaxCombo}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
-							</StackPanel>
-							<StackPanel Orientation="Horizontal">
-								<TextBlock Text="MISS: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
-								<TextBlock Text="{Binding Players[0].Score.MissHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
-							</StackPanel>
-							<StackPanel Orientation="Horizontal">
-								<TextBlock Text="ACCURACY: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
-								<TextBlock Text="{Binding Players[0].Score.Accuracy}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
-							</StackPanel>
-						</StackPanel>
-					</Grid>
+                        <!-- Right Column -->
+                        <StackPanel Grid.Column="1">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="MAX COMBO: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+                                <TextBlock Text="{Binding Players[0].Score.MaxCombo}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="MISS: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+                                <TextBlock Text="{Binding Players[0].Score.MissHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="ACCURACY: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+                                <TextBlock Text="{Binding Players[0].Score.Accuracy}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+                                <TextBlock Text="%" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Left" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
 
-				</StackPanel>
+                </StackPanel>
 
 				<!-- Notes ItemsControl -->
 				<ItemsControl ItemsSource="{Binding Player1Notes}">

@@ -65,10 +65,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         }
     }
 
-    public class PlayerSettingsManager
+    public static class PlayerSettingsManager
     {
         private static Dictionary<int, PlayerSettings> _playerSettings = new Dictionary<int, PlayerSettings>();
-        public PlayerSettingsManager()
+        static PlayerSettingsManager()
         {
             _playerSettings[0] = new PlayerSettings
             {
@@ -118,6 +118,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public int LateHit { get; private set; }
         public int Combo {  get; private set; }
         public int MaxCombo { get; private set; }
+        public double Accuracy { get; private set; }
+        public int TotalPassedNotes { get; private set; }
+
 
         public ScoreManager(ScoreSet scoreset)
         {
@@ -131,6 +134,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             LateHit = 0;
             Combo = 0;
             MaxCombo = 0;
+            Accuracy = 100;
+            TotalPassedNotes = 0;
         }
         public void SetScoreSet(ScoreSet scoreset)
         {
@@ -161,6 +166,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
                     Combo = 0;
                     break;
             }
+            TotalPassedNotes++;
+            Accuracy = (PerfectHit + GoodHit * Hyperparameters.GoodWeight + BadHit * Hyperparameters.BadWeight) * 100 / TotalPassedNotes;
             if (isEarly) EarlyHit++;
             if (isLate) LateHit++;
 
@@ -196,6 +203,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public string PlayerName { get; set; }
         public bool IsLocalPlayer { get; set; }
         public double Speed { get; set; }
+        public Dictionary<string, System.Windows.Input.Key> KeysDict { get; set; }
         public string CurrentSong => SongManager.CurrentSong;
         public ScoreManager Score { get; private set; }
         public DifficultyManager Difficulty {  get; private set; }
@@ -210,7 +218,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             ScoreSet = new ScoreSet();
             Score =  new ScoreManager(ScoreSet);
             Difficulty = new DifficultyManager();
-            Speed = Hyperparameters.DefaultSpeed;
+            //Speed = Hyperparameters.DefaultSpeed;
+            Speed = PlayerSettingsManager.GetSettings(playerIndex).Speed;
+            KeysDict = PlayerSettingsManager.GetSettings(playerIndex).KeyBindings;
             Chart = new List<Note>();
             NoteManager = new NoteManager(Chart, this);
         }

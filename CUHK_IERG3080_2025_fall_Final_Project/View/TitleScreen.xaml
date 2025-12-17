@@ -32,7 +32,7 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center">
 
-				<Button Content="SINGLEPLAYER"
+				<Button Content="SINGLE PLAYER"
 						Width="160"
 						Height="42"
 						Margin="0,6"
@@ -59,7 +59,7 @@
                     Height="40"
                     HorizontalAlignment="Center"
                     Margin="0,12,0,24"
-                    Command="{Binding DataContext.InGameCommand,
+                    Command="{Binding DataContext.SettingCommand,
                                       RelativeSource={RelativeSource AncestorType=Window}}"/>
         </Grid>
     </Grid>

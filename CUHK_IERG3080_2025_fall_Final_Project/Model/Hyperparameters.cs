@@ -32,5 +32,15 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public const int DefaultGoodScore = 200;
         public const int DefaultBadScore = 100;
         public const int DefaultMissScore = 0;
+
+        //Accuracy Calculation Weight
+        public const double PerfectWeight = 1.0;
+        public const double GoodWeight = 0.9;
+        public const double BadWeight = 0.6;
+        public const double MissWeight = 0.0;
+
+        //SongName
+        public const string Song1Name = "One_Last_Kiss";
+        public const string Song2Name = "Song2";
     }
 }

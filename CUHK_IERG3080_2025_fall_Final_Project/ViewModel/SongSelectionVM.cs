@@ -10,44 +10,44 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         // Property for EasyA selection (Song1, Easy)
         public bool IsEasyASelected
         {
-            get => SongManager.CurrentSong == "Song1" && GetCurrentDifficulty() == "Easy";
+            get => SongManager.CurrentSong == Hyperparameters.Song1Name && GetCurrentDifficulty() == "Easy";
             set
             {
                 if (value)
-                    SetSongAndDifficulty("Song1", "Easy");
+                    SetSongAndDifficulty(Hyperparameters.Song1Name, "Easy");
             }
         }
 
         // Property for HardA selection (Song1, Hard)
         public bool IsHardASelected
         {
-            get => SongManager.CurrentSong == "Song1" && GetCurrentDifficulty() == "Hard";
+            get => SongManager.CurrentSong == Hyperparameters.Song1Name && GetCurrentDifficulty() == "Hard";
             set
             {
                 if (value)
-                    SetSongAndDifficulty("Song1", "Hard");
+                    SetSongAndDifficulty(Hyperparameters.Song1Name, "Hard");
             }
         }
 
         // Property for EasyB selection (Song2, Easy)
         public bool IsEasyBSelected
         {
-            get => SongManager.CurrentSong == "Song2" && GetCurrentDifficulty() == "Easy";
+            get => SongManager.CurrentSong == Hyperparameters.Song2Name && GetCurrentDifficulty() == "Easy";
             set
             {
                 if (value)
-                    SetSongAndDifficulty("Song2", "Easy");
+                    SetSongAndDifficulty(Hyperparameters.Song2Name, "Easy");
             }
         }
 
         // Property for HardB selection (Song2, Hard)
         public bool IsHardBSelected
         {
-            get => SongManager.CurrentSong == "Song2" && GetCurrentDifficulty() == "Hard";
+            get => SongManager.CurrentSong == Hyperparameters.Song2Name && GetCurrentDifficulty() == "Hard";
             set
             {
                 if (value)
-                    SetSongAndDifficulty("Song2", "Hard");
+                    SetSongAndDifficulty(Hyperparameters.Song2Name, "Hard");
             }
         }
 
@@ -83,8 +83,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private System.Collections.Generic.List<PlayerManager> GetCurrentModePlayers()
         {
             var mode = GameModeManager.CurrentMode;
-            var property = mode.GetType().GetProperty("Players");
-            return property?.GetValue(mode) as System.Collections.Generic.List<PlayerManager>;
+            var field = mode.GetType().GetField("_players");
+            return field?.GetValue(mode) as System.Collections.Generic.List<PlayerManager>;
         }
 
         // Initializes the view model based on the current game mode and selected song

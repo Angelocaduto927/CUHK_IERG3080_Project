@@ -164,20 +164,20 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 switch (bindingName)
                 {
-                    case "Blue1": return Key.J;
-                    case "Blue2": return Key.K;
-                    case "Red1": return Key.D;
-                    case "Red2": return Key.F;
+                    case "Blue1": return PlayerSettingsManager.GetSettings(0).KeyBindings["Blue1"];
+                    case "Blue2": return PlayerSettingsManager.GetSettings(0).KeyBindings["Blue2"];
+                    case "Red1": return PlayerSettingsManager.GetSettings(0).KeyBindings["Red1"];
+                    case "Red2": return PlayerSettingsManager.GetSettings(0).KeyBindings["Red2"];
                 }
             }
             else
             {
                 switch (bindingName)
                 {
-                    case "Blue1": return Key.O;
-                    case "Blue2": return Key.P;
-                    case "Red1": return Key.Q;
-                    case "Red2": return Key.W;
+                    case "Blue1": return PlayerSettingsManager.GetSettings(1).KeyBindings["Blue1"];
+                    case "Blue2": return PlayerSettingsManager.GetSettings(1).KeyBindings["Blue2"];
+                    case "Red1": return PlayerSettingsManager.GetSettings(1).KeyBindings["Red1"];
+                    case "Red2": return PlayerSettingsManager.GetSettings(1).KeyBindings["Red2"];
                 }
             }
             return Key.None;

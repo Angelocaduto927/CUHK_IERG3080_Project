@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Windows;
 using System.Windows.Input;
-using System.Reflection;
 using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 using CUHK_IERG3080_2025_fall_Final_Project.Model;
 
@@ -10,189 +10,357 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
     internal class SettingVM : ViewModelBase
     {
-        private readonly Dictionary<string, Tuple<Key, ModifierKeys>> _bindings;
-        private readonly Dictionary<string, Tuple<Key, ModifierKeys>> _defaults = new Dictionary<string, Tuple<Key, ModifierKeys>>()
-        {
-            { "KeyBindActionA", Tuple.Create(Key.Space, ModifierKeys.None) },
-            { "KeyBindActionB", Tuple.Create(Key.LeftCtrl, ModifierKeys.None) },
-            { "KeyBindActionC", Tuple.Create(Key.LeftShift, ModifierKeys.None) },
-            { "KeyBindActionD", Tuple.Create(Key.E, ModifierKeys.None) },
-            { "KeyBindActionA2", Tuple.Create(Key.Enter, ModifierKeys.None) },
-            { "KeyBindActionB2", Tuple.Create(Key.RightCtrl, ModifierKeys.None) },
-            { "KeyBindActionC2", Tuple.Create(Key.RightShift, ModifierKeys.None) },
-            { "KeyBindActionD2", Tuple.Create(Key.R, ModifierKeys.None) }
-        };
-
-        private int _player1Speed = 2;
-        private int _player2Speed = 2;
-
-        public int Player1Speed
+        // Player 1 Speed
+        private double _player1Speed;
+        public double Player1Speed
         {
             get => _player1Speed;
             set
             {
-                if (_player1Speed != value)
-                {
-                    _player1Speed = value;
-                    OnPropertyChanged(nameof(Player1Speed));
-                    UpdatePlayerSpeed(0, value);
-                }
+                _player1Speed = value;
+                var settings = PlayerSettingsManager.GetSettings(0);
+                settings.Speed = value;
+                PlayerSettingsManager.UpdateSettings(0, settings);
+                OnPropertyChanged(nameof(Player1Speed));
             }
         }
 
-        public int Player2Speed
+        // Player 2 Speed
+        private double _player2Speed;
+        public double Player2Speed
         {
             get => _player2Speed;
             set
             {
-                if (_player2Speed != value)
-                {
-                    _player2Speed = value;
-                    OnPropertyChanged(nameof(Player2Speed));
-                    UpdatePlayerSpeed(1, value);
-                }
+                _player2Speed = value;
+                var settings = PlayerSettingsManager.GetSettings(1);
+                settings.Speed = value;
+                PlayerSettingsManager.UpdateSettings(1, settings);
+                OnPropertyChanged(nameof(Player2Speed));
             }
         }
+
+        // Player 1 Key Bindings (display)
+        public string P1Blue1 => _listeningFor == "P1Blue1" ? "Enter a key..." : GetBindingDisplay(0, "Blue1", "J");
+        public string P1Blue2 => _listeningFor == "P1Blue2" ? "Enter a key..." : GetBindingDisplay(0, "Blue2", "K");
+        public string P1Red1 => _listeningFor == "P1Red1" ? "Enter a key..." : GetBindingDisplay(0, "Red1", "D");
+        public string P1Red2 => _listeningFor == "P1Red2" ? "Enter a key..." : GetBindingDisplay(0, "Red2", "F");
+
+        // Player 2 Key Bindings (display)
+        public string P2Blue1 => _listeningFor == "P2Blue1" ? "Enter a key..." : GetBindingDisplay(1, "Blue1", "O");
+        public string P2Blue2 => _listeningFor == "P2Blue2" ? "Enter a key..." : GetBindingDisplay(1, "Blue2", "P");
+        public string P2Red1 => _listeningFor == "P2Red1" ? "Enter a key..." : GetBindingDisplay(1, "Red1", "Q");
+        public string P2Red2 => _listeningFor == "P2Red2" ? "Enter a key..." : GetBindingDisplay(1, "Red2", "W");
+
+        // Commands for rebinding
+        public ICommand RebindP1Blue1Command { get; }
+        public ICommand RebindP1Blue2Command { get; }
+        public ICommand RebindP1Red1Command { get; }
+        public ICommand RebindP1Red2Command { get; }
+        public ICommand RebindP2Blue1Command { get; }
+        public ICommand RebindP2Blue2Command { get; }
+        public ICommand RebindP2Red1Command { get; }
+        public ICommand RebindP2Red2Command { get; }
+
+        private string _listeningFor = null;
+        private Window _window;
+
+        // All binding names we manage
+        private static readonly string[] BindingNames = new[] { "Blue1", "Blue2", "Red1", "Red2" };
 
         public SettingVM()
         {
-            _bindings = new Dictionary<string, Tuple<Key, ModifierKeys>>();
-            foreach (var kv in _defaults)
-                _bindings[kv.Key] = Tuple.Create(kv.Value.Item1, kv.Value.Item2);
+            // Load current speeds
+            _player1Speed = PlayerSettingsManager.GetSettings(0).Speed;
+            _player2Speed = PlayerSettingsManager.GetSettings(1).Speed;
 
-            LoadSpeedSettings();
+            // Setup commands
+            RebindP1Blue1Command = new RelayCommand(o => StartListening("P1Blue1"));
+            RebindP1Blue2Command = new RelayCommand(o => StartListening("P1Blue2"));
+            RebindP1Red1Command = new RelayCommand(o => StartListening("P1Red1"));
+            RebindP1Red2Command = new RelayCommand(o => StartListening("P1Red2"));
+            RebindP2Blue1Command = new RelayCommand(o => StartListening("P2Blue1"));
+            RebindP2Blue2Command = new RelayCommand(o => StartListening("P2Blue2"));
+            RebindP2Red1Command = new RelayCommand(o => StartListening("P2Red1"));
+            RebindP2Red2Command = new RelayCommand(o => StartListening("P2Red2"));
         }
 
-        private void LoadSpeedSettings()
+        public void AttachWindow(Window window)
         {
-            var players = GetCurrentModePlayers();
-            if (players != null && players.Count > 0)
-            {
-                dynamic player0 = players[0];
-                _player1Speed = (int)player0?.Speed?.CurrentSpeed;
-                OnPropertyChanged(nameof(Player1Speed));
+            if (_window != null)
+                _window.PreviewKeyDown -= OnKeyPress;
 
-                if (players.Count > 1)
+            _window = window;
+            if (_window != null)
+                _window.PreviewKeyDown += OnKeyPress;
+        }
+
+        public void DetachWindow()
+        {
+            if (_window != null)
+                _window.PreviewKeyDown -= OnKeyPress;
+            _window = null;
+        }
+
+        private void OnKeyPress(object sender, KeyEventArgs e)
+        {
+            if (_listeningFor == null) return;
+
+            var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+            // Allow Escape to cancel
+            if (key == Key.Escape)
+            {
+                _listeningFor = null;
+                RefreshBindings();
+                e.Handled = true;
+                return;
+            }
+
+            // Disallow modifier-only keys for assignment
+            if (!IsAssignableKey(key))
+            {
+                MessageBox.Show($"Key '{key}' cannot be assigned.", "Invalid Key", MessageBoxButton.OK, MessageBoxImage.Information);
+                _listeningFor = null;
+                RefreshBindings();
+                e.Handled = true;
+                return;
+            }
+
+            SetBinding(key);
+            e.Handled = true;
+        }
+
+        private void StartListening(string binding)
+        {
+            _listeningFor = binding;
+            RefreshBindings(); // show "Enter a key..."
+        }
+
+        /// <summary>
+        /// Returns the display string for a binding: if a stored binding exists and is not Key.None, show it;
+        /// if stored and Key.None, show "None"; otherwise show the default fallback string.
+        /// </summary>
+        private string GetBindingDisplay(int playerIdx, string bindingName, string fallback)
+        {
+            var settings = PlayerSettingsManager.GetSettings(playerIdx);
+            if (settings.KeyBindings.ContainsKey(bindingName))
+            {
+                var k = settings.KeyBindings[bindingName];
+                return k == Key.None ? "None" : k.ToString();
+            }
+            return fallback;
+        }
+
+        /// <summary>
+        /// Returns the default Key for a given player and binding name.
+        /// These defaults are used for collision detection even when not stored.
+        /// </summary>
+        private Key GetDefaultKey(int playerIdx, string bindingName)
+        {
+            // Player 1 defaults: J K D F
+            // Player 2 defaults: O P Q W
+            if (playerIdx == 0)
+            {
+                switch (bindingName)
                 {
-                    dynamic player1 = players[1];
-                    _player2Speed = (int)player1?.Speed?.CurrentSpeed;
-                    OnPropertyChanged(nameof(Player2Speed));
+                    case "Blue1": return Key.J;
+                    case "Blue2": return Key.K;
+                    case "Red1": return Key.D;
+                    case "Red2": return Key.F;
                 }
             }
-        }
-
-        private void UpdatePlayerSpeed(int playerIndex, int speed)
-        {
-            var players = GetCurrentModePlayers();
-            if (players != null && playerIndex < players.Count)
+            else
             {
-                dynamic player = players[playerIndex];
-                if (player?.Speed != null)
+                switch (bindingName)
                 {
-                    player.Speed.CurrentSpeed = speed;
+                    case "Blue1": return Key.O;
+                    case "Blue2": return Key.P;
+                    case "Red1": return Key.Q;
+                    case "Red2": return Key.W;
                 }
             }
+            return Key.None;
         }
 
-        private IList GetCurrentModePlayers()
+        /// <summary>
+        /// Set a binding with global collision detection that includes defaults.
+        /// Resolution: assign to target and explicitly clear (persist Key.None) every conflicting binding (stored or default).
+        /// </summary>
+        private void SetBinding(Key newKey)
         {
-            var mode = GameModeManager.CurrentMode;
-            if (mode == null)
-                return null;
+            if (_listeningFor == null) return;
 
-            var property = mode.GetType().GetProperty("Players", BindingFlags.Instance | BindingFlags.Public);
-            return property?.GetValue(mode) as IList;
-        }
+            int targetPlayer = _listeningFor.StartsWith("P1") ? 0 : 1;
+            string targetBinding = _listeningFor.Contains("Blue1") ? "Blue1" :
+                                   _listeningFor.Contains("Blue2") ? "Blue2" :
+                                   _listeningFor.Contains("Red1") ? "Red1" : "Red2";
 
-        public Dictionary<string, Tuple<Key, ModifierKeys>> GetBindings()
-        {
-            var copy = new Dictionary<string, Tuple<Key, ModifierKeys>>();
-            foreach (var kv in _bindings)
-                copy[kv.Key] = Tuple.Create(kv.Value.Item1, kv.Value.Item2);
-            return copy;
-        }
+            // Load target settings and current stored key (if any)
+            var targetSettings = PlayerSettingsManager.GetSettings(targetPlayer);
+            Key? oldKey = targetSettings.KeyBindings.ContainsKey(targetBinding)
+                ? (Key?)targetSettings.KeyBindings[targetBinding]
+                : null;
 
-        public string SaveBinding(string actionName, Key key, ModifierKeys mods, bool force = false)
-        {
-            if (string.IsNullOrEmpty(actionName))
-                throw new ArgumentNullException(nameof(actionName));
-
-            string existing = null;
-            foreach (var kv in _bindings)
+            // No-op if pressing same key already stored on target
+            if (oldKey.HasValue && oldKey.Value == newKey)
             {
-                if (kv.Key != actionName && kv.Value.Item1 == key && kv.Value.Item2 == mods)
+                _listeningFor = null;
+                RefreshBindings();
+                return;
+            }
+
+            // Build a stable snapshot that includes defaults for bindings that are not stored.
+            // Snapshot entries: (playerIdx, bindingName, keyValue, wasStored)
+            var snapshot = new List<Tuple<int, string, Key, bool>>();
+            for (int p = 0; p <= 1; p++)
+            {
+                var s = PlayerSettingsManager.GetSettings(p);
+                foreach (var bn in BindingNames)
                 {
-                    existing = kv.Key;
-                    break;
+                    if (s.KeyBindings.ContainsKey(bn))
+                    {
+                        snapshot.Add(Tuple.Create(p, bn, s.KeyBindings[bn], true));
+                    }
+                    else
+                    {
+                        // include default as a virtual binding (wasStored = false)
+                        snapshot.Add(Tuple.Create(p, bn, GetDefaultKey(p, bn), false));
+                    }
                 }
             }
 
-            if (existing != null && !force)
+            // Find conflicts in snapshot (exclude the target binding itself)
+            var conflicts = snapshot
+                .Where(t => t.Item3 == newKey && !(t.Item1 == targetPlayer && t.Item2 == targetBinding))
+                .Select(t => Tuple.Create(t.Item1, t.Item2, t.Item4)) // (player, binding, wasStored)
+                .ToList();
+
+            if (conflicts.Count == 0)
             {
-                return existing;
+                // No conflict: assign directly to target and persist
+                targetSettings.KeyBindings[targetBinding] = newKey;
+                PlayerSettingsManager.UpdateSettings(targetPlayer, targetSettings);
+            }
+            else
+            {
+                // Build readable conflict list
+                var conflictList = string.Join("\n", conflicts.Select(c =>
+                    $"- Player {c.Item1 + 1} - {c.Item2}"));
+
+                var result = MessageBox.Show(
+                    $"Key '{newKey}' is already bound to:\n{conflictList}\n\n" +
+                    $"Do you want to assign it to Player {targetPlayer + 1} - {targetBinding} and clear it from the others?",
+                    "Key Conflict",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    // For each conflict (stored or default), persist an explicit cleared state by setting Key.None
+                    foreach (var c in conflicts)
+                    {
+                        int pIdx = c.Item1;
+                        string bName = c.Item2;
+
+                        var s = PlayerSettingsManager.GetSettings(pIdx);
+
+                        // Persist explicit cleared state (Key.None) so the default no longer applies
+                        if (!s.KeyBindings.ContainsKey(bName))
+                        {
+                            // add explicit cleared entry
+                            s.KeyBindings.Add(bName, Key.None);
+                        }
+                        else
+                        {
+                            // overwrite stored binding with Key.None
+                            s.KeyBindings[bName] = Key.None;
+                        }
+
+                        PlayerSettingsManager.UpdateSettings(pIdx, s);
+                    }
+
+                    // Assign new key to target (reload target in case it was changed above)
+                    targetSettings = PlayerSettingsManager.GetSettings(targetPlayer);
+                    targetSettings.KeyBindings[targetBinding] = newKey;
+                    PlayerSettingsManager.UpdateSettings(targetPlayer, targetSettings);
+                }
+                else
+                {
+                    // Cancel: do nothing
+                }
             }
 
-            if (existing != null && force)
+            _listeningFor = null;
+            RefreshBindings();
+        }
+
+        /// <summary>
+        /// Returns all current conflicts (live) for compatibility if needed elsewhere.
+        /// </summary>
+        private List<Tuple<int, string>> FindKeyConflicts(Key key, int excludePlayerIdx, string excludeBindingKey)
+        {
+            var conflicts = new List<Tuple<int, string>>();
+
+            for (int playerIdx = 0; playerIdx <= 1; playerIdx++)
             {
-                _bindings.Remove(existing);
+                var settings = PlayerSettingsManager.GetSettings(playerIdx);
+                foreach (var kvp in settings.KeyBindings)
+                {
+                    if (playerIdx == excludePlayerIdx && kvp.Key == excludeBindingKey)
+                        continue;
+
+                    if (kvp.Value == key)
+                        conflicts.Add(Tuple.Create(playerIdx, kvp.Key));
+                }
+
+                // Also check defaults for bindings that are not stored
+                foreach (var bn in BindingNames)
+                {
+                    if (!settings.KeyBindings.ContainsKey(bn))
+                    {
+                        var def = GetDefaultKey(playerIdx, bn);
+                        if (def == key && !(playerIdx == excludePlayerIdx && bn == excludeBindingKey))
+                            conflicts.Add(Tuple.Create(playerIdx, bn));
+                    }
+                }
             }
 
-            _bindings[actionName] = Tuple.Create(key, mods);
-            OnPropertyChanged(nameof(GetBindings));
-            return null;
+            return conflicts;
         }
 
-        public void ResetToDefaults()
+        public bool IsListening => _listeningFor != null;
+        public string ListeningFor => _listeningFor;
+
+        private void RefreshBindings()
         {
-            _bindings.Clear();
-            foreach (var kv in _defaults)
-                _bindings[kv.Key] = Tuple.Create(kv.Value.Item1, kv.Value.Item2);
-
-            Player1Speed = 2;
-            Player2Speed = 2;
-
-            OnPropertyChanged(nameof(GetBindings));
+            OnPropertyChanged(nameof(P1Blue1));
+            OnPropertyChanged(nameof(P1Blue2));
+            OnPropertyChanged(nameof(P1Red1));
+            OnPropertyChanged(nameof(P1Red2));
+            OnPropertyChanged(nameof(P2Blue1));
+            OnPropertyChanged(nameof(P2Blue2));
+            OnPropertyChanged(nameof(P2Red1));
+            OnPropertyChanged(nameof(P2Red2));
         }
 
-        public string FindExistingBinding(Key key, ModifierKeys mods)
+        /// <summary>
+        /// Disallow modifier-only keys (Ctrl/Alt/Shift) and Key.None from being assigned interactively.
+        /// Key.None is still used internally as a persisted "cleared" sentinel.
+        /// </summary>
+        private bool IsAssignableKey(Key key)
         {
-            foreach (var kv in _bindings)
+            if (key == Key.None) return false;
+
+            if (key == Key.LeftCtrl || key == Key.RightCtrl ||
+                key == Key.LeftAlt || key == Key.RightAlt ||
+                key == Key.LeftShift || key == Key.RightShift ||
+                key == Key.LWin || key == Key.RWin)
             {
-                if (kv.Value.Item1 == key && kv.Value.Item2 == mods)
-                    return kv.Key;
+                return false;
             }
-            return null;
-        }
 
-        public static string FormatBindingText(Key key, ModifierKeys mods)
-        {
-            var parts = new List<string>();
-            if ((mods & ModifierKeys.Control) == ModifierKeys.Control) parts.Add("Ctrl");
-            if ((mods & ModifierKeys.Alt) == ModifierKeys.Alt) parts.Add("Alt");
-            if ((mods & ModifierKeys.Shift) == ModifierKeys.Shift) parts.Add("Shift");
-            if ((mods & ModifierKeys.Windows) == ModifierKeys.Windows) parts.Add("Win");
-
-            string keyName = KeyToFriendlyString(key);
-            if (parts.Count > 0)
-                return string.Join("+", parts) + "+" + keyName;
-            return keyName;
-        }
-
-        private static string KeyToFriendlyString(Key key)
-        {
-            switch (key)
-            {
-                case Key.Space: return "Space";
-                case Key.LeftCtrl: return "LeftCtrl";
-                case Key.RightCtrl: return "RightCtrl";
-                case Key.LeftShift: return "LeftShift";
-                case Key.RightShift: return "RightShift";
-                case Key.LeftAlt: return "LeftAlt";
-                case Key.RightAlt: return "RightAlt";
-                case Key.OemPlus: return "+";
-                case Key.OemMinus: return "-";
-                default: return key.ToString();
-            }
+            return true;
         }
     }
 }

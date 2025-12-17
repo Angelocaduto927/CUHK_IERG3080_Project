@@ -17,14 +17,11 @@
 	</UserControl.DataContext>
 
 	<UserControl.InputBindings>
-		<KeyBinding Key="D" Command="{Binding KeyPressCommand}" CommandParameter="D"/>
-		<KeyBinding Key="F" Command="{Binding KeyPressCommand}" CommandParameter="F"/>
-		<KeyBinding Key="J" Command="{Binding KeyPressCommand}" CommandParameter="J"/>
-		<KeyBinding Key="K" Command="{Binding KeyPressCommand}" CommandParameter="K"/>
-		<KeyBinding Key="Q" Command="{Binding KeyPressCommand}" CommandParameter="Q"/>
-		<KeyBinding Key="W" Command="{Binding KeyPressCommand}" CommandParameter="W"/>
-		<KeyBinding Key="O" Command="{Binding KeyPressCommand}" CommandParameter="O"/>
-		<KeyBinding Key="P" Command="{Binding KeyPressCommand}" CommandParameter="P"/>
+		<!-- Dynamically map key bindings -->
+		<KeyBinding Key="{Binding KeyBindings[0]}" Command="{Binding KeyPressCommand}" CommandParameter="0"/>
+		<KeyBinding Key="{Binding KeyBindings[1]}" Command="{Binding KeyPressCommand}" CommandParameter="1"/>
+		<KeyBinding Key="{Binding KeyBindings[2]}" Command="{Binding KeyPressCommand}" CommandParameter="2"/>
+		<KeyBinding Key="{Binding KeyBindings[3]}" Command="{Binding KeyPressCommand}" CommandParameter="3"/>
 	</UserControl.InputBindings>
 
 	<UserControl.Background>
@@ -33,148 +30,199 @@
 
 	<Grid>
 		<Grid.RowDefinitions>
-			<RowDefinition Height="100"/>
+			<RowDefinition Height="*"/>
 			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 
-		<!-- Header -->
-		<Border Background="#CC000000" BorderBrush="#FF6B4E" BorderThickness="0,0,0,3">
-			<Grid Margin="30,0">
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="*"/>
-					<ColumnDefinition Width="2*"/>
-					<ColumnDefinition Width="*"/>
-				</Grid.ColumnDefinitions>
+		<!-- Player 1 -->
+		<Border Grid.Row="0" Background="#66000000" BorderBrush="#FF6B4E" BorderThickness="0,2" Height="160" Margin="0,20,0,10">
+			<Canvas ClipToBounds="True">
+				<Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
+                           Fill="#FF6B4E" Canvas.Left="300"/>
+				<Ellipse Width="60" Height="60" Stroke="#FF6B4E" StrokeThickness="6" Fill="#44FF6B4E"
+                         Canvas.Left="270" Canvas.Top="50">
+					<Ellipse.Effect>
+						<DropShadowEffect Color="#FF6B4E" BlurRadius="20" ShadowDepth="0"/>
+					</Ellipse.Effect>
+				</Ellipse>
 
-				<StackPanel VerticalAlignment="Center">
-					<TextBlock Text="{Binding Players[0].PlayerName}" FontSize="18" FontWeight="Bold" Foreground="#FF6B4E"/>
-					<StackPanel Orientation="Horizontal">
-						<TextBlock Text="Score: " FontSize="14" Foreground="White"/>
-						<TextBlock Text="{Binding Players[0].Score.Score}" FontSize="24" FontWeight="Bold" Foreground="#FFD700"/>
-					</StackPanel>
-					<StackPanel Orientation="Horizontal">
-						<TextBlock Text="Combo: " FontSize="12" Foreground="White"/>
-						<TextBlock Text="{Binding Players[0].Score.Combo}" FontSize="16" FontWeight="Bold" Foreground="#FF6B4E"/>
-					</StackPanel>
+				<StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="10,10,0,0">
+
+					<!-- Big Score -->
+					<TextBlock Text="{Binding Players[0].Score.Score}"
+                               FontSize="36" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#FFD700" Margin="0,0,0,10"/>
+
+					<!-- Small Stats Grid -->
+					<Grid HorizontalAlignment="Center">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="130"/>
+							<ColumnDefinition Width="130"/>
+						</Grid.ColumnDefinitions>
+
+						<!-- Left Column -->
+						<StackPanel Grid.Column="0">
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="PERFECT: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+								<TextBlock Text="{Binding Players[0].Score.PerfectHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+							</StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="GOOD: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+								<TextBlock Text="{Binding Players[0].Score.GoodHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+							</StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="BAD: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+								<TextBlock Text="{Binding Players[0].Score.BadHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+							</StackPanel>
+						</StackPanel>
+
+						<!-- Right Column -->
+						<StackPanel Grid.Column="1">
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="MAX COMBO: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+								<TextBlock Text="{Binding Players[0].Score.MaxCombo}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+							</StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="MISS: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+								<TextBlock Text="{Binding Players[0].Score.MissHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+							</StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="ACCURACY: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+								<TextBlock Text="{Binding Players[0].Score.Accuracy}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+							</StackPanel>
+						</StackPanel>
+					</Grid>
+
 				</StackPanel>
 
-				<StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
-					<TextBlock Text="{Binding SongName}" FontSize="20" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-					<TextBlock Text="{Binding CurrentTime, StringFormat={}{0:F2}s}" FontSize="28" FontWeight="Bold" Foreground="#FFD700" HorizontalAlignment="Center"/>
-				</StackPanel>
+				<!-- Notes ItemsControl -->
+				<ItemsControl ItemsSource="{Binding Player1Notes}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<Canvas/>
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemContainerStyle>
+						<Style>
+							<Setter Property="Canvas.Left" Value="{Binding X}"/>
+							<Setter Property="Canvas.Top" Value="{Binding Y}"/>
+						</Style>
+					</ItemsControl.ItemContainerStyle>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<Grid Width="60" Height="60">
+								<Ellipse>
+									<Ellipse.Fill>
+										<RadialGradientBrush>
+											<GradientStop Color="{Binding Inner}" Offset="0.3"/>
+											<GradientStop Color="{Binding Outer}" Offset="1"/>
+										</RadialGradientBrush>
+									</Ellipse.Fill>
+								</Ellipse>
+								<Ellipse Stroke="{Binding Border}" StrokeThickness="4"/>
+								<TextBlock Text="{Binding Icon}" FontSize="40" FontWeight="Bold" Foreground="#C0C0C0"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							</Grid>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
 
-				<StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right"
-                           Visibility="{Binding IsMultiplayer, Converter={StaticResource BoolToVis}}">
-					<TextBlock Text="{Binding Players[1].PlayerName}" FontSize="18" FontWeight="Bold" Foreground="#4E9AFF" HorizontalAlignment="Right"/>
-					<StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-						<TextBlock Text="Score: " FontSize="14" Foreground="White"/>
-						<TextBlock Text="{Binding Players[1].Score.Score}" FontSize="24" FontWeight="Bold" Foreground="#FFD700"/>
-					</StackPanel>
-					<StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-						<TextBlock Text="Combo: " FontSize="12" Foreground="White"/>
-						<TextBlock Text="{Binding Players[1].Score.Combo}" FontSize="16" FontWeight="Bold" Foreground="#4E9AFF"/>
-					</StackPanel>
-				</StackPanel>
-			</Grid>
+			</Canvas>
 		</Border>
 
-		<!-- Game Area -->
-		<Grid Grid.Row="1">
-			<Grid.RowDefinitions>
-				<RowDefinition Height="*"/>
-				<RowDefinition Height="*"/>
-			</Grid.RowDefinitions>
+		<!-- Player 2 -->
+		<Border Grid.Row="1" Background="#66000000" BorderBrush="#4E9AFF" BorderThickness="0,2" Height="160" Margin="0,10,0,20"
+                >
+			<Canvas ClipToBounds="True">
+				<Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
+                           Fill="#4E9AFF" Canvas.Left="300"/>
+				<Ellipse Width="60" Height="60" Stroke="#4E9AFF" StrokeThickness="6" Fill="#444E9AFF"
+                         Canvas.Left="270" Canvas.Top="50">
+					<Ellipse.Effect>
+						<DropShadowEffect Color="#4E9AFF" BlurRadius="20" ShadowDepth="0"/>
+					</Ellipse.Effect>
+				</Ellipse>
 
-			<!-- Player 1 Lane -->
-			<Border Background="#11000000" BorderBrush="#FF6B4E" BorderThickness="0,2" Margin="0,20,0,10">
-				<Canvas ClipToBounds="True">
-					<Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
-                              Fill="#FF6B4E" Canvas.Left="200"/>
-					<Ellipse Width="120" Height="120" Stroke="#FF6B4E" StrokeThickness="6" Fill="#44FF6B4E"
-                            Canvas.Left="140" Canvas.Top="115">
-						<Ellipse.Effect>
-							<DropShadowEffect Color="#FF6B4E" BlurRadius="20" ShadowDepth="0"/>
-						</Ellipse.Effect>
-					</Ellipse>
+				<StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="10,10,0,0">
 
-					<ItemsControl ItemsSource="{Binding Player1Notes}">
-						<ItemsControl.ItemsPanel>
-							<ItemsPanelTemplate>
-								<Canvas/>
-							</ItemsPanelTemplate>
-						</ItemsControl.ItemsPanel>
-						<ItemsControl.ItemContainerStyle>
-							<Style>
-								<Setter Property="Canvas.Left" Value="{Binding X}"/>
-								<Setter Property="Canvas.Top" Value="{Binding Y}"/>
-							</Style>
-						</ItemsControl.ItemContainerStyle>
-						<ItemsControl.ItemTemplate>
-							<DataTemplate>
-								<Grid Width="90" Height="90">
-									<Ellipse>
-										<Ellipse.Fill>
-											<RadialGradientBrush>
-												<GradientStop Color="{Binding Inner}" Offset="0.3"/>
-												<GradientStop Color="{Binding Outer}" Offset="1"/>
-											</RadialGradientBrush>
-										</Ellipse.Fill>
-									</Ellipse>
-									<Ellipse Stroke="{Binding Border}" StrokeThickness="4"/>
-									<TextBlock Text="{Binding Icon}" FontSize="50" FontWeight="Bold" Foreground="White"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
-								</Grid>
-							</DataTemplate>
-						</ItemsControl.ItemTemplate>
-					</ItemsControl>
-				</Canvas>
-			</Border>
+					<!-- Big Score -->
+					<TextBlock Text="{Binding Players[1].Score.Score}"
+                               FontSize="36" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#FFD700" Margin="0,0,0,10"/>
 
-			<!-- Player 2 Lane -->
-			<Border Grid.Row="1" Background="#11000000" BorderBrush="#4E9AFF" BorderThickness="0,2" Margin="0,10,0,20"
-                   Visibility="{Binding IsMultiplayer, Converter={StaticResource BoolToVis}}">
-				<Canvas ClipToBounds="True">
-					<Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
-                              Fill="#4E9AFF" Canvas.Left="200"/>
-					<Ellipse Width="120" Height="120" Stroke="#4E9AFF" StrokeThickness="6" Fill="#444E9AFF"
-                            Canvas.Left="140" Canvas.Top="115">
-						<Ellipse.Effect>
-							<DropShadowEffect Color="#4E9AFF" BlurRadius="20" ShadowDepth="0"/>
-						</Ellipse.Effect>
-					</Ellipse>
+					<!-- Small Stats Grid -->
+					<Grid HorizontalAlignment="Center">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="130"/>
+							<ColumnDefinition Width="130"/>
+						</Grid.ColumnDefinitions>
 
-					<ItemsControl ItemsSource="{Binding Player2Notes}">
-						<ItemsControl.ItemsPanel>
-							<ItemsPanelTemplate>
-								<Canvas/>
-							</ItemsPanelTemplate>
-						</ItemsControl.ItemsPanel>
-						<ItemsControl.ItemContainerStyle>
-							<Style>
-								<Setter Property="Canvas.Left" Value="{Binding X}"/>
-								<Setter Property="Canvas.Top" Value="{Binding Y}"/>
-							</Style>
-						</ItemsControl.ItemContainerStyle>
-						<ItemsControl.ItemTemplate>
-							<DataTemplate>
-								<Grid Width="90" Height="90">
-									<Ellipse>
-										<Ellipse.Fill>
-											<RadialGradientBrush>
-												<GradientStop Color="{Binding Inner}" Offset="0.3"/>
-												<GradientStop Color="{Binding Outer}" Offset="1"/>
-											</RadialGradientBrush>
-										</Ellipse.Fill>
-									</Ellipse>
-									<Ellipse Stroke="{Binding Border}" StrokeThickness="4"/>
-									<TextBlock Text="{Binding Icon}" FontSize="50" FontWeight="Bold" Foreground="White"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
-								</Grid>
-							</DataTemplate>
-						</ItemsControl.ItemTemplate>
-					</ItemsControl>
-				</Canvas>
-			</Border>
-		</Grid>
+						<!-- Left Column -->
+						<StackPanel Grid.Column="0">
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="PERFECT: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+								<TextBlock Text="{Binding Players[1].Score.PerfectHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+							</StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="GOOD: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+								<TextBlock Text="{Binding Players[1].Score.GoodHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+							</StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="BAD: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+								<TextBlock Text="{Binding Players[1].Score.BadHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+							</StackPanel>
+						</StackPanel>
+
+						<!-- Right Column -->
+						<StackPanel Grid.Column="1">
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="MAX COMBO: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+								<TextBlock Text="{Binding Players[1].Score.MaxCombo}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+							</StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="MISS: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+								<TextBlock Text="{Binding Players[1].Score.MissHit}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+							</StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="ACCURACY: " FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0"/>
+								<TextBlock Text="{Binding Players[1].Score.Accuracy}" FontSize="16" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#C0C0C0" HorizontalAlignment="Right"/>
+							</StackPanel>
+						</StackPanel>
+					</Grid>
+
+				</StackPanel>
+
+				<ItemsControl ItemsSource="{Binding Player2Notes}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<Canvas/>
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemContainerStyle>
+						<Style>
+							<Setter Property="Canvas.Left" Value="{Binding X}"/>
+							<Setter Property="Canvas.Top" Value="{Binding Y}"/>
+						</Style>
+					</ItemsControl.ItemContainerStyle>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<Grid Width="60" Height="60">
+								<Ellipse>
+									<Ellipse.Fill>
+										<RadialGradientBrush>
+											<GradientStop Color="{Binding Inner}" Offset="0.3"/>
+											<GradientStop Color="{Binding Outer}" Offset="1"/>
+										</RadialGradientBrush>
+									</Ellipse.Fill>
+								</Ellipse>
+								<Ellipse Stroke="{Binding Border}" StrokeThickness="4"/>
+								<TextBlock Text="{Binding Icon}" FontSize="40" FontWeight="Bold" Foreground="#C0C0C0"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							</Grid>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+
+			</Canvas>
+		</Border>
+
 	</Grid>
 </UserControl>

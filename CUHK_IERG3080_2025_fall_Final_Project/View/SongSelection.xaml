@@ -8,16 +8,19 @@
              d:DesignWidth="800"
              Padding="16">
 
-	<UserControl.Background>
-		<ImageBrush ImageSource="/Assets/Image/SongSelectBG.png"
+    <UserControl.Background>
+        <ImageBrush ImageSource="/Assets/Image/SongSelectBG.png"
                     Stretch="UniformToFill" />
-	</UserControl.Background>
-	
+    </UserControl.Background>
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />  <!-- Title -->
-            <RowDefinition Height="*" />     <!-- Center cards -->
-            <RowDefinition Height="Auto" />  <!-- Footer (Back / Play) -->
+            <RowDefinition Height="Auto" />
+            <!-- Title -->
+            <RowDefinition Height="*" />
+            <!-- Center cards -->
+            <RowDefinition Height="Auto" />
+            <!-- Footer (Back / Play) -->
         </Grid.RowDefinitions>
 
         <!-- Title -->
@@ -44,30 +47,40 @@
                     VerticalAlignment="Center">
                 <Border.Background>
                     <!-- Image asset not present yet. Placeholder used to avoid XAML load failures. -->
-                    <!-- Original: <ImageBrush ImageSource="/Assets/Images/songA.jpg" Stretch="UniformToFill" /> -->
-                    <SolidColorBrush Color="#2D2D2D" />
+                    <ImageBrush ImageSource="/Assets/Song/Utada_Hikaru_-_One_Last_Kiss_Cover.png" Stretch="UniformToFill" />
+                    <!--SolidColorBrush Color="#2D2D2D" /-->
                 </Border.Background>
+
+              
 
                 <!-- Overlay + content -->
                 <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="145*"/>
+                        <RowDefinition Height="111*"/>
+                    </Grid.RowDefinitions>
                     <!-- Dark overlay so text/buttons are readable over image -->
-                    <Rectangle Fill="#40000000" RadiusX="6" RadiusY="6" />
+                    <Rectangle Fill="#40000000" RadiusX="6" RadiusY="6" Grid.RowSpan="2" />
 
-                    <Grid>
+                    <Grid Grid.RowSpan="2">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-
+                           
                         <TextBlock Grid.Row="0"
-                                   Text="Song Title A"
+                                   Text="One Last Kiss"
                                    Foreground="#FFFFFF"
                                    FontSize="16"
                                    FontWeight="SemiBold"
                                    HorizontalAlignment="Center"
                                    Margin="0,0,0,8" />
-
+                        <Image Source="/Assets/Song/Utada_Hikaru_-_One_Last_Kiss_Cover.png"
+                                Width="100"
+                                Height="100"
+                                Stretch="UniformToFill"
+                                Margin="0,30,0,0"/>
                         <!-- Spacer (image is background of the card) -->
                         <Grid Grid.Row="1" />
                         <StackPanel Grid.Row="2"
@@ -130,17 +143,17 @@
                                 HorizontalAlignment="Center"
                                 Margin="0,8,0,0">
 
-                        <ToggleButton Content="Easy"
+                            <ToggleButton Content="Easy"
                                       Width="96"
                                       Margin="0,0,0,8"
                                       Padding="6,4"
                                       IsChecked="{Binding IsEasyBSelected, Mode=TwoWay}" />
 
-                        <ToggleButton Content="Hard"
+                            <ToggleButton Content="Hard"
                                       Width="96"
                                       Padding="6,4"
                                       IsChecked="{Binding IsHardBSelected, Mode=TwoWay}" />
-</StackPanel>
+                        </StackPanel>
 
                     </Grid>
                 </Grid>
@@ -149,20 +162,20 @@
 
         <!-- Footer with Back and Play buttons bound to NavigationVM commands on the window DataContext -->
         <Grid Grid.Row="2" Margin="0,12,0,0">
-    <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="Auto" />
-        <ColumnDefinition Width="Auto" />
-        <ColumnDefinition Width="*" />
-    </Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-    <!-- Empty Spacer Grid to center the buttons -->
-    <Grid Grid.Column="0" />
+            <!-- Empty Spacer Grid to center the buttons -->
+            <Grid Grid.Column="0" />
 
-    <!-- Centered StackPanel with buttons -->
-    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <!-- Back Button -->
-        <Button Content="Back"
+            <!-- Centered StackPanel with buttons -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- Back Button -->
+                <Button Content="Back"
                 Width="96"
                 Height="36"
                 Margin="0,0,16,0"
@@ -170,18 +183,18 @@
                 Command="{Binding DataContext.TitleScreenCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                 ToolTip="Back to title" />
 
-        <!-- Play Button -->
-        <Button Content="Play"
+                <!-- Play Button -->
+                <Button Content="Play"
                 Width="96"
                 Height="36"
                 HorizontalAlignment="Center"
                 Command="{Binding DataContext.InGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                 ToolTip="Start game" />
-    </StackPanel>
+            </StackPanel>
 
-    <!-- Empty Spacer Grid to balance the layout -->
-    <Grid Grid.Column="3" />
-</Grid>
+            <!-- Empty Spacer Grid to balance the layout -->
+            <Grid Grid.Column="3" />
+        </Grid>
 
     </Grid>
 </UserControl>

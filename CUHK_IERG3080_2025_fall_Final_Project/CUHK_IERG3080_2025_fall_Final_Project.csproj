@@ -157,11 +157,12 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
-	  <Resource Include="Assets\Chart\chart_beta.json" />
-	  <Resource Include="Assets\Image\GameOverBG.png" />
-	  <Resource Include="Assets\Image\InGameBG.png" />
+    <Folder Include="Assets\Chart\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\Image\GameOverBG.png" />
+    <Resource Include="Assets\Image\InGameBG.png" />
     <Resource Include="Assets\Image\SongSelectBG.png" />
     <Resource Include="Assets\Image\TitleBG.png" />
     <Content Include="Assets\Sound\background.mp3">

@@ -5,13 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
              d:DesignHeight="450"
-             d:DesignWidth="800"
-             Padding="16">
-
-    <UserControl.Background>
-        <ImageBrush ImageSource="/Assets/Image/SongSelectBG.png"
-                    Stretch="UniformToFill" />
-    </UserControl.Background>
+             d:DesignWidth="800">
 
     <UserControl.Resources>
         <!-- Style for Disabled Play Button -->
@@ -26,195 +20,215 @@
             </Style.Triggers>
         </Style>
     </UserControl.Resources>
+    <Viewbox Stretch="UniformToFill">
+        <Grid Width="1536" Height="1024">
+            <Grid.Background>
+                <!-- Background image -->
+                <ImageBrush ImageSource="/Assets/Image/SongSelectBG.png"
+                              Stretch="Fill"/>
+            </Grid.Background>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" MinHeight="80" />
+                <!-- Title -->
+                <RowDefinition />
+                <!-- Center cards -->
+                <RowDefinition Height="Auto" MinHeight="350" />
+                <!-- Footer (Back / Play) -->
+            </Grid.RowDefinitions>
+
             <!-- Title -->
-            <RowDefinition Height="*" />
-            <!-- Center cards -->
-            <RowDefinition Height="Auto" />
-            <!-- Footer (Back / Play) -->
-        </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0"
+                       Text="Song Selection"
+                       Foreground="#FFFFFF"
+                       FontSize="50"
+                       FontWeight="SemiBold"
+                       HorizontalAlignment="Center"
+                       Margin="0,4,0,12" Width="374" />
 
-        <!-- Title -->
-        <TextBlock Grid.Row="0"
-                   Text="Song Selection"
-                   Foreground="#FFFFFF"
-                   FontSize="24"
-                   FontWeight="SemiBold"
-                   HorizontalAlignment="Center"
-                   Margin="0,4,0,12" />
+            <!-- Centered cards -->
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" Height="500" Width="616">
+                <!-- Left card: image used as card background -->
+                <Border Width="300"
+                        Height="500"
+                        Margin="0,0,16,0"
+                        CornerRadius="8"
+                        Padding="12">
+                    <Border.Background>
+                        <ImageBrush ImageSource="/Assets/Song/Utada_Hikaru_-_One_Last_Kiss_Cover.png" Stretch="UniformToFill" />
+                    </Border.Background>
 
-        <!-- Centered cards -->
-        <StackPanel Grid.Row="1"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-            <!-- Left card: image used as card background -->
-            <Border Width="140"
-                    Height="280"
-                    Margin="0,0,16,0"
-                    CornerRadius="8"
-                    Padding="12"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-                <Border.Background>
-                    <ImageBrush ImageSource="/Assets/Song/Utada_Hikaru_-_One_Last_Kiss_Cover.png" Stretch="UniformToFill" />
-                </Border.Background>
-
-                <!-- Overlay + content -->
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="145*"/>
-                        <RowDefinition Height="111*"/>
-                    </Grid.RowDefinitions>
-                    <!-- Dark overlay so text/buttons are readable over image -->
-                    <Rectangle Fill="#40000000" RadiusX="6" RadiusY="6" Grid.RowSpan="2" />
-
-                    <Grid Grid.RowSpan="2">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                      
-                            <TextBlock Grid.Row="0"
-                                   Text="One Last Kiss"
-                                   Foreground="#FFFFFF"
-                                   FontSize="16"
-                                   FontWeight="SemiBold"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,0,0,8" />
-                        <Image Source="/Assets/Song/Utada_Hikaru_-_One_Last_Kiss_Cover.png"
-                                Width="100"
-                                Height="100"
-                                Stretch="UniformToFill"
-                                Margin="0,30,0,0"/>
-                        <Grid Grid.Row="1" />
-                        <StackPanel Grid.Row="2"
-                                    Orientation="Vertical"
-                                    HorizontalAlignment="Center"
-                                    Margin="0,8,0,0">
-
-                            <ToggleButton Content="EASY"
-                                          Width="96"
-                                          Margin="0,0,0,8"
-                                          Padding="6,4"
-                                          FontWeight="Bold"
-                                          Background="#40000000"
-                                          Foreground="#C0000000"
-                                          IsChecked="{Binding IsEasyASelected, Mode=TwoWay}" />
-
-                            <ToggleButton Content="HARD"
-                                          Width="96"
-                                          Padding="6,4"
-                                          FontWeight="Bold"
-                                          Background="#40000000"
-                                          Foreground="#C0000000"
-                                          IsChecked="{Binding IsHardASelected, Mode=TwoWay}" />
-                        </StackPanel>
-
-                    </Grid>
-                </Grid>
-            </Border>
-
-            <!-- Right card: image background -->
-            <Border Width="140"
-                    Height="280"
-                    Margin="0"
-                    CornerRadius="8"
-                    Padding="12"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-                <Border.Background>
-                    <ImageBrush ImageSource="/Assets/Song/Kenshi_Yonezu_-_Iris_Out_Cover.png" Stretch="UniformToFill" />
-                    
-                </Border.Background>
-
-                <Grid>
-                    <Rectangle Fill="#40000000" RadiusX="6" RadiusY="6" />
-
+                    <!-- Overlay + content -->
                     <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="145*"/>
+                            <RowDefinition Height="111*"/>
                         </Grid.RowDefinitions>
+                        <!-- Dark overlay so text/buttons are readable over image -->
+                        <Rectangle Fill="#40000000" RadiusX="6" RadiusY="6" Grid.RowSpan="2" />
 
-                        <TextBlock Grid.Row="0"
-                                   Text="Song Title B"
-                                   Foreground="#FFFFFF"
-                                   FontSize="16"
-                                   FontWeight="SemiBold"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,0,0,8" />
-                        <Image Source="/Assets/Song/Kenshi_Yonezu_-_Iris_Out_Cover.png"
-                                   Width="100"
-                                   Height="100"
-                                   Stretch="UniformToFill"
-                                   Margin="0,30,0,0"/>
-                        <Grid Grid.Row="1" />
+                        <Grid Grid.RowSpan="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" MinHeight="138" />
+                                <RowDefinition />
+                                <RowDefinition Height="Auto" MinHeight="165" />
+                            </Grid.RowDefinitions>
 
-                        <StackPanel Grid.Row="2"
-                                    Orientation="Vertical"
-                                    HorizontalAlignment="Center"
-                                    Margin="0,8,0,0">
+                            <TextBlock Grid.Row="0"
+                                       Text="One Last Kiss"
+                                       Foreground="#FFFFFF"
+                                       FontSize="30"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,25,0,156" Width="200" Grid.RowSpan="2" />
+                            <Image Source="/Assets/Song/Utada_Hikaru_-_One_Last_Kiss_Cover.png"
+                                    Stretch="UniformToFill"
+                                    Margin="76,90,76,96" Grid.RowSpan="2"/>
+                            <Grid Grid.Row="1" />
+                            <StackPanel Grid.Row="2"
+                                        Orientation="Vertical"
+                                        HorizontalAlignment="Center"
+                                        Margin="0,8,0,0" Width="150">
 
-                            <ToggleButton Content="EASY"
-                                          Width="96"
-                                          Margin="0,0,0,8"
-                                          Padding="6,4"
-                                          FontWeight="Bold"
-                                          Background="#40000000"
-                                          Foreground="#C0000000"
-                                          IsChecked="{Binding IsEasyBSelected, Mode=TwoWay}" />
+                                <ToggleButton Content="EASY"
+                                              Width="150"
+                                              Height="60"
+                                              FontSize="25"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,0,8"
+                                              Padding="6,4"
+                                              FontWeight="Bold"
+                                              Background="#40000000"
+                                              Foreground="#C0000000"
+                                              IsChecked="{Binding IsEasyASelected, Mode=TwoWay}" />
+                                <ToggleButton Content="HARD"
+                                              Width="150"
+                                              Height="60"
+                                              FontSize="25"
+                                              Padding="6,4"
+                                              FontWeight="Bold"
+                                              Background="#40000000"
+                                              Foreground="#C0000000"
+                                              IsChecked="{Binding IsHardASelected, Mode=TwoWay}" />
+                            </StackPanel>
 
-                            <ToggleButton Content="HARD"
-                                          Width="96"
-                                          Padding="6,4"
-                                          FontWeight="Bold"
-                                          Background="#40000000"
-                                          Foreground="#C0000000"
-                                          IsChecked="{Binding IsHardBSelected, Mode=TwoWay}" />
-                        </StackPanel>
-
+                        </Grid>
                     </Grid>
-                </Grid>
-            </Border>
-        </StackPanel>
+                </Border>
 
-        <!-- Footer with Back and Play buttons bound to NavigationVM commands on the window DataContext -->
-        <Grid Grid.Row="2" Margin="0,12,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <Grid Grid.Column="0" />
-
-            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Button Content="BACK"
-                        Width="96"
-                        Height="36"
+                <!-- Right card: image background -->
+                <Border Width="300"
+                        Height="500"
                         Margin="0,0,16,0"
-                        HorizontalAlignment="Center"
-                        Command="{Binding DataContext.TitleScreenCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                        ToolTip="Back to title" />
+                        CornerRadius="8"
+                        Padding="12">
+                    <Border.Background>
+                        <ImageBrush ImageSource="/Assets/Song/Kenshi_Yonezu_-_Iris_Out_Cover.png" Stretch="UniformToFill" />
 
-                <Button Content="PLAY"
-                        Width="96"
-                        Height="36"
-                        HorizontalAlignment="Center"
-                        Command="{Binding DataContext.InGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                        ToolTip="Start game"
-                        IsEnabled="{Binding IsPlayButtonEnabled}" />
+                    </Border.Background>
+
+                    <Grid>
+                        <Rectangle Fill="#40000000" RadiusX="6" RadiusY="6" />
+
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="145*" />
+                                <RowDefinition Height="111*" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Dark overlay -->
+                            <Rectangle Fill="#40000000" RadiusX="6" RadiusY="6" Grid.RowSpan="2" />
+
+                            <Grid Grid.RowSpan="2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" MinHeight="138" />
+                                    <RowDefinition />
+                                    <RowDefinition Height="Auto" MinHeight="165" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0"
+                                       Text="Iris Out"
+                                       Foreground="#FFFFFF"
+                                       FontSize="30"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,25,0,0" />
+
+                                <Image Source="/Assets/Song/Kenshi_Yonezu_-_Iris_Out_Cover.png"
+                                           Stretch="UniformToFill"
+                                           Margin="72,92,80,87" Grid.RowSpan="2"/>
+                                <Grid Grid.Row="1" />
+
+                                <StackPanel Grid.Row="2"
+                                            Orientation="Vertical"
+                                            HorizontalAlignment="Center"
+                                            Margin="0,8,0,0" Width="150">
+
+                                    <ToggleButton Content="EASY"
+                                                  Width="150"
+                                                  Height="60"
+                                                  FontSize="25"
+                                                  Margin="0,0,0,8"
+                                                  Padding="6,4"
+                                                  FontWeight="Bold"
+                                                  Background="#40000000"
+                                                  Foreground="#C0000000"
+                                                  IsChecked="{Binding IsEasyBSelected, Mode=TwoWay}" />
+
+                                    <ToggleButton Content="HARD"
+                                                  Width="150"
+                                                  Height="60"
+                                                  FontSize="25"
+                                                  Margin="0,0,0,8"
+                                                  Padding="6,4"
+                                                  FontWeight="Bold"
+                                                  Background="#40000000"
+                                                  Foreground="#C0000000"
+                                                  IsChecked="{Binding IsHardBSelected, Mode=TwoWay}" />
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Border>
             </StackPanel>
 
-            <Grid Grid.Column="3" />
-        </Grid>
+            <!-- Footer with Back and Play buttons bound to NavigationVM commands on the window DataContext -->
+            <Grid Grid.Row="2" Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-    </Grid>
+                <Grid Grid.Column="0" />
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top">
+                    <Button Content="BACK"
+                                Width="200"
+                                Height="60"
+                                Margin="0,0,16,0"
+                                FontSize="20"
+                                HorizontalAlignment="Center"
+                                Command="{Binding DataContext.TitleScreenCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                ToolTip="Back to title" />
+
+                    <Button Content="PLAY"
+                                Width="200"
+                                Height="60"
+                                HorizontalAlignment="Center"
+                                FontSize="20"
+                                Command="{Binding DataContext.InGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                ToolTip="Start game"
+                                IsEnabled="{Binding IsPlayButtonEnabled}" />
+                </StackPanel>
+
+                <Grid Grid.Column="3" />
+            </Grid>
+        </Grid>
+    </Viewbox>
 </UserControl>

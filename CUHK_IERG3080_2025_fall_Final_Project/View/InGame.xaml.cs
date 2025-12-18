@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using CUHK_IERG3080_2025_fall_Final_Project.Utility;
+using CUHK_IERG3080_2025_fall_Final_Project.ViewModel;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.View
 {
@@ -25,7 +26,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
         {
             InitializeComponent();
             AudioManager.StopBackgroundMusic();
-
         }
     }
 }

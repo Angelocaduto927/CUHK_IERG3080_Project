@@ -22,7 +22,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         // VV must be > bandwidth
         public const double MultiPlayerUpperYCoordinate = 200;
         public const double MultiPlayerLowerYCoordinate = 200;
-        public const double HitZoneXCoordinate = 0;
+        public const double HitZoneXCoordinate = 270;
         public const double SpawnZoneXCoordinate = 1600;
 
         //Size

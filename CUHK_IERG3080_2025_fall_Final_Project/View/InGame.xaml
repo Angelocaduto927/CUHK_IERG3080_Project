@@ -12,108 +12,114 @@
         <vm:BoolToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
 
-    <UserControl.Background>
-        <ImageBrush ImageSource="/Assets/Image/InGameBG.png" Stretch="UniformToFill"/>
-    </UserControl.Background>
+    <Viewbox Stretch="UniformToFill">
+        <Grid Width="1600" Height="900">
+        <Grid.Background>
+            <ImageBrush ImageSource="/Assets/Image/InGameBG.png" Stretch="UniformToFill"/>
+        </Grid.Background>
 
-    <Grid VerticalAlignment="Center">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="{Binding P1Coordinate}"/>
-            <RowDefinition Height="{Binding P2Coordinate}"/>
-        </Grid.RowDefinitions>
+        <Grid VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="{Binding P1Coordinate}"/>
+                <RowDefinition Height="{Binding P2Coordinate}"/>
+            </Grid.RowDefinitions>
 
-        <!-- Player 1 -->
-        <Border Grid.Row="0" Background="#66000000" BorderBrush="#FF6B4E" BorderThickness="0,2" Height="{Binding BandWidth}" Margin="0,20,0,10" VerticalAlignment="Center">
-            <Canvas ClipToBounds="True">
-                <!-- Hit Line -->
-                <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
-                          Fill="#FF6B4E" Canvas.Left="{Binding LineDistance}"/>
+            <!-- Player 1 -->
+            <Border Grid.Row="0" Background="#66000000" BorderBrush="#FF6B4E" BorderThickness="0,2" Height="{Binding BandWidth}" 
+                        Margin="0,20,0,10" VerticalAlignment="Center">
+                <Canvas ClipToBounds="True" Width="1600">
+                    <!-- Hit Line -->
+                    <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
+                                Fill="#FF6B4E" Canvas.Left="270"/>
 
-                <!-- Hit Circle -->
-                <Ellipse Width="{Binding EllipseS}" Height="{Binding EllipseS}" Stroke="#FF6B4E" StrokeThickness="6" Fill="#44FF6B4E"
-                        Canvas.Left="{Binding EllipseD}" Canvas.Top="{Binding BandMid}">
-                    <Ellipse.Effect>
-                        <DropShadowEffect Color="#FF6B4E" BlurRadius="20" ShadowDepth="0"/>
-                    </Ellipse.Effect>
-                </Ellipse>
+                    <!-- Hit Circle -->
+                    <Ellipse Width="60" Height="60" Stroke="#FF6B4E" StrokeThickness="6" Fill="#44FF6B4E"
+                                Canvas.Left="242" Canvas.Top="45">
+                        <Ellipse.Effect>
+                            <DropShadowEffect Color="#FF6B4E" BlurRadius="20" ShadowDepth="0"/>
+                        </Ellipse.Effect>
+                    </Ellipse>
 
-                <!-- Score Display -->
-                <TextBlock Text="{Binding P1Score}" FontSize="36" FontWeight="Bold" FontFamily="Segoe UI" VerticalAlignment="Top"
-                          Foreground="#FFD700" Canvas.Left="50" Canvas.Top="{Binding BandMid}"/>
+                    <!-- Score Display -->
+                    <TextBlock Text="{Binding P1Score}" FontSize="36" FontWeight="Bold" FontFamily="Segoe UI" VerticalAlignment="Top"
+                                Foreground="#FFD700" Canvas.Left="50" Canvas.Top="45"/>
 
-                <!-- Flying Notes -->
-                <ItemsControl ItemsSource="{Binding Player1Notes}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <Canvas/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemContainerStyle>
-                        <Style>
-                            <Setter Property="Canvas.Left" Value="{Binding X}"/>
-                            <Setter Property="Canvas.Top" Value="{Binding Y}"/>
-                        </Style>
-                    </ItemsControl.ItemContainerStyle>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Grid Width="60" Height="60">
-                                <Ellipse Fill="{Binding Fill}" />
-                                <Ellipse Stroke="{Binding Border}" StrokeThickness="4"/>
-                                <TextBlock Text="{Binding Icon}" FontSize="40" FontWeight="Bold" Foreground="#C0C0C0"
-                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </Canvas>
-        </Border>
+                    <!-- Flying Notes -->
+                    <ItemsControl ItemsSource="{Binding Player1Notes}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style>
+                                <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Width="60" Height="60">
+                                    <Ellipse Fill="{Binding Fill}" />
+                                    <Ellipse Stroke="{Binding Border}" StrokeThickness="4"/>
+                                    <TextBlock Text="{Binding Icon}" FontSize="40" FontWeight="Bold" Foreground="#C0C0C0"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Canvas>
+            </Border>
 
-        <!-- Player 2 -->
-        <Border Grid.Row="1" Background="#66000000" BorderBrush="#4E9AFF" BorderThickness="0,2" Height="{Binding BandWidth}" Margin="0,10,0,20" VerticalAlignment="Center"
-               Visibility="{Binding IsMultiplayer, Converter={StaticResource BoolToVis}}">
-            <Canvas ClipToBounds="True">
-                <!-- Hit Line -->
-                <!-- Hit Line -->
-                <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
-                          Fill="#4E9AFF" Canvas.Left="{Binding LineDistance}"/>
+            <!-- Player 2 -->
+            <Border Grid.Row="1" Background="#66000000" BorderBrush="#4E9AFF" BorderThickness="0,2" Height="{Binding BandWidth}" 
+                        Margin="0,10,0,20" VerticalAlignment="Center"
+                        Visibility="{Binding IsMultiplayer, Converter={StaticResource BoolToVis}}">
+                <Canvas ClipToBounds="True" Width="1600">
+                    <!-- Hit Line -->
+                    <!-- Hit Line -->
+                    <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
+                              Fill="#4E9AFF" Canvas.Left="270"/>
 
-                <!-- Hit Circle -->
-                <Ellipse Width="{Binding EllipseS}" Height="{Binding EllipseS}" Stroke="#4E9AFF" StrokeThickness="6" Fill="#44FF6B4E"
-                        Canvas.Left="{Binding EllipseD}" Canvas.Top="{Binding BandMid}">
-                    <Ellipse.Effect>
-                        <DropShadowEffect Color="#4E9AFF" BlurRadius="20" ShadowDepth="0"/>
-                    </Ellipse.Effect>
-                </Ellipse>
+                    <!-- Hit Circle -->
+                    <Ellipse Width="60" Height="60" Stroke="#4E9AFF" StrokeThickness="6" Fill="#44FF6B4E"
+                            Canvas.Left="242" Canvas.Top="45">
+                        <Ellipse.Effect>
+                            <DropShadowEffect Color="#4E9AFF" BlurRadius="20" ShadowDepth="0"/>
+                        </Ellipse.Effect>
+                    </Ellipse>
 
-                <!-- Score Display -->
-                <TextBlock Text="{Binding P2Score}" FontSize="36" FontWeight="Bold" FontFamily="Segoe UI" VerticalAlignment="Top"
-                          Foreground="#FFD700" Canvas.Left="50" Canvas.Top="{Binding BandMid}"/>
+                    <!-- Score Display -->
+                    <TextBlock Text="{Binding P2Score}" FontSize="36" FontWeight="Bold" FontFamily="Segoe UI" VerticalAlignment="Top"
+                              Foreground="#FFD700" Canvas.Left="50" Canvas.Top="45"/>
 
-                <!-- Flying Notes -->
-                <ItemsControl ItemsSource="{Binding Player2Notes}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <Canvas/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemContainerStyle>
-                        <Style>
-                            <Setter Property="Canvas.Left" Value="{Binding X}"/>
-                            <Setter Property="Canvas.Top" Value="{Binding Y}"/>
-                        </Style>
-                    </ItemsControl.ItemContainerStyle>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Grid Width="60" Height="60">
-                                <Ellipse Fill="{Binding Fill}" />
-                                <Ellipse Stroke="{Binding Border}" StrokeThickness="4"/>
-                                <TextBlock Text="{Binding Icon}" FontSize="40" FontWeight="Bold" Foreground="#C0C0C0"
-                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </Canvas>
-        </Border>
-    </Grid>
+                    <!-- Flying Notes -->
+                    <ItemsControl ItemsSource="{Binding Player2Notes}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style>
+                                <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Width="60" Height="60">
+                                    <Ellipse Fill="{Binding Fill}" />
+                                    <Ellipse Stroke="{Binding Border}" StrokeThickness="4"/>
+                                    <TextBlock Text="{Binding Icon}" FontSize="40" FontWeight="Bold" Foreground="#C0C0C0"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Canvas>
+            </Border>
+        </Grid>
+        </Grid>
+    </Viewbox> 
 </UserControl>

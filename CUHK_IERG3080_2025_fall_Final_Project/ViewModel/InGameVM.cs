@@ -25,7 +25,27 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public ObservableCollection<NoteVM> Player1Notes { get; } = new ObservableCollection<NoteVM>();
         public ObservableCollection<NoteVM> Player2Notes { get; } = new ObservableCollection<NoteVM>();
 
-        // Game info
+        // Game info +Hyperparameters
+        public double BandWidth => Hyperparameters.BandWidth;
+        public double EllipseS => Hyperparameters.EllipseSize;
+        public double BandMid => BandWidth / 2 - 30;
+        public double LineDistance => Hyperparameters.LineDistance;
+        public double EllipseD => LineDistance + 2 - EllipseS/2;
+        public string Song1Name => Hyperparameters.Song1Name;
+        public string Song2Name => Hyperparameters.Song2Name;
+        public double P1Coordinate => IsMultiplayer ? Hyperparameters.MultiPlayerUpperYCoordinate : Hyperparameters.SinglePlayerYCoordinate;
+        public double P2Coordinate => IsMultiplayer ? Hyperparameters.MultiPlayerLowerYCoordinate : 0;
+        public double HitZoneXCoordinate => Hyperparameters.HitZoneXCoordinate;
+        public double SpawnZoneXCoordinate => Hyperparameters.SpawnZoneXCoordinate;
+        public double DefaultSpeed => Hyperparameters.DefaultSpeed;
+        public int DefaultPerfectScore => Hyperparameters.DefaultPerfectScore;
+        public int DefaultGoodScore => Hyperparameters.DefaultGoodScore;
+        public int DefaultBadScore => Hyperparameters.DefaultBadScore;
+        public int DefaultMissScore => Hyperparameters.DefaultMissScore;
+        public double PerfectWindow => Hyperparameters.PerfectWindow;
+        public double GoodWindow => Hyperparameters.GoodWindow;
+        public double BadWindow => Hyperparameters.BadWindow;
+        public double MissWindow => Hyperparameters.MissWindow;
         public string SongName => SongManager.CurrentSong ?? "Unknown Song";
         public double CurrentTime => _engine?.CurrentTime / 1000.0 ?? 0;
         public double SongDuration => 180.0; // Default 3 minutes, could be dynamic
@@ -140,14 +160,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             // Update all UI properties
             OnPropertyChanged(nameof(CurrentTime));
             OnPropertyChanged(nameof(P1Score));
-            OnPropertyChanged(nameof(P1Combo));
-            OnPropertyChanged(nameof(P1Accuracy));
 
             if (IsMultiplayer)
             {
                 OnPropertyChanged(nameof(P2Score));
-                OnPropertyChanged(nameof(P2Combo));
-                OnPropertyChanged(nameof(P2Accuracy));
             }
 
             // Check if game is finished
@@ -162,40 +178,43 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void UpdateNotes(int playerIdx, ObservableCollection<NoteVM> noteCollection)
         {
-            if (_engine?.Players == null || playerIdx >= _engine.Players.Count) return;
+            //THIS IS WRONG IM 99 % sure, but no clue ow note.cs whould work with this yet
 
-            var player = _engine.Players[playerIdx];
-            if (player.Chart == null) return;
 
-            // Get all active notes
-            var activeNotes = player.Chart
-                .Where(n => n.State == Note.NoteState.Active)
-                .ToList();
+            //if (_engine?.Players == null || playerIdx >= _engine.Players.Count) return;
 
-            // Clear and rebuild collection
-            noteCollection.Clear();
+            //var player = _engine.Players[playerIdx];
+            //if (player.Chart == null) return;
 
-            foreach (var note in activeNotes)
-            {
-                // Calculate Y position based on player index
-                double yPos = playerIdx == 0 ? 50 : 50; // Both centered vertically in their lanes
+            //// Get all active notes
+            //var activeNotes = player.Chart
+            //    .Where(n => n.State == Note.NoteState.Active)
+            //    .ToList();
 
-                noteCollection.Add(new NoteVM
-                {
-                    X = note.X - 30, // Center the 60px note
-                    Y = yPos,
-                    Inner = note.Type == Note.NoteType.Red
-                        ? Color.FromRgb(255, 120, 120)
-                        : Color.FromRgb(120, 170, 255),
-                    Outer = note.Type == Note.NoteType.Red
-                        ? Color.FromRgb(180, 0, 0)
-                        : Color.FromRgb(0, 100, 220),
-                    Border = note.Type == Note.NoteType.Red
-                        ? Brushes.DarkRed
-                        : Brushes.DarkBlue,
-                    Icon = note.Type == Note.NoteType.Red ? "ド" : "カ"
-                });
-            }
+            //// Clear and rebuild collection
+            //noteCollection.Clear();
+
+            //foreach (var note in activeNotes)
+            //{
+            //    // Calculate Y position based on player index
+            //    double yPos = playerIdx == 0 ? 50 : 50; // Both centered vertically in their lanes
+
+            //    noteCollection.Add(new NoteVM
+            //    {
+            //        X = note.X - 30, // Center the 60px note
+            //        Y = yPos,
+            //        Inner = note.Type == Note.NoteType.Red
+            //            ? Color.FromRgb(255, 120, 120)
+            //            : Color.FromRgb(120, 170, 255),
+            //        Outer = note.Type == Note.NoteType.Red
+            //            ? Color.FromRgb(180, 0, 0)
+            //            : Color.FromRgb(0, 100, 220),
+            //        Border = note.Type == Note.NoteType.Red
+            //            ? Brushes.DarkRed
+            //            : Brushes.DarkBlue,
+            //        Icon = note.Type == Note.NoteType.Red ? "ド" : "カ"
+            //    });
+            //}
         }
 
         public void Cleanup()

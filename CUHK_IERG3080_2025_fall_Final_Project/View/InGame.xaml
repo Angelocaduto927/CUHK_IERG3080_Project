@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:vm="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.ViewModel"
+             mc:Ignorable="d"
              d:DesignHeight="900" d:DesignWidth="1600"
              Focusable="True">
 
@@ -19,32 +20,30 @@
         <ImageBrush ImageSource="/Assets/Image/InGameBG.png" Stretch="UniformToFill"/>
     </UserControl.Background>
 
-    <Grid>
+    <Grid VerticalAlignment="Center">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="{Binding P1Coordinate}"/>
+            <RowDefinition Height="{Binding P2Coordinate}"/>
         </Grid.RowDefinitions>
 
         <!-- Player 1 -->
-        <Border Grid.Row="0" Background="#66000000" BorderBrush="#FF6B4E" BorderThickness="0,2" Height="160" Margin="0,20,0,10">
+        <Border Grid.Row="0" Background="#66000000" BorderBrush="#FF6B4E" BorderThickness="0,2" Height="{Binding BandWidth}" Margin="0,20,0,10" VerticalAlignment="Center">
             <Canvas ClipToBounds="True">
                 <!-- Hit Line -->
                 <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
-                          Fill="#FF6B4E" Canvas.Left="298"/>
+                          Fill="#FF6B4E" Canvas.Left="{Binding LineDistance}"/>
 
                 <!-- Hit Circle -->
-                <Ellipse Width="60" Height="60" Stroke="#FF6B4E" StrokeThickness="6" Fill="#44FF6B4E"
-                        Canvas.Left="270" Canvas.Top="50">
+                <Ellipse Width="{Binding EllipseS}" Height="{Binding EllipseS}" Stroke="#FF6B4E" StrokeThickness="6" Fill="#44FF6B4E"
+                        Canvas.Left="{Binding EllipseD}" Canvas.Top="{Binding BandMid}">
                     <Ellipse.Effect>
                         <DropShadowEffect Color="#FF6B4E" BlurRadius="20" ShadowDepth="0"/>
                     </Ellipse.Effect>
                 </Ellipse>
 
                 <!-- Score Display -->
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,10,0,0">
-                    <TextBlock Text="{Binding P1Score}" FontSize="36" FontWeight="Bold" FontFamily="Segoe UI" 
-                              Foreground="#FFD700" Margin="0,0,0,10"/>
-                </StackPanel>
+                <TextBlock Text="{Binding P1Score}" FontSize="36" FontWeight="Bold" FontFamily="Segoe UI" VerticalAlignment="Top"
+                          Foreground="#FFD700" Canvas.Left="50" Canvas.Top="{Binding BandMid}"/>
 
                 <!-- Flying Notes -->
                 <ItemsControl ItemsSource="{Binding Player1Notes}">
@@ -81,26 +80,25 @@
         </Border>
 
         <!-- Player 2 -->
-        <Border Grid.Row="1" Background="#66000000" BorderBrush="#4E9AFF" BorderThickness="0,2" Height="160" Margin="0,10,0,20"
+        <Border Grid.Row="1" Background="#66000000" BorderBrush="#4E9AFF" BorderThickness="0,2" Height="{Binding BandWidth}" Margin="0,10,0,20" VerticalAlignment="Center"
                Visibility="{Binding IsMultiplayer, Converter={StaticResource BoolToVis}}">
             <Canvas ClipToBounds="True">
                 <!-- Hit Line -->
+                <!-- Hit Line -->
                 <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
-                          Fill="#4E9AFF" Canvas.Left="300"/>
+                          Fill="#4E9AFF" Canvas.Left="{Binding LineDistance}"/>
 
                 <!-- Hit Circle -->
-                <Ellipse Width="60" Height="60" Stroke="#4E9AFF" StrokeThickness="6" Fill="#444E9AFF"
-                        Canvas.Left="270" Canvas.Top="50">
+                <Ellipse Width="{Binding EllipseS}" Height="{Binding EllipseS}" Stroke="#4E9AFF" StrokeThickness="6" Fill="#44FF6B4E"
+                        Canvas.Left="{Binding EllipseD}" Canvas.Top="{Binding BandMid}">
                     <Ellipse.Effect>
                         <DropShadowEffect Color="#4E9AFF" BlurRadius="20" ShadowDepth="0"/>
                     </Ellipse.Effect>
                 </Ellipse>
 
                 <!-- Score Display -->
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,10,0,0">
-                    <TextBlock Text="{Binding P2Score}" FontSize="36" FontWeight="Bold" FontFamily="Segoe UI" 
-                              Foreground="#FFD700" Margin="0,0,0,10"/>
-                </StackPanel>
+                <TextBlock Text="{Binding P2Score}" FontSize="36" FontWeight="Bold" FontFamily="Segoe UI" VerticalAlignment="Top"
+                          Foreground="#FFD700" Canvas.Left="50" Canvas.Top="{Binding BandMid}"/>
 
                 <!-- Flying Notes -->
                 <ItemsControl ItemsSource="{Binding Player2Notes}">

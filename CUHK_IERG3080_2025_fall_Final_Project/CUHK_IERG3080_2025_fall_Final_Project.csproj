@@ -300,7 +300,9 @@
     <Resource Include="Assets\Image\GameOverBG.png" />
     <Resource Include="Assets\Image\InGameBG.png" />
     <Resource Include="Assets\Image\SongSelectBG.png" />
-    <Resource Include="Assets\Image\TitleBG.png" />
+    <Resource Include="Assets\Image\TitleBG.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Assets\Song\Utada_Hikaru_-_One_Last_Kiss_Cover.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>

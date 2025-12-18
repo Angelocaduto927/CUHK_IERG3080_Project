@@ -26,5 +26,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
             InitializeComponent();
             AudioManager.PlayBackgroundMusic();
         }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

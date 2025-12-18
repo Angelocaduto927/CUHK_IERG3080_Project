@@ -142,8 +142,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (mode == null)
                 return null;
 
-            var property = mode.GetType().GetProperty("Players", BindingFlags.Instance | BindingFlags.Public);
-            return property?.GetValue(mode) as IList;
+            var field = mode.GetType().GetField("_players");
+            return field?.GetValue(mode) as IList;
         }
     }
 }

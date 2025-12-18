@@ -209,7 +209,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public DifficultyManager Difficulty {  get; private set; }
         public ScoreSet ScoreSet { get; set; }
         public List<Note> Chart { get; set; }
-        public NoteManager NoteManager { get; set; }
+        public NoteManager noteManager { get; set; }
         public PlayerManager(int playerIndex, bool isLocalPlayer = true)
         {
             PlayerIndex = playerIndex;
@@ -222,7 +222,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             Speed = PlayerSettingsManager.GetSettings(playerIndex).Speed;
             KeysDict = PlayerSettingsManager.GetSettings(playerIndex).KeyBindings;
             Chart = new List<Note>();
-            NoteManager = new NoteManager(Chart, this);
+            noteManager = new NoteManager(Chart, this);
         }
     }
 }

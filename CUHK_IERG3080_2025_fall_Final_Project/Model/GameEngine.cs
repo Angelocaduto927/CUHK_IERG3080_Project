@@ -68,7 +68,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             {
                 foreach (var player in _players)
                 {
-                    player.NoteManager?.Reset();
+                    player.noteManager?.Reset();
                     player.Score.Reset(player.ScoreSet);
                 }
             }
@@ -81,16 +81,13 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         {
             if (State != GameState.Playing)
                 return;
-            Debug.WriteLine("inside game engine update");
             double currentTime = CurrentTime;
-            Debug.WriteLine("current time: " + currentTime);
 
             if (_players != null)
             {
                 foreach (var player in _players)
                 {
-                    player.NoteManager?.Update(currentTime);
-                    Debug.WriteLine("updated player note manager");
+                    player.noteManager?.Update(currentTime);
                 }
             }
         }
@@ -109,7 +106,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 
             if (noteType.HasValue)
             {
-                player.NoteManager?.HitNote(CurrentTime, noteType.Value);
+                player.noteManager?.HitNote(CurrentTime, noteType.Value);
             }
         }
 

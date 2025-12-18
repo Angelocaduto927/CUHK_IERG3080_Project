@@ -94,8 +94,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (_initialized) return;
             _initialized = true;
 
-            System.Diagnostics.Debug.WriteLine("============EnsureInitialized=============");
-
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
                 var window = Application.Current.MainWindow;
@@ -103,7 +101,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 {
                     window.Focus();
                     window.PreviewKeyDown += OnKeyDown;
-                    Debug.WriteLine("KeyDown event handler attached.");
                 }
 
                 // Initialize game mode
@@ -157,16 +154,13 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             if (_engine?.State != GameEngine.GameState.Playing)
             {
-                Debug.WriteLine("Game is not in playing state, skipping update.");
                 return;
             }
             // Update game engine (spawns notes, checks misses, updates positions)
             _engine.Update();
-            Debug.WriteLine("Game engine updated.");
 
             // Update visual note collections
             UpdateNotes(0, Player1Notes);
-            Debug.WriteLine("Player 1 notes updated.");
             if (IsMultiplayer)
             {
                 UpdateNotes(1, Player2Notes);
@@ -202,8 +196,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (player.Chart == null) return;
 
             // Get all active notes
-            var activeNotes = player.NoteManager.ActiveNotes;
-            Debug.WriteLine($"Player {playerIdx + 1} has {activeNotes.Count} active notes.");
+            var activeNotes = player.noteManager.ActiveNotes;
 
             noteCollection.Clear();
 

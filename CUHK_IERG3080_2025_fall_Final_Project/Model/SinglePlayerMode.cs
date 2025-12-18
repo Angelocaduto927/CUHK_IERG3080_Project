@@ -24,6 +24,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
                 string chartPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Chart", $"{SongManager.CurrentSong}_{player.Difficulty.CurrentDifficulty}.json");
                 (player.Chart, player.ScoreSet)= new JsonLoader().LoadFromJson(chartPath);
                 player.Score.SetScoreSet(player.ScoreSet);
+                player.noteManager.Set_allNotes(player.Chart);
                 foreach (Note note in player.Chart)
                 {
                     note.X = Hyperparameters.SpawnZoneXCoordinate;

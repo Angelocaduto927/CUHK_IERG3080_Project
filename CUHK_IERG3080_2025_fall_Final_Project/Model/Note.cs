@@ -59,6 +59,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             _activeNotes = new List<Note>();
             _player = player;
         }
+        public void Set_allNotes(List<Note> notes)
+        {
+            _allNotes = notes;
+        }
         public void Update(double currentTime)
         {
             SpawnNotes(currentTime);

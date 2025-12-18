@@ -78,8 +78,8 @@
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-
-                        <TextBlock Grid.Row="0"
+                      
+                            <TextBlock Grid.Row="0"
                                    Text="One Last Kiss"
                                    Foreground="#FFFFFF"
                                    FontSize="16"
@@ -128,8 +128,8 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
                 <Border.Background>
-                    <!-- Image asset not present yet. Placeholder used to avoid XAML load failures. -->
-                    <SolidColorBrush Color="#2D2D2D" />
+                    <ImageBrush ImageSource="/Assets/Song/Kenshi_Yonezu_-_Iris_Out_Cover.png" Stretch="UniformToFill" />
+                    
                 </Border.Background>
 
                 <Grid>
@@ -149,7 +149,11 @@
                                    FontWeight="SemiBold"
                                    HorizontalAlignment="Center"
                                    Margin="0,0,0,8" />
-
+                        <Image Source="/Assets/Song/Kenshi_Yonezu_-_Iris_Out_Cover.png"
+                                   Width="100"
+                                   Height="100"
+                                   Stretch="UniformToFill"
+                                   Margin="0,30,0,0"/>
                         <Grid Grid.Row="1" />
 
                         <StackPanel Grid.Row="2"

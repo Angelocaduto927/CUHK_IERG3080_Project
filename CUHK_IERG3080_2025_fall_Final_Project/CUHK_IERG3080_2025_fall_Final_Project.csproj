@@ -279,16 +279,12 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="Assets\Chart\IRIS_OUT_Easy.json" />
+    <None Include="Assets\Chart\IRIS_OUT_Hard.json" />
     <None Include="Assets\Chart\One_Last_Kiss_Easy.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Assets\Chart\One_Last_Kiss_Hard.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Chart\Song2_Easy.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Chart\Song2_Hard.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Properties\Settings.settings">
@@ -308,6 +304,8 @@
     <Resource Include="Assets\Song\Utada_Hikaru_-_One_Last_Kiss_Cover.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Assets\Song\Kenshi_Yonezu_-_Iris_Out_Cover.png" />
+    <Content Include="Assets\Song\IRIS OUT.mp3" />
     <Content Include="Assets\Song\One Last Kiss.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

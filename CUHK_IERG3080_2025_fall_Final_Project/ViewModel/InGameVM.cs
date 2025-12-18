@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.IO;
+using System.Diagnostics;
 using CUHK_IERG3080_2025_fall_Final_Project.Model;
 using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 
@@ -76,6 +77,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public InGameVM(Action onGameOver)
         {
             _onGameOver = onGameOver;
+            AudioManager.StopBackgroundMusic();
+            _musicManager = new MusicManager();
+            _musicManager.MusicEnded += OnMusicEnded;
+            var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Song", $"{SongManager.CurrentSong}.mp3");
+            _musicManager.Play(filePath);
+
             _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // ~60 FPS
             _timer.Tick += (s, e) => Update();
 
@@ -87,6 +94,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (_initialized) return;
             _initialized = true;
 
+            System.Diagnostics.Debug.WriteLine("============EnsureInitialized=============");
+
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
                 var window = Application.Current.MainWindow;
@@ -94,22 +103,23 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 {
                     window.Focus();
                     window.PreviewKeyDown += OnKeyDown;
+                    Debug.WriteLine("KeyDown event handler attached.");
                 }
 
                 // Initialize game mode
                 if (GameModeManager.CurrentMode != null)
                 {
+
                     GameModeManager.CurrentMode.Initialize();
 
+
                     // Get players from game mode using reflection
-                    var playersField = GameModeManager.CurrentMode.GetType().GetField("_players",
-                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var playersField = GameModeManager.CurrentMode.GetType().GetField("_players");
                     var players = playersField?.GetValue(GameModeManager.CurrentMode) as System.Collections.Generic.List<PlayerManager>;
 
                     if (players != null && players.Count > 0)
                     {
                         _engine = new GameEngine();
-                        _musicManager = new MusicManager();
                         _engine.Initialize(players);
                         _engine.StartGame();
 
@@ -145,13 +155,18 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void Update()
         {
-            if (_engine?.State != GameEngine.GameState.Playing) return;
-
+            if (_engine?.State != GameEngine.GameState.Playing)
+            {
+                Debug.WriteLine("Game is not in playing state, skipping update.");
+                return;
+            }
             // Update game engine (spawns notes, checks misses, updates positions)
             _engine.Update();
+            Debug.WriteLine("Game engine updated.");
 
             // Update visual note collections
             UpdateNotes(0, Player1Notes);
+            Debug.WriteLine("Player 1 notes updated.");
             if (IsMultiplayer)
             {
                 UpdateNotes(1, Player2Notes);
@@ -181,40 +196,38 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             //THIS IS WRONG IM 99 % sure, but no clue ow note.cs whould work with this yet
 
 
-            //if (_engine?.Players == null || playerIdx >= _engine.Players.Count) return;
+            if (_engine?.Players == null || playerIdx >= _engine.Players.Count) return;
 
-            //var player = _engine.Players[playerIdx];
-            //if (player.Chart == null) return;
+            var player = _engine.Players[playerIdx];
+            if (player.Chart == null) return;
 
-            //// Get all active notes
-            //var activeNotes = player.Chart
-            //    .Where(n => n.State == Note.NoteState.Active)
-            //    .ToList();
+            // Get all active notes
+            var activeNotes = player.NoteManager.ActiveNotes;
+            Debug.WriteLine($"Player {playerIdx + 1} has {activeNotes.Count} active notes.");
 
-            //// Clear and rebuild collection
-            //noteCollection.Clear();
+            noteCollection.Clear();
 
-            //foreach (var note in activeNotes)
-            //{
-            //    // Calculate Y position based on player index
-            //    double yPos = playerIdx == 0 ? 50 : 50; // Both centered vertically in their lanes
+            foreach (var note in activeNotes)
+            {
+                // Calculate Y position based on player index
+                double yPos = playerIdx == 0 ? 50 : 50; // Both centered vertically in their lanes
 
-            //    noteCollection.Add(new NoteVM
-            //    {
-            //        X = note.X - 30, // Center the 60px note
-            //        Y = yPos,
-            //        Inner = note.Type == Note.NoteType.Red
-            //            ? Color.FromRgb(255, 120, 120)
-            //            : Color.FromRgb(120, 170, 255),
-            //        Outer = note.Type == Note.NoteType.Red
-            //            ? Color.FromRgb(180, 0, 0)
-            //            : Color.FromRgb(0, 100, 220),
-            //        Border = note.Type == Note.NoteType.Red
-            //            ? Brushes.DarkRed
-            //            : Brushes.DarkBlue,
-            //        Icon = note.Type == Note.NoteType.Red ? "ド" : "カ"
-            //    });
-            //}
+                noteCollection.Add(new NoteVM
+                {
+                    X = note.X - 30, // Center the 60px note
+                    Y = yPos,
+                    Inner = note.Type == Note.NoteType.Red
+                        ? Color.FromRgb(255, 120, 120)
+                        : Color.FromRgb(120, 170, 255),
+                    Outer = note.Type == Note.NoteType.Red
+                        ? Color.FromRgb(180, 0, 0)
+                        : Color.FromRgb(0, 100, 220),
+                    Border = note.Type == Note.NoteType.Red
+                        ? Brushes.DarkRed
+                        : Brushes.DarkBlue,
+                    Icon = note.Type == Note.NoteType.Red ? "ド" : "カ"
+                });
+            }
         }
 
         public void Cleanup()
@@ -227,22 +240,67 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 window.PreviewKeyDown -= OnKeyDown;
             }
 
-            AudioManager.StopBackgroundMusic();
+            if (_musicManager != null)
+            {
+                _musicManager.MusicEnded -= OnMusicEnded;
+                _musicManager.Dispose();
+            }
+
             _engine?.Dispose();
+        }
+        private void OnMusicEnded(object sender, EventArgs e)
+        {
+            _onGameOver?.Invoke();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
         private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
-    public class NoteVM
+    public class NoteVM: INotifyPropertyChanged
     {
-        public double X { get; set; }
-        public double Y { get; set; }
+        private double _x;
+        private double _y;
+        public double X { 
+            get => _x; 
+            set
+            {
+                if(Math.Abs(_x - value) > 0.01)
+                {
+                    _x = value;
+                    OnPropertyChanged(nameof(X));
+                }
+            }
+        }
+        public double Y { 
+            get => _y;
+            set
+            {
+                if(Math.Abs(_y - value) > 0.01)
+                {
+                    _y = value;
+                    OnPropertyChanged(nameof(Y));
+                }
+            }
+        }
         public Color Inner { get; set; }
         public Color Outer { get; set; }
         public Brush Border { get; set; }
         public string Icon { get; set; }
+        public Brush Fill
+        {
+            get
+            {
+                var brush = new RadialGradientBrush();
+                brush.GradientStops.Add(new GradientStop(Inner, 0.3));
+                brush.GradientStops.Add(new GradientStop(Outer, 1.0));
+                return brush;
+            }
+        }
+
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
     public class BoolToVisibilityConverter : IValueConverter
@@ -259,4 +317,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             return value is Visibility v && v == Visibility.Visible;
         }
     }
+
+
 }

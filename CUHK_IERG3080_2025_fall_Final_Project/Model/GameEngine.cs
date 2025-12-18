@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Diagnostics;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
@@ -80,14 +81,16 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         {
             if (State != GameState.Playing)
                 return;
-
+            Debug.WriteLine("inside game engine update");
             double currentTime = CurrentTime;
+            Debug.WriteLine("current time: " + currentTime);
 
             if (_players != null)
             {
                 foreach (var player in _players)
                 {
                     player.NoteManager?.Update(currentTime);
+                    Debug.WriteLine("updated player note manager");
                 }
             }
         }

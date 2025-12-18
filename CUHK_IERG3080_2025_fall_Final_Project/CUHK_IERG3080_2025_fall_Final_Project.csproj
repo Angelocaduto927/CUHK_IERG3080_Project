@@ -307,8 +307,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Assets\Song\Kenshi_Yonezu_-_Iris_Out_Cover.png" />
-    <Content Include="Assets\Song\IRIS OUT.mp3" />
-    <Content Include="Assets\Song\One Last Kiss.mp3">
+    <Content Include="Assets\Song\IRIS_OUT.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Song\One_Last_Kiss.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\Sound\background.mp3">

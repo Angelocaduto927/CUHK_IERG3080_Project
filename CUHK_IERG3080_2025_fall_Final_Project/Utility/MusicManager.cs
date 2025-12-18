@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
+using System.IO;
+using System.Windows;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
 {
@@ -21,7 +23,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
         }
 
         public void Play(string songPath, double volume = 0.7)
-        {
+        { 
+        
             if (string.IsNullOrEmpty(songPath))
                 return;
 

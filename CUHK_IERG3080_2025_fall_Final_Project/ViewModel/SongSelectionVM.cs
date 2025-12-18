@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using CUHK_IERG3080_2025_fall_Final_Project.Model;
+using System.Diagnostics;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
@@ -100,7 +101,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private void LoadFromModel()
         {
             var players = GetCurrentModePlayers();
-            if (players == null || players.Count == 0) return;
+            if (players == null || players.Count == 0)  return;
 
             string currentSong = SongManager.CurrentSong;
             string currentDifficulty = players[0]?.Difficulty?.CurrentDifficulty;

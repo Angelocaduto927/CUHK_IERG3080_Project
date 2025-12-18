@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Diagnostics;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
@@ -51,6 +52,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         private List<Note> _allNotes;
         private List<Note> _activeNotes;
         private PlayerManager _player;
+        public IReadOnlyList<Note> ActiveNotes => _activeNotes.AsReadOnly();
         public NoteManager(List<Note> notes, PlayerManager player)
         {
             _allNotes = notes;
@@ -71,6 +73,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
                 note.State = Note.NoteState.Active;
                _activeNotes.Add(note);
             }
+
         }
         public void UpdateNotePositions(double currentTime)
         {

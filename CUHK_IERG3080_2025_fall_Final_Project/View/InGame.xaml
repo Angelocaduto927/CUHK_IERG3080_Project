@@ -12,10 +12,6 @@
         <vm:BoolToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
 
-    <UserControl.DataContext>
-        <vm:InGameVM x:Name="ViewModel"/>
-    </UserControl.DataContext>
-
     <UserControl.Background>
         <ImageBrush ImageSource="/Assets/Image/InGameBG.png" Stretch="UniformToFill"/>
     </UserControl.Background>
@@ -61,14 +57,7 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid Width="60" Height="60">
-                                <Ellipse>
-                                    <Ellipse.Fill>
-                                        <RadialGradientBrush>
-                                            <GradientStop Color="{Binding Inner}" Offset="0.3"/>
-                                            <GradientStop Color="{Binding Outer}" Offset="1"/>
-                                        </RadialGradientBrush>
-                                    </Ellipse.Fill>
-                                </Ellipse>
+                                <Ellipse Fill="{Binding Fill}" />
                                 <Ellipse Stroke="{Binding Border}" StrokeThickness="4"/>
                                 <TextBlock Text="{Binding Icon}" FontSize="40" FontWeight="Bold" Foreground="#C0C0C0"
                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -116,14 +105,7 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid Width="60" Height="60">
-                                <Ellipse>
-                                    <Ellipse.Fill>
-                                        <RadialGradientBrush>
-                                            <GradientStop Color="{Binding Inner}" Offset="0.3"/>
-                                            <GradientStop Color="{Binding Outer}" Offset="1"/>
-                                        </RadialGradientBrush>
-                                    </Ellipse.Fill>
-                                </Ellipse>
+                                <Ellipse Fill="{Binding Fill}" />
                                 <Ellipse Stroke="{Binding Border}" StrokeThickness="4"/>
                                 <TextBlock Text="{Binding Icon}" FontSize="40" FontWeight="Bold" Foreground="#C0C0C0"
                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>

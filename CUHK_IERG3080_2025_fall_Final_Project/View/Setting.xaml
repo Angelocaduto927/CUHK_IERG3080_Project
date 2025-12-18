@@ -48,7 +48,7 @@
 						</StackPanel>
 
 						<Slider Minimum="1" Maximum="4" Value="{Binding Player1Speed, Mode=TwoWay}"
-                                TickFrequency="0.5" IsSnapToTickEnabled="True" HorizontalAlignment="Stretch"/>
+                                TickFrequency="1" IsSnapToTickEnabled="True" HorizontalAlignment="Stretch"/>
 
 						<Rectangle Height="12" Fill="Transparent" />
 
@@ -106,7 +106,7 @@
 						</StackPanel>
 
 						<Slider Minimum="1" Maximum="4" Value="{Binding Player2Speed, Mode=TwoWay}"
-                                TickFrequency="0.5" IsSnapToTickEnabled="True" HorizontalAlignment="Stretch"/>
+                                TickFrequency="1" IsSnapToTickEnabled="True" HorizontalAlignment="Stretch"/>
 
 						<Rectangle Height="12" Fill="Transparent" />
 

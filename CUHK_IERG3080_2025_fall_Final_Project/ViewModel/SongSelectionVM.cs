@@ -51,6 +51,15 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             }
         }
 
+        // Property for enabling/disabling the Play button
+        public bool IsPlayButtonEnabled
+        {
+            get
+            {
+                return (IsEasyASelected || IsHardASelected || IsEasyBSelected || IsHardBSelected);
+            }
+        }
+
         public SongSelectionVM()
         {
             LoadFromModel();
@@ -113,6 +122,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             OnPropertyChanged(nameof(IsHardASelected));
             OnPropertyChanged(nameof(IsEasyBSelected));
             OnPropertyChanged(nameof(IsHardBSelected));
+            OnPropertyChanged(nameof(IsPlayButtonEnabled));  // Raise PropertyChanged for PlayButtonEnabled
         }
 
         // Notifies that a property has changed

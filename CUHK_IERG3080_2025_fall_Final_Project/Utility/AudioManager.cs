@@ -16,6 +16,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
         private const double BackgroundVolume = 0.1; // 30% volume for background music
         private const double EffectVolume = 0.8; // 80% volume for sound effects
 
+
         public static void Initialize()
         {
             if (_isInitialized)

@@ -13,6 +13,20 @@
                     Stretch="UniformToFill" />
     </UserControl.Background>
 
+    <UserControl.Resources>
+        <!-- Style for Disabled Play Button -->
+        <Style TargetType="Button" x:Key="DisabledButtonStyle">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsEnabled}" Value="False">
+                    <Setter Property="Background" Value="#D3D3D3"/>
+                    <!-- Gray color -->
+                    <Setter Property="Foreground" Value="#A9A9A9"/>
+                    <!-- Darker gray text -->
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -46,12 +60,8 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
                 <Border.Background>
-                    <!-- Image asset not present yet. Placeholder used to avoid XAML load failures. -->
                     <ImageBrush ImageSource="/Assets/Song/Utada_Hikaru_-_One_Last_Kiss_Cover.png" Stretch="UniformToFill" />
-                    <!--SolidColorBrush Color="#2D2D2D" /-->
                 </Border.Background>
-
-              
 
                 <!-- Overlay + content -->
                 <Grid>
@@ -68,7 +78,7 @@
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                           
+
                         <TextBlock Grid.Row="0"
                                    Text="One Last Kiss"
                                    Foreground="#FFFFFF"
@@ -81,22 +91,27 @@
                                 Height="100"
                                 Stretch="UniformToFill"
                                 Margin="0,30,0,0"/>
-                        <!-- Spacer (image is background of the card) -->
                         <Grid Grid.Row="1" />
                         <StackPanel Grid.Row="2"
                                     Orientation="Vertical"
                                     HorizontalAlignment="Center"
                                     Margin="0,8,0,0">
 
-                            <ToggleButton Content="Easy"
+                            <ToggleButton Content="EASY"
                                           Width="96"
                                           Margin="0,0,0,8"
                                           Padding="6,4"
+                                          FontWeight="Bold"
+                                          Background="#40000000"
+                                          Foreground="#C0000000"
                                           IsChecked="{Binding IsEasyASelected, Mode=TwoWay}" />
 
-                            <ToggleButton Content="Hard"
+                            <ToggleButton Content="HARD"
                                           Width="96"
                                           Padding="6,4"
+                                          FontWeight="Bold"
+                                          Background="#40000000"
+                                          Foreground="#C0000000"
                                           IsChecked="{Binding IsHardASelected, Mode=TwoWay}" />
                         </StackPanel>
 
@@ -114,7 +129,6 @@
                     VerticalAlignment="Center">
                 <Border.Background>
                     <!-- Image asset not present yet. Placeholder used to avoid XAML load failures. -->
-                    <!-- Original: <ImageBrush ImageSource="/Assets/Images/songB.jpg" Stretch="UniformToFill" /> -->
                     <SolidColorBrush Color="#2D2D2D" />
                 </Border.Background>
 
@@ -139,20 +153,26 @@
                         <Grid Grid.Row="1" />
 
                         <StackPanel Grid.Row="2"
-                                Orientation="Vertical"
-                                HorizontalAlignment="Center"
-                                Margin="0,8,0,0">
+                                    Orientation="Vertical"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,8,0,0">
 
-                            <ToggleButton Content="Easy"
-                                      Width="96"
-                                      Margin="0,0,0,8"
-                                      Padding="6,4"
-                                      IsChecked="{Binding IsEasyBSelected, Mode=TwoWay}" />
+                            <ToggleButton Content="EASY"
+                                          Width="96"
+                                          Margin="0,0,0,8"
+                                          Padding="6,4"
+                                          FontWeight="Bold"
+                                          Background="#40000000"
+                                          Foreground="#C0000000"
+                                          IsChecked="{Binding IsEasyBSelected, Mode=TwoWay}" />
 
-                            <ToggleButton Content="Hard"
-                                      Width="96"
-                                      Padding="6,4"
-                                      IsChecked="{Binding IsHardBSelected, Mode=TwoWay}" />
+                            <ToggleButton Content="HARD"
+                                          Width="96"
+                                          Padding="6,4"
+                                          FontWeight="Bold"
+                                          Background="#40000000"
+                                          Foreground="#C0000000"
+                                          IsChecked="{Binding IsHardBSelected, Mode=TwoWay}" />
                         </StackPanel>
 
                     </Grid>
@@ -169,30 +189,26 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Empty Spacer Grid to center the buttons -->
             <Grid Grid.Column="0" />
 
-            <!-- Centered StackPanel with buttons -->
             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <!-- Back Button -->
-                <Button Content="Back"
-                Width="96"
-                Height="36"
-                Margin="0,0,16,0"
-                HorizontalAlignment="Center"
-                Command="{Binding DataContext.TitleScreenCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                ToolTip="Back to title" />
+                <Button Content="BACK"
+                        Width="96"
+                        Height="36"
+                        Margin="0,0,16,0"
+                        HorizontalAlignment="Center"
+                        Command="{Binding DataContext.TitleScreenCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        ToolTip="Back to title" />
 
-                <!-- Play Button -->
-                <Button Content="Play"
-                Width="96"
-                Height="36"
-                HorizontalAlignment="Center"
-                Command="{Binding DataContext.InGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                ToolTip="Start game" />
+                <Button Content="PLAY"
+                        Width="96"
+                        Height="36"
+                        HorizontalAlignment="Center"
+                        Command="{Binding DataContext.InGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        ToolTip="Start game"
+                        IsEnabled="{Binding IsPlayButtonEnabled}" />
             </StackPanel>
 
-            <!-- Empty Spacer Grid to balance the layout -->
             <Grid Grid.Column="3" />
         </Grid>
 

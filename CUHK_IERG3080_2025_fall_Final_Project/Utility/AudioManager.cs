@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Controls;
+using System.IO;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
 {
@@ -43,8 +44,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
             {
                 if (!_bgmOpened)
                 {
-                    var uri = new Uri(
-                        @"C:\Users\LENOVO\source\repos\Angelocaduto927\CUHK_IERG3080_Project\CUHK_IERG3080_2025_fall_Final_Project\Assets\Sound\background.mp3");
+                    Uri uri = new Uri(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Sound", "background.mp3"));
 
                     _backgroundMusicPlayer.Open(uri);
                     _backgroundMusicPlayer.Volume = BackgroundVolume;
@@ -96,7 +96,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
             try
             {
                 // Click sound effect file (local path)
-                var uri = new Uri(@"C:\Users\LENOVO\source\repos\Angelocaduto927\CUHK_IERG3080_Project\CUHK_IERG3080_2025_fall_Final_Project\Assets\Sound\click.wav");
+                Uri uri = new Uri(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Sound", "click.wav"));
                 _effectPlayer.Open(uri);
                 _effectPlayer.Volume = EffectVolume;
                 _effectPlayer.Play();

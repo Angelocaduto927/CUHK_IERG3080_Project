@@ -7,6 +7,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.IO;
 using CUHK_IERG3080_2025_fall_Final_Project.Model;
 using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 
@@ -18,6 +19,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private DispatcherTimer _timer;
         private bool _initialized = false;
         private Action _onGameOver;
+        private MusicManager _musicManager;
 
         // Note collections for rendering
         public ObservableCollection<NoteVM> Player1Notes { get; } = new ObservableCollection<NoteVM>();
@@ -56,6 +58,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             _onGameOver = onGameOver;
             _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // ~60 FPS
             _timer.Tick += (s, e) => Update();
+
+            EnsureInitialized();
         }
 
         private void EnsureInitialized()
@@ -68,6 +72,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 var window = Application.Current.MainWindow;
                 if (window != null)
                 {
+                    window.Focus();
                     window.PreviewKeyDown += OnKeyDown;
                 }
 
@@ -84,14 +89,15 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     if (players != null && players.Count > 0)
                     {
                         _engine = new GameEngine();
+                        _musicManager = new MusicManager();
                         _engine.Initialize(players);
                         _engine.StartGame();
 
                         // Start background music
-                        AudioManager.Initialize();
-                        AudioManager.PlayBackgroundMusic();
-
+                        AudioManager.StopBackgroundMusic();
+                        _musicManager.Play(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Song", $"{SongManager.CurrentSong}.mp3"));
                         _timer.Start();
+                        
                         OnPropertyChanged(""); // Notify all properties
                     }
                 }

@@ -31,7 +31,7 @@
             <Canvas ClipToBounds="True">
                 <!-- Hit Line -->
                 <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
-                          Fill="#FF6B4E" Canvas.Left="300"/>
+                          Fill="#FF6B4E" Canvas.Left="298"/>
 
                 <!-- Hit Circle -->
                 <Ellipse Width="60" Height="60" Stroke="#FF6B4E" StrokeThickness="6" Fill="#44FF6B4E"

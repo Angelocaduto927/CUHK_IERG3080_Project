@@ -13,11 +13,15 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public const double GoodWindow = 100;
         public const double BadWindow = 150;
         public const double MissWindow = 200;
-        
+
         //Coordinates
-        public const double SinglePlayerYCoordinate = 400;
-        public const double MultiPlayerUpperYCoordinate = 500;
-        public const double MultiPlayerLowerYCoordinate = 300;
+        public const double BandWidth = 150;
+        public const double EllipseSize = 60;
+        public const double LineDistance = 270;
+        public const double SinglePlayerYCoordinate = 200;
+        // VV must be > bandwidth
+        public const double MultiPlayerUpperYCoordinate = 200;
+        public const double MultiPlayerLowerYCoordinate = 200;
         public const double HitZoneXCoordinate = 0;
         public const double SpawnZoneXCoordinate = 400;
 

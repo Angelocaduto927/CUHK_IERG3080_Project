@@ -1,14 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
+using System.IO;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Threading;
-using System.IO;
-using System.Diagnostics;
+
 using CUHK_IERG3080_2025_fall_Final_Project.Model;
 using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 
@@ -17,25 +16,37 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
     public class InGameVM : INotifyPropertyChanged
     {
         private GameEngine _engine;
-        private DispatcherTimer _timer;
         private bool _initialized = false;
-        private Action _onGameOver;
-        private MusicManager _musicManager;
+        private readonly Action _onGameOver;
+        private readonly MusicManager _musicManager;
+
+        // ✅ CHANGED: 用 Rendering 代替 DispatcherTimer
+        private bool _renderingAttached = false;
+        private double _lastRenderUpdateMs = -9999;  // 用于限帧
+        private const double TargetFrameMs = 16.0;   // 60fps
 
         // Note collections for rendering
         public ObservableCollection<NoteVM> Player1Notes { get; } = new ObservableCollection<NoteVM>();
         public ObservableCollection<NoteVM> Player2Notes { get; } = new ObservableCollection<NoteVM>();
 
-        // Game info +Hyperparameters
+        // Note -> NoteVM reuse maps
+        private readonly Dictionary<Note, NoteVM> _p1Map = new Dictionary<Note, NoteVM>();
+        private readonly Dictionary<Note, NoteVM> _p2Map = new Dictionary<Note, NoteVM>();
+
+        private int _frameStamp = 0;
+
+        // Game info + Hyperparameters
         public double BandWidth => Hyperparameters.BandWidth;
         public double EllipseS => Hyperparameters.EllipseSize;
         public double BandMid => BandWidth / 2 - 30;
         public double LineDistance => Hyperparameters.LineDistance;
-        public double EllipseD => LineDistance + 2 - EllipseS/2;
+        public double EllipseD => LineDistance + 2 - EllipseS / 2;
         public string Song1Name => Hyperparameters.Song1Name;
         public string Song2Name => Hyperparameters.Song2Name;
+
         public double P1Coordinate => IsMultiplayer ? Hyperparameters.MultiPlayerUpperYCoordinate : Hyperparameters.SinglePlayerYCoordinate;
         public double P2Coordinate => IsMultiplayer ? Hyperparameters.MultiPlayerLowerYCoordinate : 0;
+
         public double HitZoneXCoordinate => Hyperparameters.HitZoneXCoordinate;
         public double SpawnZoneXCoordinate => Hyperparameters.SpawnZoneXCoordinate;
         public double DefaultSpeed => Hyperparameters.DefaultSpeed;
@@ -48,43 +59,33 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public double BadWindow => Hyperparameters.BadWindow;
         public double MissWindow => Hyperparameters.MissWindow;
         public string SongName => SongManager.CurrentSong ?? "Unknown Song";
+
         public double CurrentTime => _engine?.CurrentTime / 1000.0 ?? 0;
-        public double SongDuration => 180.0; // Default 3 minutes, could be dynamic
+        public double SongDuration => 180.0;
         public bool IsMultiplayer => _engine?.Players?.Count > 1;
 
         // Player 1 Properties
-        public string P1Name
-        {
-            get
-            {
-                if (_engine?.Players != null && _engine.Players.Count > 0)
-                    return _engine.Players[0].PlayerName;
-                return "Player 1";
-            }
-        }
-        public int P1Score => _engine?.Players != null && _engine.Players.Count > 0 ? _engine.Players[0].Score.Score : 0;
-        public int P1Combo => _engine?.Players != null && _engine.Players.Count > 0 ? _engine.Players[0].Score.Combo : 0;
-        public double P1Accuracy => _engine?.Players != null && _engine.Players.Count > 0 ? _engine.Players[0].Score.Accuracy : 100;
+        public string P1Name => (_engine?.Players != null && _engine.Players.Count > 0) ? _engine.Players[0].PlayerName : "Player 1";
+        public int P1Score => (_engine?.Players != null && _engine.Players.Count > 0) ? _engine.Players[0].Score.Score : 0;
+        public int P1Combo => (_engine?.Players != null && _engine.Players.Count > 0) ? _engine.Players[0].Score.Combo : 0;
+        public double P1Accuracy => (_engine?.Players != null && _engine.Players.Count > 0) ? _engine.Players[0].Score.Accuracy : 100;
 
         // Player 2 Properties
-        public string P2Name => _engine?.Players != null && _engine.Players.Count > 1 ? _engine.Players[1].PlayerName : "Player 2";
-        public int P2Score => _engine?.Players != null && _engine.Players.Count > 1 ? _engine.Players[1].Score.Score : 0;
-        public int P2Combo => _engine?.Players != null && _engine.Players.Count > 1 ? _engine.Players[1].Score.Combo : 0;
-        public double P2Accuracy => _engine?.Players != null && _engine.Players.Count > 1 ? _engine.Players[1].Score.Accuracy : 100;
+        public string P2Name => (_engine?.Players != null && _engine.Players.Count > 1) ? _engine.Players[1].PlayerName : "Player 2";
+        public int P2Score => (_engine?.Players != null && _engine.Players.Count > 1) ? _engine.Players[1].Score.Score : 0;
+        public int P2Combo => (_engine?.Players != null && _engine.Players.Count > 1) ? _engine.Players[1].Score.Combo : 0;
+        public double P2Accuracy => (_engine?.Players != null && _engine.Players.Count > 1) ? _engine.Players[1].Score.Accuracy : 100;
 
         public InGameVM() : this(null) { }
 
         public InGameVM(Action onGameOver)
         {
             _onGameOver = onGameOver;
+
             AudioManager.StopBackgroundMusic();
+
             _musicManager = new MusicManager();
             _musicManager.MusicEnded += OnMusicEnded;
-            var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Song", $"{SongManager.CurrentSong}.mp3");
-            _musicManager.Play(filePath);
-
-            _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // ~60 FPS
-            _timer.Tick += (s, e) => Update();
 
             EnsureInitialized();
         }
@@ -103,16 +104,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     window.PreviewKeyDown += OnKeyDown;
                 }
 
-                // Initialize game mode
                 if (GameModeManager.CurrentMode != null)
                 {
-
                     GameModeManager.CurrentMode.Initialize();
 
-
-                    // Get players from game mode using reflection
                     var playersField = GameModeManager.CurrentMode.GetType().GetField("_players");
-                    var players = playersField?.GetValue(GameModeManager.CurrentMode) as System.Collections.Generic.List<PlayerManager>;
+                    var players = playersField?.GetValue(GameModeManager.CurrentMode) as List<PlayerManager>;
 
                     if (players != null && players.Count > 0)
                     {
@@ -120,15 +117,43 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                         _engine.Initialize(players);
                         _engine.StartGame();
 
-                        // Start background music
                         AudioManager.StopBackgroundMusic();
-                        _musicManager.Play(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Song", $"{SongManager.CurrentSong}.mp3"));
-                        _timer.Start();
-                        
-                        OnPropertyChanged(""); // Notify all properties
+                        var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Song", $"{SongManager.CurrentSong}.mp3");
+                        _musicManager.Play(filePath);
+
+                        // ✅ CHANGED: 开始渲染循环
+                        StartRenderLoop();
+
+                        OnPropertyChanged("");
                     }
                 }
             }), System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+
+        private void StartRenderLoop()
+        {
+            if (_renderingAttached) return;
+            CompositionTarget.Rendering += OnRendering;
+            _renderingAttached = true;
+        }
+
+        private void StopRenderLoop()
+        {
+            if (!_renderingAttached) return;
+            CompositionTarget.Rendering -= OnRendering;
+            _renderingAttached = false;
+        }
+
+        // ✅ CHANGED: Rendering 回调（跟屏幕同步），并限帧到 60fps
+        private void OnRendering(object sender, EventArgs e)
+        {
+            if (_engine?.State != GameEngine.GameState.Playing) return;
+
+            double t = _engine.CurrentTime; // ms
+            if (t - _lastRenderUpdateMs < TargetFrameMs) return;
+            _lastRenderUpdateMs = t;
+
+            UpdateFrame();
         }
 
         private void OnKeyDown(object sender, KeyEventArgs e)
@@ -137,7 +162,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
             var key = e.Key == Key.System ? e.SystemKey : e.Key;
 
-            // Find which player and which note type
             for (int i = 0; i < _engine.Players.Count; i++)
             {
                 var settings = PlayerSettingsManager.GetSettings(i);
@@ -150,88 +174,96 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             }
         }
 
-        private void Update()
+        private int _lastP1Score = int.MinValue;
+        private int _lastP2Score = int.MinValue;
+
+        private void UpdateFrame()
         {
-            if (_engine?.State != GameEngine.GameState.Playing)
-            {
-                return;
-            }
-            // Update game engine (spawns notes, checks misses, updates positions)
             _engine.Update();
 
-            // Update visual note collections
-            UpdateNotes(0, Player1Notes);
-            if (IsMultiplayer)
-            {
-                UpdateNotes(1, Player2Notes);
-            }
+            _frameStamp++;
+            UpdateNotes(0, Player1Notes, _p1Map, _frameStamp);
 
-            // Update all UI properties
+            if (IsMultiplayer)
+                UpdateNotes(1, Player2Notes, _p2Map, _frameStamp);
+
             OnPropertyChanged(nameof(CurrentTime));
-            OnPropertyChanged(nameof(P1Score));
+
+            var p1 = P1Score;
+            if (p1 != _lastP1Score)
+            {
+                _lastP1Score = p1;
+                OnPropertyChanged(nameof(P1Score));
+            }
 
             if (IsMultiplayer)
             {
-                OnPropertyChanged(nameof(P2Score));
+                var p2 = P2Score;
+                if (p2 != _lastP2Score)
+                {
+                    _lastP2Score = p2;
+                    OnPropertyChanged(nameof(P2Score));
+                }
             }
 
-            // Check if game is finished
             if (_engine.IsGameFinished())
             {
-                _timer.Stop();
+                StopRenderLoop();
                 _engine.StopGame();
                 AudioManager.StopBackgroundMusic();
                 _onGameOver?.Invoke();
             }
         }
 
-        private void UpdateNotes(int playerIdx, ObservableCollection<NoteVM> noteCollection)
+        private void UpdateNotes(
+            int playerIdx,
+            ObservableCollection<NoteVM> noteCollection,
+            Dictionary<Note, NoteVM> map,
+            int stamp)
         {
-            //THIS IS WRONG IM 99 % sure, but no clue ow note.cs whould work with this yet
-
-
             if (_engine?.Players == null || playerIdx >= _engine.Players.Count) return;
 
             var player = _engine.Players[playerIdx];
-            if (player.Chart == null) return;
+            if (player?.noteManager == null) return;
 
-            // Get all active notes
             var activeNotes = player.noteManager.ActiveNotes;
+            if (activeNotes == null) return;
 
-            noteCollection.Clear();
+            const double laneTop = 50;
 
-            foreach (var note in activeNotes)
+            for (int i = 0; i < activeNotes.Count; i++)
             {
-                // Calculate Y position based on player index
-                double yPos = playerIdx == 0 ? 50 : 50; // Both centered vertically in their lanes
+                var note = activeNotes[i];
 
-                noteCollection.Add(new NoteVM
+                if (!map.TryGetValue(note, out var vm))
                 {
-                    X = note.X - 30, // Center the 60px note
-                    Y = yPos,
-                    Inner = note.Type == Note.NoteType.Red
-                        ? Color.FromRgb(255, 120, 120)
-                        : Color.FromRgb(120, 170, 255),
-                    Outer = note.Type == Note.NoteType.Red
-                        ? Color.FromRgb(180, 0, 0)
-                        : Color.FromRgb(0, 100, 220),
-                    Border = note.Type == Note.NoteType.Red
-                        ? Brushes.DarkRed
-                        : Brushes.DarkBlue,
-                    Icon = note.Type == Note.NoteType.Red ? "ド" : "カ"
-                });
+                    vm = NoteVM.Create(note, laneTop);
+                    map[note] = vm;
+                    noteCollection.Add(vm);
+                }
+
+                vm.LastSeenStamp = stamp;
+                vm.X = note.X - 30;
+            }
+
+            for (int i = noteCollection.Count - 1; i >= 0; i--)
+            {
+                var vm = noteCollection[i];
+                if (vm.LastSeenStamp != stamp)
+                {
+                    map.Remove(vm.Model);
+                    noteCollection.RemoveAt(i);
+                }
             }
         }
 
         public void Cleanup()
         {
-            _timer?.Stop();
+            StopRenderLoop();
 
             var window = Application.Current.MainWindow;
             if (window != null)
-            {
                 window.PreviewKeyDown -= OnKeyDown;
-            }
 
             if (_musicManager != null)
             {
@@ -240,7 +272,13 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             }
 
             _engine?.Dispose();
+
+            _p1Map.Clear();
+            _p2Map.Clear();
+            Player1Notes.Clear();
+            Player2Notes.Clear();
         }
+
         private void OnMusicEnded(object sender, EventArgs e)
         {
             _onGameOver?.Invoke();
@@ -250,47 +288,77 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
-    public class NoteVM: INotifyPropertyChanged
+    public class NoteVM : INotifyPropertyChanged
     {
+        private static readonly Brush RedFill = CreateFill(Color.FromRgb(255, 120, 120), Color.FromRgb(180, 0, 0));
+        private static readonly Brush BlueFill = CreateFill(Color.FromRgb(120, 170, 255), Color.FromRgb(0, 100, 220));
+
+        private static Brush CreateFill(Color inner, Color outer)
+        {
+            var brush = new RadialGradientBrush();
+            brush.GradientStops.Add(new GradientStop(inner, 0.3));
+            brush.GradientStops.Add(new GradientStop(outer, 1.0));
+            brush.Freeze();
+            return brush;
+        }
+
+        public Note Model { get; }
+        public int LastSeenStamp { get; set; }
+
         private double _x;
         private double _y;
-        public double X { 
-            get => _x; 
+
+        public double X
+        {
+            get => _x;
             set
             {
-                if(Math.Abs(_x - value) > 0.01)
+                if (Math.Abs(_x - value) > 0.01)
                 {
                     _x = value;
                     OnPropertyChanged(nameof(X));
                 }
             }
         }
-        public double Y { 
+
+        public double Y
+        {
             get => _y;
             set
             {
-                if(Math.Abs(_y - value) > 0.01)
+                if (Math.Abs(_y - value) > 0.01)
                 {
                     _y = value;
                     OnPropertyChanged(nameof(Y));
                 }
             }
         }
-        public Color Inner { get; set; }
-        public Color Outer { get; set; }
-        public Brush Border { get; set; }
-        public string Icon { get; set; }
-        public Brush Fill
+
+        public Brush Fill { get; }
+        public Brush Border { get; }
+        public string Icon { get; }
+
+        private NoteVM(Note model, double laneTop)
         {
-            get
+            Model = model;
+            Y = laneTop;
+            X = model.X - 30;
+
+            if (model.Type == Note.NoteType.Red)
             {
-                var brush = new RadialGradientBrush();
-                brush.GradientStops.Add(new GradientStop(Inner, 0.3));
-                brush.GradientStops.Add(new GradientStop(Outer, 1.0));
-                return brush;
+                Fill = RedFill;
+                Border = Brushes.DarkRed;
+                Icon = "ド";
+            }
+            else
+            {
+                Fill = BlueFill;
+                Border = Brushes.DarkBlue;
+                Icon = "カ";
             }
         }
 
+        public static NoteVM Create(Note model, double laneTop) => new NoteVM(model, laneTop);
 
         public event PropertyChangedEventHandler PropertyChanged;
         private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
@@ -310,6 +378,4 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             return value is Visibility v && v == Visibility.Visible;
         }
     }
-
-
 }

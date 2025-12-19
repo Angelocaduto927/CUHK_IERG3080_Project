@@ -206,6 +206,7 @@
     <Compile Include="Utility\MusicManager.cs" />
     <Compile Include="Utility\RelayCommand.cs" />
     <Compile Include="Utility\ViewModelBase.cs" />
+    <Compile Include="ViewModel\DifficultySelectionVM.cs" />
     <Compile Include="ViewModel\GameOverVM.cs" />
     <Compile Include="ViewModel\InGameVM.cs" />
     <Compile Include="ViewModel\LobbyViewModel.cs" />
@@ -213,6 +214,9 @@
     <Compile Include="ViewModel\SettingVM.cs" />
     <Compile Include="ViewModel\SongSelectionVM.cs" />
     <Compile Include="ViewModel\TitleScreenVM.cs" />
+    <Compile Include="View\DifficultySelection.xaml.cs">
+      <DependentUpon>DifficultySelection.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\GameOver.xaml.cs">
       <DependentUpon>GameOver.xaml</DependentUpon>
     </Compile>
@@ -247,7 +251,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Style\ToggleButton.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Utility\DataTemplate.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\DifficultySelection.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -294,8 +306,12 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="Assets\Chart\IRIS_OUT_Easy.json" />
-    <None Include="Assets\Chart\IRIS_OUT_Hard.json" />
+    <None Include="Assets\Chart\IRIS_OUT_Easy.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Assets\Chart\IRIS_OUT_Hard.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Assets\Chart\One_Last_Kiss_Easy.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -324,10 +340,10 @@
     <Resource Include="Assets\Image\TitleBG.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Assets\Song\Utada_Hikaru_-_One_Last_Kiss_Cover.png">
+    <Resource Include="Assets\Song\One_Last_Kiss_Cover.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Assets\Song\Kenshi_Yonezu_-_Iris_Out_Cover.png" />
+    <Resource Include="Assets\Song\IRIS_OUT_Cover.png" />
     <Content Include="Assets\Song\IRIS_OUT.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

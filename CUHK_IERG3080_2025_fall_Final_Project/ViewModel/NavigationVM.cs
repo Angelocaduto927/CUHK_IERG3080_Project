@@ -31,6 +31,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public ICommand InGameCommand { get; set; }
         public ICommand GameOverCommand { get; set; }
 
+        public ICommand DifficultySelectionCommand { get; set; }
+
         private void TitleScreen(object obj)
         {
             CurrentViewModel = new TitleScreenVM(() => SongSelection(null));
@@ -47,6 +49,17 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             //}
 
             CurrentViewModel = new SongSelectionVM();
+        }
+
+        private void DifficultySelection(object obj)
+        {
+            string songName = obj as string;
+            if (string.IsNullOrEmpty(songName))
+            {
+                return;
+            }
+            SongManager.SetSong(songName);
+            CurrentViewModel = new DifficultySelectionVM(songName);
         }
 
         private void Setting(object obj)
@@ -94,6 +107,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             SettingCommand = new RelayCommand(Setting);
             InGameCommand = new RelayCommand(InGame);
             GameOverCommand = new RelayCommand(GameOver);
+            DifficultySelectionCommand = new RelayCommand(DifficultySelection);
 
             // Initialize audio system  
             CUHK_IERG3080_2025_fall_Final_Project.Utility.AudioManager.Initialize();

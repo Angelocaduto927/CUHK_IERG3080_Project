@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CUHK_IERG3080_2025_fall_Final_Project.Utility;
+using CUHK_IERG3080_2025_fall_Final_Project.ViewModel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using CUHK_IERG3080_2025_fall_Final_Project.Utility;
+using System.Diagnostics;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.View
 {
@@ -25,6 +27,24 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
         {
             InitializeComponent();
             AudioManager.PlayBackgroundMusic();
+        }
+
+        private void OnSong1Click(object sender, MouseButtonEventArgs e)
+        {
+            var navVM = Application.Current.MainWindow?.DataContext as NavigationVM;
+            if (navVM != null)
+            {
+                navVM.DifficultySelectionCommand.Execute("One_Last_Kiss");
+           }
+        }
+
+        private void OnSong2Click(object sender, MouseButtonEventArgs e)
+        {
+            var navVM = Application.Current.MainWindow?.DataContext as NavigationVM;
+            if (navVM != null)
+            {
+                navVM.DifficultySelectionCommand.Execute("IRIS_OUT");
+            }
         }
     }
 }

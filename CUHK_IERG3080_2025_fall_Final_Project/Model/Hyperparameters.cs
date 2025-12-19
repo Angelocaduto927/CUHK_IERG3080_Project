@@ -45,6 +45,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 
         //SongName
         public const string Song1Name = "One_Last_Kiss";
-        public const string Song2Name = "Song2";
+        public const string Song2Name = "IRIS_OUT";
     }
 }

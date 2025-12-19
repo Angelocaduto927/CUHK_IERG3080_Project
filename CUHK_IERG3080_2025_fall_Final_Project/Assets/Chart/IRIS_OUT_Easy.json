@@ -5,10 +5,6 @@
   "bpm": 136
 },
   "notes": [
-    { "timestamp": 766, "type": "Red" },
-    { "timestamp": 1463, "type": "Red" },
-    { "timestamp": 1904, "type": "Red" },
-    { "timestamp": 2461, "type": "Red" },
     { "timestamp": 3541, "type": "Red" },
     { "timestamp": 4307, "type": "Blue" },
     { "timestamp": 5677, "type": "Red" },
@@ -168,18 +164,12 @@
     { "timestamp": 138983, "type": "Blue" },
     { "timestamp": 139459, "type": "Red" },
     { "timestamp": 140330, "type": "Blue" },
-    { "timestamp": 140748, "type": "Red" },
-    { "timestamp": 142118, "type": "Red" },
-    { "timestamp": 142571, "type": "Red" },
-    { "timestamp": 143012, "type": "Red" },
-    { "timestamp": 144335, "type": "Red" },
-    { "timestamp": 145694, "type": "Red" },
-    { "timestamp": 146193, "type": "Red" }
+    { "timestamp": 140748, "type": "Red" }
   ],
   "scoresets": {
-  "PerfectHitScore": 300,
-  "GoodHitScore": 200,
-  "BadHitScore": 100,
+  "PerfectHitScore": 625,
+  "GoodHitScore": 600,
+  "BadHitScore": 400,
   "MissHitScore": 0
 }
 }

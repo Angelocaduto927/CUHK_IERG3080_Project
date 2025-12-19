@@ -5,11 +5,6 @@
   "bpm": 147.65625
 },
   "notes": [
-    { "timestamp": 337, "type": "Red" },
-    { "timestamp": 743, "type": "Red" },
-    { "timestamp": 1138, "type": "Red" },
-    { "timestamp": 1950, "type": "Red" },
-    { "timestamp": 2218, "type": "Red" },
     { "timestamp": 4365, "type": "Red" },
     { "timestamp": 4632, "type": "Red" },
     { "timestamp": 5027, "type": "Red" },
@@ -290,9 +285,9 @@
     { "timestamp": 251774, "type": "Red" }
   ],
   "scoresets": {
-  "PerfectHitScore": 300,
-  "GoodHitScore": 200,
-  "BadHitScore": 100,
+  "PerfectHitScore": 360,
+  "GoodHitScore": 330,
+  "BadHitScore": 200,
   "MissHitScore": 0
 }
 }

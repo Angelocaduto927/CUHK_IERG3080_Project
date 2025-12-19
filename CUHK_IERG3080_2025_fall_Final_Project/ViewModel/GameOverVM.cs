@@ -172,6 +172,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             int perfect = playerIdx == 1 ? PerfectHits1 : PerfectHits2;
             int total = playerIdx == 1 ? TotalNotes1 : TotalNotes2;
+            int totalscore = playerIdx == 1 ? TotalScore1 : TotalScore2;
 
             string grade;
             string color;
@@ -183,28 +184,28 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             }
             else
             {
-                double perfectRatio = (double)perfect / total;
-                if (perfectRatio >= 0.95)
+                //double perfectRatio = (double)perfect / total;
+                if (totalscore >= 96000)
                 {
                     grade = "S";
                     color = "#FFD4AF37";
                 }
-                else if (perfectRatio >= 0.90)
+                else if (totalscore >= 92000)
                 {
                     grade = "A";
                     color = "#FFFFE08A";
                 }
-                else if (perfectRatio >= 0.80)
+                else if (totalscore >= 82000)
                 {
                     grade = "B";
                     color = "#FF3B82F6";
                 }
-                else if (perfectRatio >= 0.70)
+                else if (totalscore >= 72000)
                 {
                     grade = "C";
                     color = "#FF1E3A8A";
                 }
-                else if (perfectRatio >= 0.60)
+                else if (totalscore >= 60000)
                 {
                     grade = "D";
                     color = "#FF6B7280";

@@ -5,13 +5,6 @@
     "bpm": 147.65625
   },
   "notes": [
-    { "timestamp": 337, "type": "Red" },
-    { "timestamp": 743, "type": "Red" },
-    { "timestamp": 1138, "type": "Red" },
-    { "timestamp": 1544, "type": "Red" },
-    { "timestamp": 1950, "type": "Red" },
-    { "timestamp": 2218, "type": "Red" },
-    { "timestamp": 2485, "type": "Red" },
     { "timestamp": 2891, "type": "Red" },
     { "timestamp": 3286, "type": "Red" },
     { "timestamp": 3692, "type": "Red" },
@@ -562,19 +555,10 @@
     { "timestamp": 245783, "type": "Red" },
     { "timestamp": 246132, "type": "Red" },
     { "timestamp": 246584, "type": "Red" },
-    { "timestamp": 246828, "type": "Red" },
-    { "timestamp": 247223, "type": "Red" },
-    { "timestamp": 247943, "type": "Red" },
-    { "timestamp": 248268, "type": "Red" },
-    { "timestamp": 249731, "type": "Red" },
-    { "timestamp": 249986, "type": "Red" },
-    { "timestamp": 251031, "type": "Red" },
-    { "timestamp": 251379, "type": "Red" },
-    { "timestamp": 251774, "type": "Red" }
   ],
   "scoresets": {
-    "PerfectHitScore": 300,
-    "GoodHitScore": 200,
+    "PerfectHitScore": 182,
+    "GoodHitScore": 150,
     "BadHitScore": 100,
     "MissHitScore": 0
   }

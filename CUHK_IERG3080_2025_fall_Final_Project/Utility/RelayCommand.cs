@@ -7,7 +7,7 @@ using System.Windows.Input;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
 {
-    class RelayCommand : ICommand  // view can use binding to bind event to the viewmodel
+    public class RelayCommand : ICommand  // view can use binding to bind event to the viewmodel
     {
         private readonly Action<object> _execute;
         private readonly Func<object, bool> _canExecute;

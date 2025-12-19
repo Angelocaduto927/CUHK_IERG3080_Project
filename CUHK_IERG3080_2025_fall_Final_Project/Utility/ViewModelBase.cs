@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
 {
-    class ViewModelBase : INotifyPropertyChanged
+    public class ViewModelBase : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)

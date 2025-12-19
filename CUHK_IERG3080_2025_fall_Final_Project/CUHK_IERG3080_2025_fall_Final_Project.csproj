@@ -168,6 +168,7 @@
     <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.4.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.Tasks.Extensions.4.6.3\lib\net462\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -195,6 +196,11 @@
     <Compile Include="Model\OnlineMultiPlayerMode.cs" />
     <Compile Include="Model\ScoreSet.cs" />
     <Compile Include="Model\SinglePlayerMode.cs" />
+    <Compile Include="Networking\NetCodec.cs" />
+    <Compile Include="Networking\OnlineSession.cs" />
+    <Compile Include="Networking\TcpHost.cs" />
+    <Compile Include="Networking\TcpJoiner.cs" />
+    <Compile Include="Shared\NetMessages.cs" />
     <Compile Include="Utility\AudioManager.cs" />
     <Compile Include="Utility\BoolToVisibilityConverter.cs" />
     <Compile Include="Utility\MusicManager.cs" />
@@ -202,6 +208,7 @@
     <Compile Include="Utility\ViewModelBase.cs" />
     <Compile Include="ViewModel\GameOverVM.cs" />
     <Compile Include="ViewModel\InGameVM.cs" />
+    <Compile Include="ViewModel\LobbyViewModel.cs" />
     <Compile Include="ViewModel\NavigationVM.cs" />
     <Compile Include="ViewModel\SettingVM.cs" />
     <Compile Include="ViewModel\SongSelectionVM.cs" />
@@ -211,6 +218,9 @@
     </Compile>
     <Compile Include="View\InGame.xaml.cs">
       <DependentUpon>InGame.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\LobbyWindow.xaml.cs">
+      <DependentUpon>LobbyWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\Setting.xaml.cs">
       <DependentUpon>Setting.xaml</DependentUpon>
@@ -246,6 +256,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="View\InGame.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\LobbyWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

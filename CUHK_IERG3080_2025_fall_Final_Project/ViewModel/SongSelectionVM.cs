@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel;
 using CUHK_IERG3080_2025_fall_Final_Project.Model;
 using System.Diagnostics;
+using CUHK_IERG3080_2025_fall_Final_Project.Networking;
+using System.Windows;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
@@ -64,7 +66,36 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public SongSelectionVM()
         {
             LoadFromModel();
+
+            // ===== Insert A: Online multiplayer listen =====
+            var mode = GameModeManager.CurrentMode;
+            if (mode is OnlineMultiPlayerMode && GameModeManager.OnlineSession != null)
+            {
+                var session = GameModeManager.OnlineSession;
+
+                session.OnSelectSong += msg =>
+                {
+                    // Joiner 才响应；Host 自己点的不需要再处理
+                    if (session.IsHost) return;
+
+                    // 切回 UI 线程更新
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        SongManager.SetSong(msg.SongId);
+
+                        var players = GetCurrentModePlayers();
+                        if (players != null)
+                        {
+                            foreach (var p in players)
+                                p.Difficulty.CurrentDifficulty = msg.Difficulty;
+                        }
+
+                        RaiseAll();
+                    });
+                };
+            }
         }
+
 
         // Directly sets the song and difficulty without any intermediary variable
         private void SetSongAndDifficulty(string song, string difficulty)

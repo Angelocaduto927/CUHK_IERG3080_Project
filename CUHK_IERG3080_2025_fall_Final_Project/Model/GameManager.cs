@@ -6,6 +6,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using CUHK_IERG3080_2025_fall_Final_Project.Networking;
+
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
@@ -13,6 +15,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
     {
         //the current game mode
         public static IGameMode CurrentMode { get; private set; }
+        public static OnlineSession OnlineSession { get; set; } // online 模式连接成功后赋值，其他时候为 null
+
         public enum Mode
         {
             SinglePlayer,

@@ -23,6 +23,14 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             State = GameState.NotStarted;
         }
 
+        public void UpdatePlayerSpeed(int playerIndex, int newSpeed)
+        {
+            if (_players != null && playerIndex >= 0 && playerIndex < _players.Count)
+            {
+                _players[playerIndex].UpdateSpeed(newSpeed);
+            }
+        }
+
         public void Initialize(List<PlayerManager> players)
         {
             _players = players;

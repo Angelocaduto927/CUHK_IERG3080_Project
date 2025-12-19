@@ -72,6 +72,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         {
             _playerSettings[0] = new PlayerSettings
             {
+                Speed = 1.0,
                 KeyBindings = new Dictionary<string, System.Windows.Input.Key>
                 {
                     { "Red1", System.Windows.Input.Key.D },
@@ -206,7 +207,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public Dictionary<string, System.Windows.Input.Key> KeysDict { get; set; }
         public string CurrentSong => SongManager.CurrentSong;
         public ScoreManager Score { get; private set; }
-        public DifficultyManager Difficulty {  get; private set; }
+        public DifficultyManager Difficulty { get; private set; }
         public ScoreSet ScoreSet { get; set; }
         public List<Note> Chart { get; set; }
         public NoteManager noteManager { get; set; }
@@ -216,13 +217,29 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             IsLocalPlayer = isLocalPlayer;
             PlayerName = $"Player {playerIndex + 1}";
             ScoreSet = new ScoreSet();
-            Score =  new ScoreManager(ScoreSet);
+            Score = new ScoreManager(ScoreSet);
             Difficulty = new DifficultyManager();
             //Speed = Hyperparameters.DefaultSpeed;
             Speed = PlayerSettingsManager.GetSettings(playerIndex).Speed;
             KeysDict = PlayerSettingsManager.GetSettings(playerIndex).KeyBindings;
             Chart = new List<Note>();
             noteManager = new NoteManager(Chart, this);
+        }
+        public void UpdateSpeed(double newSpeed)
+        {
+            if (Math.Abs(Speed - newSpeed) < 0.001) return;
+
+            Speed = newSpeed;
+
+            // ✅ 重新计算所有 Note 的 Speed 和 SpawnTime
+            if (Chart != null)
+            {
+                foreach (var note in Chart)
+                {
+                    note.Speed = newSpeed;
+                    note.SpawnTime = note.HitTime - (Hyperparameters.Length / newSpeed);
+                }
+            }
         }
     }
 }

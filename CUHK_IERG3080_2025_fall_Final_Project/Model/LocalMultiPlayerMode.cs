@@ -39,7 +39,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         {
             for (int i = 0; i < PlayerCount; i++)
             {
-                PlayerManager player = new PlayerManager(playerIndex: i + 1, isLocalPlayer: true);
+                PlayerManager player = new PlayerManager(playerIndex: i, isLocalPlayer: true);
                 _players.Add(player);
             }
         }

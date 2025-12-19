@@ -22,6 +22,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 settings.Speed = value;
                 PlayerSettingsManager.UpdateSettings(0, settings);
                 OnPropertyChanged(nameof(Player1Speed));
+
+                UpdateRunningGameSpeed(0, value);
             }
         }
 
@@ -37,6 +39,27 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 settings.Speed = value;
                 PlayerSettingsManager.UpdateSettings(1, settings);
                 OnPropertyChanged(nameof(Player2Speed));
+
+                UpdateRunningGameSpeed(1, value);
+            }
+        }
+
+        private void UpdateRunningGameSpeed(int playerIndex, double newSpeed)
+        {
+            // 通过 GameModeManager 获取当前模式的玩家
+            if (GameModeManager.CurrentMode != null)
+            {
+                var playersField = GameModeManager.CurrentMode.GetType().GetField("_players");
+                if (playersField != null)
+                {
+                    var players = playersField.GetValue(GameModeManager.CurrentMode)
+                        as System.Collections.Generic.List<PlayerManager>;
+
+                    if (players != null && playerIndex < players.Count)
+                    {
+                        players[playerIndex].UpdateSpeed(newSpeed);
+                    }
+                }
             }
         }
 

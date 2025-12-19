@@ -70,7 +70,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
         }
 
 
-
         public static void Cleanup()
         {
             if (_backgroundMusicPlayer != null)
@@ -104,6 +103,36 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to play click sound: {ex.Message}");
+            }
+        }
+
+        // New: play a hit sound effect. Uses a dedicated MediaPlayer instance and closes it after playback.
+        public static void PlayHitSound()
+        {
+            try
+            {
+                var hitPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Sound", "hit.wav");
+
+                Uri uri = new Uri(hitPath);
+                var player = new MediaPlayer();
+                player.Open(uri);
+                player.Volume = EffectVolume;
+
+                // Ensure resources are released after playback
+                player.MediaEnded += (s, e) =>
+                {
+                    try
+                    {
+                        player.Close();
+                    }
+                    catch { }
+                };
+
+                player.Play();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to play hit sound: {ex.Message}");
             }
         }
 

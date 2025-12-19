@@ -32,8 +32,17 @@
                     <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
                                 Fill="#FF6B4E" Canvas.Left="270"/>
 
+                    <!-- Hit Text (above ellipse) -->
+                    <TextBlock Text="{Binding P1HitText}" FontSize="20" FontWeight="Bold" Width="70" TextAlignment="Center"
+                               Canvas.Left="235" Canvas.Top="10" Visibility="{Binding P1HitVisible, Converter={StaticResource BoolToVis}}"
+                               Foreground="{Binding P1HitBrush}">
+                        <TextBlock.Effect>
+                                <DropShadowEffect Color="#000000" BlurRadius="6" ShadowDepth="0"/>
+                            </TextBlock.Effect>
+                    </TextBlock>
+
                     <!-- Hit Circle -->
-                    <Ellipse Width="60" Height="60" Stroke="#FF6B4E" StrokeThickness="6" Fill="#44FF6B4E"
+                    <Ellipse Width="60" Height="60" Stroke="{Binding P1EllipseStroke}" StrokeThickness="6" Fill="{Binding P1EllipseFill}"
                                 Canvas.Left="242" Canvas.Top="45">
                         <Ellipse.Effect>
                             <DropShadowEffect Color="#FF6B4E" BlurRadius="20" ShadowDepth="0"/>
@@ -81,8 +90,17 @@
                     <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
                               Fill="#4E9AFF" Canvas.Left="270"/>
 
+                    <!-- Hit Text (above ellipse) -->
+                    <TextBlock Text="{Binding P2HitText}" FontSize="20" FontWeight="Bold" Width="70" TextAlignment="Center"
+                               Canvas.Left="235" Canvas.Top="10" Visibility="{Binding P2HitVisible, Converter={StaticResource BoolToVis}}"
+                               Foreground="{Binding P2HitBrush}">
+                        <TextBlock.Effect>
+                            <DropShadowEffect Color="#000000" BlurRadius="6" ShadowDepth="0"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+
                     <!-- Hit Circle -->
-                    <Ellipse Width="60" Height="60" Stroke="#4E9AFF" StrokeThickness="6" Fill="#44FF6B4E"
+                    <Ellipse Width="60" Height="60" Stroke="{Binding P2EllipseStroke}" StrokeThickness="6" Fill="{Binding P2EllipseFill}"
                             Canvas.Left="242" Canvas.Top="45">
                         <Ellipse.Effect>
                             <DropShadowEffect Color="#4E9AFF" BlurRadius="20" ShadowDepth="0"/>

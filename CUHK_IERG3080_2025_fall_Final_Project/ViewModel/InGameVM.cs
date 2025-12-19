@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Threading.Tasks;
 
 using CUHK_IERG3080_2025_fall_Final_Project.Model;
 using CUHK_IERG3080_2025_fall_Final_Project.Utility;
@@ -76,11 +77,174 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public int P2Combo => (_engine?.Players != null && _engine.Players.Count > 1) ? _engine.Players[1].Score.Combo : 0;
         public double P2Accuracy => (_engine?.Players != null && _engine.Players.Count > 1) ? _engine.Players[1].Score.Accuracy : 100;
 
+        // --- Hit effect brushes (for hit-circle color flash) ---
+        private readonly Brush _p1StrokeDefault;
+        private readonly Brush _p1FillDefault;
+        private readonly Brush _p2StrokeDefault;
+        private readonly Brush _p2FillDefault;
+
+        private Brush _p1EllipseStroke;
+        private Brush _p1EllipseFill;
+        private Brush _p2EllipseStroke;
+        private Brush _p2EllipseFill;
+
+        // --- New: hit text, visibility and color for each player ---
+        private string _p1HitText = string.Empty;
+        private bool _p1HitVisible = false;
+        private Brush _p1HitBrush = Brushes.White;
+
+        private string _p2HitText = string.Empty;
+        private bool _p2HitVisible = false;
+        private Brush _p2HitBrush = Brushes.White;
+
+        public string P1HitText
+        {
+            get => _p1HitText;
+            set
+            {
+                if (_p1HitText != value)
+                {
+                    _p1HitText = value;
+                    OnPropertyChanged(nameof(P1HitText));
+                }
+            }
+        }
+
+        public bool P1HitVisible
+        {
+            get => _p1HitVisible;
+            set
+            {
+                if (_p1HitVisible != value)
+                {
+                    _p1HitVisible = value;
+                    OnPropertyChanged(nameof(P1HitVisible));
+                }
+            }
+        }
+
+        public Brush P1HitBrush
+        {
+            get => _p1HitBrush;
+            set
+            {
+                if (!Equals(_p1HitBrush, value))
+                {
+                    _p1HitBrush = value;
+                    OnPropertyChanged(nameof(P1HitBrush));
+                }
+            }
+        }
+
+        public string P2HitText
+        {
+            get => _p2HitText;
+            set
+            {
+                if (_p2HitText != value)
+                {
+                    _p2HitText = value;
+                    OnPropertyChanged(nameof(P2HitText));
+                }
+            }
+        }
+
+        public bool P2HitVisible
+        {
+            get => _p2HitVisible;
+            set
+            {
+                if (_p2HitVisible != value)
+                {
+                    _p2HitVisible = value;
+                    OnPropertyChanged(nameof(P2HitVisible));
+                }
+            }
+        }
+
+        public Brush P2HitBrush
+        {
+            get => _p2HitBrush;
+            set
+            {
+                if (!Equals(_p2HitBrush, value))
+                {
+                    _p2HitBrush = value;
+                    OnPropertyChanged(nameof(P2HitBrush));
+                }
+            }
+        }
+
+        public Brush P1EllipseStroke
+        {
+            get => _p1EllipseStroke;
+            set
+            {
+                if (!Equals(_p1EllipseStroke, value))
+                {
+                    _p1EllipseStroke = value;
+                    OnPropertyChanged(nameof(P1EllipseStroke));
+                }
+            }
+        }
+
+        public Brush P1EllipseFill
+        {
+            get => _p1EllipseFill;
+            set
+            {
+                if (!Equals(_p1EllipseFill, value))
+                {
+                    _p1EllipseFill = value;
+                    OnPropertyChanged(nameof(P1EllipseFill));
+                }
+            }
+        }
+
+        public Brush P2EllipseStroke
+        {
+            get => _p2EllipseStroke;
+            set
+            {
+                if (!Equals(_p2EllipseStroke, value))
+                {
+                    _p2EllipseStroke = value;
+                    OnPropertyChanged(nameof(P2EllipseStroke));
+                }
+            }
+        }
+
+        public Brush P2EllipseFill
+        {
+            get => _p2EllipseFill;
+            set
+            {
+                if (!Equals(_p2EllipseFill, value))
+                {
+                    _p2EllipseFill = value;
+                    OnPropertyChanged(nameof(P2EllipseFill));
+                }
+            }
+        }
+
         public InGameVM() : this(null) { }
 
         public InGameVM(Action onGameOver)
         {
             _onGameOver = onGameOver;
+
+            // Initialize default brushes to match existing XAML colors
+            _p1StrokeDefault = new SolidColorBrush(Color.FromRgb(0xFF, 0x6B, 0x4E)); // #FF6B4E
+            _p1FillDefault = new SolidColorBrush(Color.FromArgb(0x44, 0xFF, 0x6B, 0x4E)); // #44FF6B4E
+
+            _p2StrokeDefault = new SolidColorBrush(Color.FromRgb(0x4E, 0x9A, 0xFF)); // #4E9AFF
+            _p2FillDefault = new SolidColorBrush(Color.FromArgb(0x44, 0x4E, 0x9A, 0xFF)); // #444E9AFF (semi-transparent blue)
+
+            // Set initial public brushes
+            P1EllipseStroke = _p1StrokeDefault;
+            P1EllipseFill = _p1FillDefault;
+            P2EllipseStroke = _p2StrokeDefault;
+            P2EllipseFill = _p2FillDefault;
 
             AudioManager.StopBackgroundMusic();
 
@@ -167,7 +331,49 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 var settings = PlayerSettingsManager.GetSettings(i);
                 if (settings.KeyBindings.ContainsValue(key))
                 {
+                    // Snapshot score counters before the key press so we can detect which counter changed.
+                    var player = _engine.Players[i];
+                    var score = player.Score;
+                    var beforePerfect = score.PerfectHit;
+                    var beforeGood = score.GoodHit;
+                    var beforeBad = score.BadHit;
+                    var beforeMiss = score.MissHit;
+
+                    // Perform the key handling (this updates score counters synchronously).
                     _engine.HandleKeyPress(i, key);
+
+                    // Trigger a brief hit-circle color flash for the player who pressed
+                    TriggerHitEffect(i);
+
+                    // Detect which hit counter increased and show text accordingly.
+                    string hitText = null;
+                    Brush hitBrush = Brushes.White;
+                    if (score.PerfectHit > beforePerfect)
+                    {
+                        hitText = "Perfect";
+                        hitBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0xD7, 0x00)); // Gold #FFD700
+                    }
+                    else if (score.GoodHit > beforeGood)
+                    {
+                        hitText = "Good";
+                        hitBrush = new SolidColorBrush(Color.FromRgb(0x32, 0xCD, 0x32)); // LimeGreen
+                    }
+                    else if (score.BadHit > beforeBad)
+                    {
+                        hitText = "Bad";
+                        hitBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0x8C, 0x8C)); // Light red
+                    }
+                    else if (score.MissHit > beforeMiss)
+                    {
+                        hitText = "Miss";
+                        hitBrush = new SolidColorBrush(Color.FromRgb(0x8B, 0x00, 0x00)); // Dark red
+                    }
+
+                    if (!string.IsNullOrEmpty(hitText))
+                    {
+                        ShowHitText(i, hitText, hitBrush);
+                    }
+
                     e.Handled = true;
                     break;
                 }
@@ -254,6 +460,75 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     map.Remove(vm.Model);
                     noteCollection.RemoveAt(i);
                 }
+            }
+        }
+
+        // Trigger a brief hit-circle flash for the given player index.
+        // Uses async Task.Delay so no additional timers or removal of existing code required.
+        private async void TriggerHitEffect(int playerIdx)
+        {
+            const int flashMs = 120;
+
+            // Play hit sound effect when a hit effect is triggered
+            AudioManager.PlayHitSound();
+
+            if (playerIdx == 0)
+            {
+                // highlight (semi-white)
+                P1EllipseStroke = new SolidColorBrush(Colors.White);
+                P1EllipseFill = new SolidColorBrush(Color.FromArgb(0x88, 0xFF, 0xFF, 0xFF));
+                await Task.Delay(flashMs);
+                P1EllipseStroke = _p1StrokeDefault;
+                P1EllipseFill = _p1FillDefault;
+            }
+            else if (playerIdx == 1)
+            {
+                P2EllipseStroke = new SolidColorBrush(Colors.White);
+                P2EllipseFill = new SolidColorBrush(Color.FromArgb(0x88, 0xFF, 0xFF, 0xFF));
+                await Task.Delay(flashMs);
+                P2EllipseStroke = _p2StrokeDefault;
+                P2EllipseFill = _p2FillDefault;
+            }
+        }
+
+        // Show hit text above the player's ellipse briefly.
+        private async void ShowHitText(int playerIdx, string text, Brush brush)
+        {
+            const int showMs = 600;
+
+            if (playerIdx == 0)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    P1HitText = text;
+                    P1HitBrush = brush;
+                    P1HitVisible = true;
+                });
+
+                await Task.Delay(showMs);
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    P1HitVisible = false;
+                    P1HitText = string.Empty;
+                });
+            }
+            else if (playerIdx == 1)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    P2HitText = text;
+                    P2HitBrush = brush;
+                    P2HitVisible = true;
+                });
+
+                await Task.Delay(showMs);
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    P2HitVisible = false;
+                    P2HitText = string.Empty;
+                });
             }
         }
 

@@ -91,6 +91,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                 case MsgType.Abort: return _json.Deserialize<AbortMsg>(line);
                 case MsgType.System: return _json.Deserialize<SystemMsg>(line);
 
+
+                case MsgType.SelectDifficulty: return _json.Deserialize<SelectDifficultyMsg>(line);
+                case MsgType.Ready: return _json.Deserialize<ReadyMsg>(line);
+
+
                 default:
                     return baseMsg;
             }

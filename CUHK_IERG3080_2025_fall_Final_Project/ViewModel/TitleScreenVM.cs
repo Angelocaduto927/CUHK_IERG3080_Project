@@ -35,22 +35,24 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 SetMode(GameModeManager.Mode.OnlineMultiPlayer);
 
-                // ✅ 弹出 LobbyWindow，只有成功连接才进入选歌
                 var lobby = new LobbyWindow();
                 lobby.Owner = Application.Current.MainWindow;
 
                 bool? ok = lobby.ShowDialog();
                 if (ok == true)
                 {
-                    // 连接成功：进入选歌界面
+                    // ★关键：把已经连接好的 Session 保存到全局
+                    GameModeManager.OnlineSession = lobby.VM.Session;
+
                     _navigateToSongSelection?.Invoke();
                 }
                 else
                 {
-                    // 取消/失败：回到 Title，不跳转
-                    // （可选）如果你想：GameModeManager.SetMode(GameModeManager.Mode.SinglePlayer);
+                    // 可选：取消就清掉，避免残留
+                    GameModeManager.OnlineSession = null;
                 }
             });
+
         }
 
         private void SetMode(GameModeManager.Mode mode)

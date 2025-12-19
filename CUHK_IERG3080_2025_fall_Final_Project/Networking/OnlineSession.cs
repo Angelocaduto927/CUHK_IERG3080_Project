@@ -32,6 +32,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                     .ToArray();
             }
         }
+        public StartMsg LastStartMsg { get; private set; }
+
 
         public event Action<string> OnLog;
         public event Action<int> OnConnected;
@@ -110,10 +112,19 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             return SendAsync(new SelectSongMsg { SongId = songId, Difficulty = difficulty });
         }
 
-        public Task SendStartAsync(int startInMs = 2000)
+        public Task SendStartAsync(int startInMs = 1500)
         {
-            return SendAsync(new StartMsg { StartInMs = startInMs });
+            long startAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + startInMs;
+            var msg = new StartMsg { StartInMs = startInMs, StartAtUnixMs = startAt };
+
+            // Host 本机也要开始：直接触发本地 OnStart（否则 Host 只发给 Joiner）
+            LastStartMsg = msg;
+    
+            OnStart?.Invoke(msg);
+
+            return SendAsync(msg);
         }
+
 
         public Task SendInputAsync(int slot, string noteType, double atMs)
         {
@@ -137,11 +148,28 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
         private void HandleIncoming(NetMsg msg)
         {
+
+            if (msg is SelectDifficultyMsg dif) { OnSelectDifficulty?.Invoke(dif); return; }
+
+            if (msg is ReadyMsg r)
+            {
+                if (r.Slot == 1) Slot1Ready = r.IsReady;
+                if (r.Slot == 2) Slot2Ready = r.IsReady;
+                OnReady?.Invoke(r);
+                return;
+            }
+
             var sel = msg as SelectSongMsg;
             if (sel != null) { if (OnSelectSong != null) OnSelectSong(sel); return; }
 
             var st = msg as StartMsg;
-            if (st != null) { if (OnStart != null) OnStart(st); return; }
+            if (st != null)
+            {
+                LastStartMsg = st;           // ★新增
+                OnStart?.Invoke(st);
+                return;
+            }
+
 
             var inp = msg as InputMsg;
             if (inp != null) { if (OnInput != null) OnInput(inp); return; }
@@ -174,6 +202,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             IsConnected = false;
             IsHost = false;
             LocalSlot = 0;
+            LastStartMsg = null;
         }
 
         public void Dispose()
@@ -198,6 +227,34 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             {
                 return new string[0];
             }
+    
         }
+
+        public bool Slot1Ready { get; private set; }
+        public bool Slot2Ready { get; private set; }
+
+        public event Action<SelectDifficultyMsg> OnSelectDifficulty;
+        public event Action<ReadyMsg> OnReady;
+
+
+        public Task SendSelectDifficultyAsync(int slot, string difficulty)
+        {
+            return SendAsync(new SelectDifficultyMsg { Slot = slot, Difficulty = difficulty });
+        }
+
+        public Task SendReadyAsync(int slot, bool isReady)
+        {
+            // 本地也记录（这样就算没人订阅事件，状态也不会丢）
+            if (slot == 1) Slot1Ready = isReady;
+            if (slot == 2) Slot2Ready = isReady;
+
+            return SendAsync(new ReadyMsg { Slot = slot, IsReady = isReady });
+        }
+
+
+
+
+
     }
+
 }

@@ -17,6 +17,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Shared
         public const string Ping = "Ping";             // optional
         public const string Pong = "Pong";             // optional
         public const string System = "System";         // optional log
+
+        public const string SelectDifficulty = "SelectDifficulty";
+        public const string Ready = "Ready";
+
     }
 
     // === 基类 ===
@@ -55,8 +59,13 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Shared
     public sealed class StartMsg : NetMsg
     {
         public int StartInMs { get; set; } = 2000;
+
+        // 新增：绝对开始时间（UTC Unix ms），用于“同时开始”
+        public long StartAtUnixMs { get; set; } = 0;
+
         public StartMsg() { Type = MsgType.Start; }
     }
+
 
     // === 选歌同步（房主发）===
     [Serializable]
@@ -92,5 +101,24 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Shared
     {
         public string Text { get; set; } = "";
         public SystemMsg() { Type = MsgType.System; }
+
+
     }
+
+    [Serializable]
+    public sealed class SelectDifficultyMsg : NetMsg
+    {
+        public int Slot { get; set; }        // 1 or 2
+        public string Difficulty { get; set; } = "Easy"; // "Easy"/"Hard"
+        public SelectDifficultyMsg() { Type = MsgType.SelectDifficulty; }
+    }
+
+    [Serializable]
+    public sealed class ReadyMsg : NetMsg
+    {
+        public int Slot { get; set; }        // 1 or 2
+        public bool IsReady { get; set; } = true;
+        public ReadyMsg() { Type = MsgType.Ready; }
+    }
+
 }

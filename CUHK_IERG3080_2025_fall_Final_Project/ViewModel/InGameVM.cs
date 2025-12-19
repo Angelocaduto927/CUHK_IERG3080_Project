@@ -1,22 +1,33 @@
-﻿using System;
+﻿using CUHK_IERG3080_2025_fall_Final_Project.Model;
+using CUHK_IERG3080_2025_fall_Final_Project.Networking;
+using CUHK_IERG3080_2025_fall_Final_Project.Utility;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Threading.Tasks;
+using CUHK_IERG3080_2025_fall_Final_Project.Shared;
 
-using CUHK_IERG3080_2025_fall_Final_Project.Model;
-using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
     public class InGameVM : INotifyPropertyChanged
     {
+
+        private OnlineSession _session;
+        private bool _started;
+        private bool _isOnline;
+        private bool _startScheduled;
+        private readonly TaskCompletionSource<bool> _engineReadyTcs =
+            new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+
         private GameEngine _engine;
         private bool _initialized = false;
         private readonly Action _onGameOver;
@@ -64,7 +75,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         public double CurrentTime => _engine?.CurrentTime / 1000.0 ?? 0;
         public double SongDuration => 180.0;
-        public bool IsMultiplayer => _engine?.Players?.Count > 1;
+        public bool IsMultiplayer => IsOnline || (_engine?.Players?.Count > 1);
+
 
         // Player 1 Properties
         public string P1Name => (_engine?.Players != null && _engine.Players.Count > 0) ? _engine.Players[0].PlayerName : "Player 1";
@@ -252,6 +264,22 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             _musicManager = new MusicManager();
             _musicManager.MusicEnded += OnMusicEnded;
 
+
+
+            _isOnline = GameModeManager.CurrentMode is OnlineMultiPlayerMode
+            && GameModeManager.OnlineSession != null
+            && GameModeManager.OnlineSession.IsConnected;
+
+            if (_isOnline)
+            {
+                _session = GameModeManager.OnlineSession;
+                _session.OnStart += OnStartFromNet;
+
+                if (_session.LastStartMsg != null)   // ★新增
+                    OnStartFromNet(_session.LastStartMsg);
+            }
+
+
             EnsureInitialized();
         }
 
@@ -276,24 +304,94 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     var playersField = GameModeManager.CurrentMode.GetType().GetField("_players");
                     var players = playersField?.GetValue(GameModeManager.CurrentMode) as List<PlayerManager>;
 
+                    if (IsOnline && players != null)
+                    {
+                        // 如果你的 OnlineMode 意外只创建了 1 个 player，这里补齐到 2 个
+                        while (players.Count < 2)
+                        {
+                            players.Add(new PlayerManager(players.Count, isLocalPlayer: false));
+                        }
+                    }
+
+
                     if (players != null && players.Count > 0)
                     {
                         _engine = new GameEngine();
                         _engine.Initialize(players);
-                        
 
                         AudioManager.StopBackgroundMusic();
 
-                        var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Song", $"{SongManager.CurrentSong}.mp3");
-                        _musicManager.Play(filePath);
-                        _engine.StartGame();
-                        StartRenderLoop();
+                        // ★告诉“等待开始”的逻辑：引擎准备好了
+                        _engineReadyTcs.TrySetResult(true);
 
+                        // ★非 Online：保持原逻辑（初始化完立刻开始）
+                        if (!_isOnline)
+                        {
+                            StartLocalGameNow();
+                        }
+                        // ★Online：什么都不做，等 StartMsg 来触发 StartLocalGameNow()
+
+                        OnPropertyChanged(nameof(IsMultiplayer));
                         OnPropertyChanged("");
+
+
                     }
                 }
             }), System.Windows.Threading.DispatcherPriority.Loaded);
         }
+
+
+
+        private void OnStartFromNet(StartMsg msg)
+        {
+            if (msg == null) return;
+            if (_startScheduled) return;   // 防止重复 start
+            _startScheduled = true;
+
+            _ = BeginStartAtAsync(msg);
+        }
+
+        private async Task BeginStartAtAsync(StartMsg msg)
+        {
+            // 等待引擎/谱面初始化完成（EnsureInitialized 会 set）
+            await _engineReadyTcs.Task;
+
+            if (_started) return;
+            _started = true;
+
+            long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            // 兼容：如果你还没实现 StartAtUnixMs，就退回用 StartInMs
+            long startAt = (msg.StartAtUnixMs > 0)
+                ? msg.StartAtUnixMs
+                : now + msg.StartInMs;
+
+            int delayMs = (int)Math.Max(0, startAt - now);
+            if (delayMs > 0)
+                await Task.Delay(delayMs);
+
+            // ⚠️ UI/渲染相关操作放 UI 线程更稳
+            Application.Current.Dispatcher.Invoke(StartLocalGameNow);
+        }
+
+        private void StartLocalGameNow()
+        {
+            if (_engine == null) return;
+            if (_engine.State == GameEngine.GameState.Playing) return;
+
+            AudioManager.StopBackgroundMusic();
+
+            var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                "Assets", "Song", $"{SongManager.CurrentSong}.mp3");
+
+            _musicManager.Play(filePath);
+
+            _engine.StartGame();
+            StartRenderLoop();
+
+            OnPropertyChanged(""); // 触发 UI 全刷新
+        }
+
 
         private void StartRenderLoop()
         {
@@ -551,6 +649,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             StopRenderLoop();
 
+
+            if (_session != null)
+            {
+                _session.OnStart -= OnStartFromNet;
+            }
+
             var window = Application.Current.MainWindow;
             if (window != null)
                 window.PreviewKeyDown -= OnKeyDown;
@@ -576,6 +680,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         public event PropertyChangedEventHandler PropertyChanged;
         private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+        private bool IsOnline =>
+            GameModeManager.CurrentMode is OnlineMultiPlayerMode
+             && GameModeManager.OnlineSession != null
+             && GameModeManager.OnlineSession.IsConnected;
+
     }
 
     public class NoteVM : INotifyPropertyChanged

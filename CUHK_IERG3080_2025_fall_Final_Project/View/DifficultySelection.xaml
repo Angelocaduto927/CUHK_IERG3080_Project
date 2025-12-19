@@ -51,10 +51,13 @@
 
                 <!-- Player 1 Difficulty Selection -->
                 <Border Grid.Column="0"
+                        
                         Background="#80000000"
                         CornerRadius="12"
                         Padding="30"
-                        Margin="77,0,0,0" HorizontalAlignment="Left" Width="400">
+                        Margin="77,0,0,0" HorizontalAlignment="Left" Width="400"
+                        IsEnabled="{Binding CanEditP1}">
+                    
                     <StackPanel VerticalAlignment="center" >
                         <TextBlock Text="PLAYER 1"
                                    Foreground="#FF6B4E"
@@ -109,10 +112,12 @@
 
                 <!-- Player 2 Difficulty Selection (Only in Multiplayer) -->
                 <Border Grid.Column="2"
+                        
                         Background="#80000000"
                         CornerRadius="12"
                         Padding="30"
                         Margin="20,0,0,0" Width="400"
+                        IsEnabled="{Binding CanEditP2}"
                         Visibility="{Binding IsMultiplayer, Converter={StaticResource BoolToVis}}">
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="PLAYER 2"

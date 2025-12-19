@@ -4,6 +4,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
@@ -66,13 +67,14 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             get { return IsConnected ? ("Connected as Player " + Session.LocalSlot) : "Not connected"; }
         }
 
-        // 你的 RelayCommand<T> 只有 1 参数构造函数，所以我们只传 execute
-        public RelayCommand<object> StartHostCommand { get; }
-        public RelayCommand<object> JoinHostCommand { get; }
-        public RelayCommand<object> CopyAddressCommand { get; }
-        public RelayCommand<object> OkCommand { get; }
-        public RelayCommand<object> CloseCommand { get; }
+        // ✅ 对外暴露 ICommand（最稳）
+        public ICommand StartHostCommand { get; }
+        public ICommand JoinHostCommand { get; }
+        public ICommand CopyAddressCommand { get; }
+        public ICommand OkCommand { get; }
+        public ICommand CloseCommand { get; }
 
+        // Window 会订阅这个事件来 Close + DialogResult
         public event Action<bool> RequestClose;
 
         public LobbyViewModel()
@@ -98,11 +100,17 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 });
             };
 
-            StartHostCommand = new RelayCommand<object>(async o => await StartHostAsync());
-            JoinHostCommand = new RelayCommand<object>(async o => await JoinHostAsync());
-            CopyAddressCommand = new RelayCommand<object>(o => CopySelectedAddress());
+            StartHostCommand = new RelayCommand(
+                 _ => { _ = StartHostAsync(); },
+                 _ => !IsBusy && !IsConnected && !Session.IsHost);
 
-            OkCommand = new RelayCommand<object>(o =>
+            JoinHostCommand = new RelayCommand(
+                _ => { _ = JoinHostAsync(); },
+                _ => !IsBusy && !IsConnected && !Session.IsHost);
+
+            CopyAddressCommand = new RelayCommand(_ => CopySelectedAddress());
+
+            OkCommand = new RelayCommand(_ =>
             {
                 if (!IsConnected)
                 {
@@ -112,7 +120,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 if (RequestClose != null) RequestClose(true);
             });
 
-            CloseCommand = new RelayCommand<object>(o =>
+            CloseCommand = new RelayCommand(_ =>
             {
                 if (RequestClose != null) RequestClose(false);
             });
@@ -120,12 +128,14 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private async Task StartHostAsync()
         {
-            int port;
-            if (!TryParsePort(out port)) return;
-
-            Logs.Add("[Lobby] Starting host...");
+            if (IsBusy) return;
+            IsBusy = true;
             try
             {
+                int port;
+                if (!TryParsePort(out port)) return;
+
+                Logs.Add("[Lobby] Starting host...");
                 await Session.StartHostAsync(port, Name, RoomId);
                 RefreshShareAddresses();
             }
@@ -133,23 +143,52 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 Logs.Add("[Error] " + ex.Message);
             }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
         private async Task JoinHostAsync()
         {
-            int port;
-            if (!TryParsePort(out port)) return;
+            if (IsBusy) return;
+            if (Session.IsHost)
+            {
+                Logs.Add("[Lobby] You are hosting already. Please open a 2nd instance to join.");
+                return;
+            }
 
-            Logs.Add("[Lobby] Joining " + HostIp + ":" + port + " ...");
+            IsBusy = true;
             try
             {
-                await Session.JoinHostAsync(HostIp, port, Name);
+                int defaultPort;
+                if (!TryParsePort(out defaultPort)) return;
+
+                string host;
+                int port;
+
+                if (!TryParseEndpoint(HostIp, defaultPort, out host, out port))
+                {
+                    Logs.Add("[Error] Invalid address. Use: 192.168.x.x or 192.168.x.x:5050");
+                    return;
+                }
+
+                HostIp = host;
+                PortText = port.ToString();
+
+                Logs.Add("[Lobby] Joining " + host + ":" + port + " ...");
+                await Session.JoinHostAsync(host, port, Name);
             }
             catch (Exception ex)
             {
                 Logs.Add("[Error] " + ex.Message);
             }
+            finally
+            {
+                IsBusy = false;
+            }
         }
+
 
         private void CopySelectedAddress()
         {
@@ -196,5 +235,71 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             // 暂时不 Dispose Session，避免 OK 之后断线
         }
+
+        private bool TryParseEndpoint(string input, int defaultPort, out string host, out int port)
+        {
+            host = "";
+            port = defaultPort;
+
+            if (string.IsNullOrWhiteSpace(input)) return false;
+
+            input = input.Trim();
+
+            // 兼容中文冒号：192.168.1.5：5050
+            input = input.Replace('：', ':');
+
+            // 支持用户粘贴 http://192.168.1.5:5050/xxx
+            if (input.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                input.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                Uri uri;
+                if (Uri.TryCreate(input, UriKind.Absolute, out uri))
+                {
+                    host = uri.Host;
+                    port = uri.Port;
+                    return true;
+                }
+                return false;
+            }
+
+            // 去掉可能的路径部分 192.168.1.5:5050/abc
+            int slash = input.IndexOf('/');
+            if (slash >= 0) input = input.Substring(0, slash);
+
+            // 支持 host:port（只处理一个冒号的情况，避免 IPv6 麻烦）
+            int firstColon = input.IndexOf(':');
+            int lastColon = input.LastIndexOf(':');
+            if (firstColon > 0 && firstColon == lastColon)
+            {
+                string h = input.Substring(0, firstColon).Trim();
+                string pStr = input.Substring(firstColon + 1).Trim();
+
+                int p;
+                if (!string.IsNullOrEmpty(h) && int.TryParse(pStr, out p))
+                {
+                    host = h;
+                    port = p;
+                    return true;
+                }
+            }
+
+            // 否则就是纯 host/ip
+            host = input;
+            port = defaultPort;
+            return true;
+        }
+        private bool _isBusy;
+        public bool IsBusy
+        {
+            get { return _isBusy; }
+            private set
+            {
+                _isBusy = value;
+                OnPropertyChanged(nameof(IsBusy));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
     }
+
 }

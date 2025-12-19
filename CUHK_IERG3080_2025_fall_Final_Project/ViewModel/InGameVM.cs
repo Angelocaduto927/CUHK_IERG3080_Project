@@ -260,7 +260,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (_initialized) return;
             _initialized = true;
 
-            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            Application.Current.Dispatcher.BeginInvoke(new Action(async () =>
             {
                 var window = Application.Current.MainWindow;
                 if (window != null)
@@ -280,13 +280,13 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     {
                         _engine = new GameEngine();
                         _engine.Initialize(players);
-                        _engine.StartGame();
+                        
 
                         AudioManager.StopBackgroundMusic();
+
                         var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Song", $"{SongManager.CurrentSong}.mp3");
                         _musicManager.Play(filePath);
-
-                        // ✅ CHANGED: 开始渲染循环
+                        _engine.StartGame();
                         StartRenderLoop();
 
                         OnPropertyChanged("");

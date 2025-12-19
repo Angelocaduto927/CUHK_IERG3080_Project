@@ -90,51 +90,59 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
         }
 
 
-        private static void PlayClickSound(object sender, RoutedEventArgs e)
+        // Unified FX player. By default it creates a dedicated MediaPlayer and closes it after playback.
+        // Pass reuseSharedPlayer = true to use the shared _effectPlayer (keeps previous click behavior).
+        public static void PlayFx(string fileName, bool reuseSharedPlayer = false)
         {
             try
             {
-                // Click sound effect file (local path)
-                Uri uri = new Uri(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Sound", "click.wav"));
-                _effectPlayer.Open(uri);
-                _effectPlayer.Volume = EffectVolume;
-                _effectPlayer.Play();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to play click sound: {ex.Message}");
-            }
-        }
+                var fxPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Sound", fileName);
+                Uri uri = new Uri(fxPath);
 
-        // New: play a hit sound effect. Uses a dedicated MediaPlayer instance and closes it after playback.
-        public static void PlayHitSound()
-        {
-            try
-            {
-                var hitPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Sound", "hit.wav");
-
-                Uri uri = new Uri(hitPath);
-                var player = new MediaPlayer();
-                player.Open(uri);
-                player.Volume = EffectVolume;
-
-                // Ensure resources are released after playback
-                player.MediaEnded += (s, e) =>
+                if (reuseSharedPlayer)
                 {
-                    try
+                    // Use the shared effect player (click behavior previously used this player)
+                    if (_effectPlayer == null)
                     {
-                        player.Close();
+                        _effectPlayer = new MediaPlayer();
                     }
-                    catch { }
-                };
 
-                player.Play();
+                    _effectPlayer.Open(uri);
+                    _effectPlayer.Volume = EffectVolume;
+                    _effectPlayer.Play();
+                }
+                else
+                {
+                    // Create a dedicated player and ensure resources are released after playback
+                    var player = new MediaPlayer();
+                    player.Open(uri);
+                    player.Volume = EffectVolume;
+
+                    player.MediaEnded += (s, e) =>
+                    {
+                        try
+                        {
+                            player.Close();
+                        }
+                        catch { }
+                    };
+
+                    player.Play();
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to play hit sound: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Failed to play fx '{fileName}': {ex.Message}");
             }
         }
+
+        // Shared click handler (replaces the previous PlayClickSound method).
+        // It directly calls PlayFx. The additional parameter previously passed was redundant,
+        // so we use the simpler call.
+        private static readonly RoutedEventHandler SharedClickHandler = (s, e) =>
+        {
+            PlayFx("click.wav");
+        };
 
         // Attached property for enabling/disabling click sound
         public static readonly DependencyProperty EnableClickSoundProperty =
@@ -164,12 +172,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
                 if ((bool)e.NewValue)
                 {
                     // Subscribe to the Click event of the button to play the click sound
-                    button.Click += PlayClickSound;
+                    button.Click += SharedClickHandler;
                 }
                 else
                 {
                     // Unsubscribe from the Click event of the button
-                    button.Click -= PlayClickSound;
+                    button.Click -= SharedClickHandler;
                 }
             }
         }

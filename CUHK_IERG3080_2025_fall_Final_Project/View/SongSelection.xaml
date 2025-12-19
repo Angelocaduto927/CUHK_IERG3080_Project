@@ -56,10 +56,30 @@
                         Height="500"
                         Margin="0,0,16,0"
                         CornerRadius="8"
-                        Padding="12">
+                        Padding="12"
+                        Cursor="Hand"
+                        MouseLeftButtonDown="OnSong1Click">
                     <Border.Background>
-                        <ImageBrush ImageSource="/Assets/Song/Utada_Hikaru_-_One_Last_Kiss_Cover.png" Stretch="UniformToFill" />
+                        <ImageBrush ImageSource="/Assets/Song/One_Last_Kiss_Cover.png" Stretch="UniformToFill" />
                     </Border.Background>
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#000000" BlurRadius="20" ShadowDepth="5" Opacity="0.6"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Effect">
+                                        <Setter.Value>
+                                            <DropShadowEffect Color="#FFD700" BlurRadius="30" ShadowDepth="0" Opacity="0.8"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
 
                     <!-- Overlay + content -->
                     <Grid>
@@ -84,7 +104,7 @@
                                        FontWeight="SemiBold"
                                        HorizontalAlignment="Center"
                                        Margin="0,25,0,156" Width="200" Grid.RowSpan="2" />
-                            <Image Source="/Assets/Song/Utada_Hikaru_-_One_Last_Kiss_Cover.png"
+                            <Image Source="/Assets/Song/One_Last_Kiss_Cover.png"
                                     Stretch="UniformToFill"
                                     Margin="76,90,76,96" Grid.RowSpan="2"/>
                             <Grid Grid.Row="1" />
@@ -92,7 +112,7 @@
                                         Orientation="Vertical"
                                         HorizontalAlignment="Center"
                                         Margin="0,8,0,0" Width="150">
-
+                                <!--
                                 <ToggleButton Content="EASY"
                                               Width="150"
                                               Height="60"
@@ -113,7 +133,7 @@
                                               FontWeight="Bold"
                                               Background="#40000000"
                                               Foreground="#C0000000"
-                                              IsChecked="{Binding IsHardASelected, Mode=TwoWay}" />
+                                              IsChecked="{Binding IsHardASelected, Mode=TwoWay}" /> -->
                             </StackPanel>
 
                         </Grid>
@@ -125,11 +145,31 @@
                         Height="500"
                         Margin="0,0,16,0"
                         CornerRadius="8"
-                        Padding="12">
+                        Padding="12"
+                        Cursor="Hand"
+                        MouseLeftButtonDown="OnSong2Click">
                     <Border.Background>
-                        <ImageBrush ImageSource="/Assets/Song/Kenshi_Yonezu_-_Iris_Out_Cover.png" Stretch="UniformToFill" />
+                        <ImageBrush ImageSource="/Assets/Song/Iris_Out_Cover.png" Stretch="UniformToFill" />
 
                     </Border.Background>
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#000000" BlurRadius="20" ShadowDepth="5" Opacity="0.6"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Effect">
+                                        <Setter.Value>
+                                            <DropShadowEffect Color="#FFD700" BlurRadius="30" ShadowDepth="0" Opacity="0.8"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
 
                     <Grid>
                         <Rectangle Fill="#40000000" RadiusX="6" RadiusY="6" />
@@ -146,8 +186,8 @@
                             <Grid Grid.RowSpan="2">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" MinHeight="138" />
-                                    <RowDefinition />
-                                    <RowDefinition Height="Auto" MinHeight="165" />
+                                    <RowDefinition Height="173*" />
+                                    <RowDefinition Height="165*" />
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Row="0"
@@ -158,7 +198,7 @@
                                        HorizontalAlignment="Center"
                                        Margin="0,25,0,0" />
 
-                                <Image Source="/Assets/Song/Kenshi_Yonezu_-_Iris_Out_Cover.png"
+                                <Image Source="/Assets/Song/IRIS_OUT_Cover.png"
                                            Stretch="UniformToFill"
                                            Margin="72,92,80,87" Grid.RowSpan="2"/>
                                 <Grid Grid.Row="1" />
@@ -168,6 +208,7 @@
                                             HorizontalAlignment="Center"
                                             Margin="0,8,0,0" Width="150">
 
+                                    <!--
                                     <ToggleButton Content="EASY"
                                                   Width="150"
                                                   Height="60"
@@ -188,7 +229,7 @@
                                                   FontWeight="Bold"
                                                   Background="#40000000"
                                                   Foreground="#C0000000"
-                                                  IsChecked="{Binding IsHardBSelected, Mode=TwoWay}" />
+                                                  IsChecked="{Binding IsHardBSelected, Mode=TwoWay}" /> -->
                                 </StackPanel>
                             </Grid>
                         </Grid>
@@ -217,6 +258,7 @@
                                 Command="{Binding DataContext.TitleScreenCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 ToolTip="Back to title" />
 
+                    <!--
                     <Button Content="PLAY"
                                 Width="200"
                                 Height="60"
@@ -224,7 +266,7 @@
                                 FontSize="20"
                                 Command="{Binding DataContext.InGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 ToolTip="Start game"
-                                IsEnabled="{Binding IsPlayButtonEnabled}" />
+                                IsEnabled="{Binding IsPlayButtonEnabled}" /> -->
                 </StackPanel>
 
                 <Grid Grid.Column="3" />

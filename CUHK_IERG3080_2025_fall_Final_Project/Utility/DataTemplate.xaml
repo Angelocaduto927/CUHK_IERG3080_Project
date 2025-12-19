@@ -11,6 +11,10 @@
         <view:SongSelection />
     </DataTemplate>
 
+    <DataTemplate DataType="{x:Type vm:DifficultySelectionVM}">
+        <view:DifficultySelection />
+    </DataTemplate>
+
     <DataTemplate DataType="{x:Type vm:SettingVM}">
         <view:Setting />
     </DataTemplate>

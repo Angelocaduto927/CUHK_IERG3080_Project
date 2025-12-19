@@ -1,0 +1,181 @@
+﻿<UserControl x:Class="CUHK_IERG3080_2025_fall_Final_Project.View.DifficultySelection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:utility="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.Utility"
+             xmlns:vm="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.ViewModel"
+             mc:Ignorable="d"
+             d:DesignHeight="450"
+             d:DesignWidth="800">
+
+    <UserControl.Resources>
+        <utility:BoolToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+
+
+    <Viewbox Stretch="UniformToFill">
+        <Grid Width="1536" Height="1024">
+            <Grid.Background>
+                <ImageBrush ImageSource="/Assets/Image/SongSelectBG.png" Stretch="Fill"/>
+            </Grid.Background>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" MinHeight="80"/>
+                <!-- Title -->
+                <RowDefinition/>
+                <!-- Content -->
+                <RowDefinition Height="Auto" MinHeight="365"/>
+                <!-- Buttons -->
+            </Grid.RowDefinitions>
+
+            <!-- Title -->
+            <TextBlock Grid.Row="0"
+                       Text="{Binding SongDisplayName}"
+                       Foreground="#FFFFFF"
+                       FontSize="50"
+                       FontWeight="SemiBold"
+                       HorizontalAlignment="Center"
+                       Margin="0,4,0,12" Width="0"/>
+
+            <!-- Content -->
+            <Grid Grid.Row="1" Margin="100,20,100,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <!-- Player 1 -->
+                    <ColumnDefinition Width="Auto" MinWidth="300"/>
+                    <!-- Cover -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Player 2 (if multiplayer) -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Player 1 Difficulty Selection -->
+                <Border Grid.Column="0"
+                        Background="#80000000"
+                        CornerRadius="12"
+                        Padding="30"
+                        Margin="77,0,0,0" HorizontalAlignment="Left" Width="400">
+                    <StackPanel VerticalAlignment="center" >
+                        <TextBlock Text="PLAYER 1"
+                                   Foreground="#FF6B4E"
+                                   FontSize="50"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,40"/>
+
+                        <TextBlock Text="Select Difficulty"
+                                   Foreground="#FFFFFF"
+                                   FontSize="24"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,30"/>
+
+
+                        <ToggleButton Content="EASY"
+                              Width="250"
+                              Height="80"
+                              FontSize="32"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Margin="0,0,0,8"
+                              Padding="6,4"
+                              IsChecked="{Binding IsP1EasySelected, Mode=TwoWay}" >
+                        </ToggleButton>
+                        <ToggleButton Content="HARD"
+                              Width="250"
+                              Height="80"
+                              FontSize="32"
+                              Padding="6,4"
+                              IsChecked="{Binding IsP1HardSelected, Mode=TwoWay}">
+                        </ToggleButton>
+                    </StackPanel>
+                </Border>
+
+
+                <!-- Song Cover (Center) -->
+                <Border Grid.Column="1"
+                        Width="300"
+                        Height="450"
+                        CornerRadius="12"
+                        VerticalAlignment="Center">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#000000" 
+                                        BlurRadius="30" 
+                                        ShadowDepth="8" 
+                                        Opacity="0.8"/>
+                    </Border.Effect>
+                    <Image Source="{Binding SongCoverPath}"
+                           Stretch="Uniform"/>
+                </Border>
+
+                <!-- Player 2 Difficulty Selection (Only in Multiplayer) -->
+                <Border Grid.Column="2"
+                        Background="#80000000"
+                        CornerRadius="12"
+                        Padding="30"
+                        Margin="20,0,0,0" Width="400"
+                        Visibility="{Binding IsMultiplayer, Converter={StaticResource BoolToVis}}">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="PLAYER 2"
+                                   Foreground="#4E9AFF"
+                                   FontSize="50"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,40"/>
+
+                        <TextBlock Text="Select Difficulty"
+                                   Foreground="#FFFFFF"
+                                   FontSize="24"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,30"/>
+
+                        <ToggleButton Content="EASY"
+                              Width="250"
+                              Height="80"
+                              FontSize="32"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Margin="0,0,0,8"
+                              Padding="6,4"
+                              IsChecked="{Binding IsP2EasySelected, Mode=TwoWay}"> 
+                        </ToggleButton>
+
+                        <ToggleButton Content="HARD"
+                              Width="250"
+                              Height="80"
+                              FontSize="32"
+                              Padding="6,4"
+                              IsChecked="{Binding IsP2HardSelected, Mode=TwoWay}" >
+
+                        </ToggleButton>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Buttons -->
+            <StackPanel Grid.Row="2"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="0,20,0,40" Width="470">
+                <Button Content="BACK"
+                        Width="220"
+                        Height="70"
+                        Margin="0,0,30,0"
+                        FontSize="24"
+                        FontWeight="Bold"
+                        VerticalAlignment="Top"
+                        Command="{Binding DataContext.SongSelectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+
+                <Button Content="PLAY"
+                        Width="220"
+                        Height="70"
+                        FontSize="24"
+                        FontWeight="Bold"
+                        VerticalAlignment="Top"
+                        Command="{Binding DataContext.InGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        ToolTip="Start game"
+                        IsEnabled="{Binding IsPlayButtonEnabled}">
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Viewbox>
+</UserControl>

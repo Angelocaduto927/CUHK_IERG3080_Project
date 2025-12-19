@@ -11,6 +11,7 @@
 			
 				<ResourceDictionary Source="Style/Button.xaml"/>
                 <ResourceDictionary Source="Utility/DataTemplate.xaml"/>
+                <ResourceDictionary Source="Style/ToggleButton.xaml"/>
 
             </ResourceDictionary.MergedDictionaries>
 

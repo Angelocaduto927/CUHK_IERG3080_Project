@@ -1,0 +1,28 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style TargetType="ToggleButton">
+        <Setter Property="Background" Value="#FF1E3A8A"/>
+        <Setter Property="Foreground" Value="#FFFFD700"/>
+        <Setter Property="BorderBrush" Value="#FFFFD700"/>
+        <Setter Property="BorderThickness" Value="4"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Style.Triggers>
+            <!-- 选中状态 -->
+            <Trigger Property="IsChecked" Value="True">
+                <Setter Property="Background" Value="#FF1E3A8A"/>
+                <Setter Property="Foreground" Value="Black"/>
+                <Setter Property="BorderBrush" Value="Black"/>
+            </Trigger>
+            <!-- 未选中 + 悬停 -->
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsMouseOver" Value="True"/>
+                    <Condition Property="IsChecked" Value="False"/>
+                </MultiTrigger.Conditions>
+                <MultiTrigger.Setters>
+                    <Setter Property="Background" Value="#FF3B82F6"/>
+                </MultiTrigger.Setters>
+            </MultiTrigger>
+        </Style.Triggers>
+    </Style>
+</ResourceDictionary>

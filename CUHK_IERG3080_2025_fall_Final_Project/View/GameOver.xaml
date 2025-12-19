@@ -3,162 +3,244 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:CUHK_IERG3080_2025_fall_Final_Project.ViewModel"
              mc:Ignorable="d"
              d:DesignHeight="450"
              d:DesignWidth="800"
-             Padding="16">
+             Padding="0">
 
-	<UserControl.Background>
-		<ImageBrush ImageSource="/Assets/Image/GameOverBG.png"
-                    Stretch="UniformToFill"/>
-	</UserControl.Background>
+    <UserControl.Resources>
+        <vm:BoolToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
 
-	<Grid>
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="*"/>
-			<RowDefinition Height="Auto"/>
-		</Grid.RowDefinitions>
+    <!-- Background moved to UserControl so there is no white border around the viewbox -->
+    <UserControl.Background>
+        <ImageBrush ImageSource="/Assets/Image/GameOverBG.png" Stretch="UniformToFill"/>
+    </UserControl.Background>
 
-		<!-- GAME OVER title -->
-		<TextBlock Grid.Row="0"
-                   Text="Game Over"
-                   Foreground="White"
-                   FontSize="18"
-                   FontWeight="SemiBold"
-                   HorizontalAlignment="Center"
-                   Margin="0,20,0,0"/>
+    <!-- Use Uniform to avoid cropping; content will letterbox on mismatched aspect ratios -->
+    <Viewbox Stretch="Uniform">
+        <!-- Use a fixed design resolution so scaling matches TitleScreen -->
+        <Grid Width="1536" Height="1024">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-		<!-- Score Display Container -->
-		<Border Grid.Row="1"
-                Width="Auto"
-                Margin="0,20"
-                Background="#CC1E1E1E"
-                BorderBrush="#FFD4AF37"
-                BorderThickness="2"
-                CornerRadius="8"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
-			<Border.Effect>
-				<DropShadowEffect Color="#803B82F6"
-                                  BlurRadius="20"
-                                  ShadowDepth="0"
-                                  Opacity="0.6"/>
-			</Border.Effect>
+                <!-- GAME OVER title -->
+                <TextBlock Grid.Row="0"
+                           Text="Game Over"
+                           Foreground="White"
+                           FontSize="31"
+                           FontWeight="SemiBold"
+                           HorizontalAlignment="Center"
+                           Margin="0,20,0,0"/>
 
-			<!-- MAIN CONTENT -->
-			<StackPanel Orientation="Horizontal"
-						HorizontalAlignment="Center">
-				<StackPanel Orientation="Vertical"
-							Margin="48,0,24,0"
-                            HorizontalAlignment="Center">
-				    <!-- Grade -->
-				    <TextBlock Text="{Binding Grade}"
-                               Foreground="#FFD4AF37"
-                               FontSize="120"
-                               FontWeight="Bold"
-                               HorizontalAlignment="Center">
-					    <TextBlock.Effect>
-						    <DropShadowEffect Color="#FFD4AF37"
-                                              BlurRadius="18"
-                                              ShadowDepth="0"
-                                              Opacity="0.9"/>
-					    </TextBlock.Effect>
-				    </TextBlock>
+                <!-- Score Display Container -->
+                <Border Grid.Row="1"
+                        Width="Auto"
+                        Margin="0,20"
+                        Background="#CC1E1E1E"
+                        BorderBrush="#FFD4AF37"
+                        BorderThickness="2"
+                        CornerRadius="8"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#803B82F6"
+                                          BlurRadius="20"
+                                          ShadowDepth="0"
+                                          Opacity="0.6"/>
+                    </Border.Effect>
 
-				    <!-- Score -->
-				    <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Center"
-                                Margin="0,0,0,16">
-					    <TextBlock Text="SCORE "
-                                   Foreground="#FFD4AF37"
-                                   FontSize="24"
-                                   FontWeight="SemiBold"/>
-					    <TextBlock Text="{Binding TotalScore}"
-                                   Foreground="#FFD4AF37"
-                                   FontSize="24"
-                                   FontWeight="Bold"/>
-				    </StackPanel>
-				</StackPanel>
-				    <!-- ===================== -->
-				    <!-- STATS AREA -->
-				    <!-- ===================== -->
-				    <StackPanel Margin="24,24,48,24">
-					    <StackPanel Orientation="Horizontal" Margin="0,4">
-						    <TextBlock Text="Accuracy: "
-                                       Foreground="#FFB0B0B0"
-                                       FontSize="15"/>
-						    <TextBlock Text="{Binding Accuracy}"
-                                       Foreground="#FFD0D0D0"
-                                       FontSize="15"
-                                       FontWeight="SemiBold"/>
-					    </StackPanel>
+                    <!-- MAIN CONTENT: two player panels side-by-side -->
+                    <Grid Margin="24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="32"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-					    <StackPanel Orientation="Horizontal" Margin="0,4">
-						    <TextBlock Text="Miss: "
-                                       Foreground="#FFB0B0B0"
-                                       FontSize="15"/>
-						    <TextBlock Text="{Binding MissHits}"
-                                       Foreground="#FFD0D0D0"
-                                       FontSize="15"
-                                       FontWeight="SemiBold"/>
-					    </StackPanel>
+                        <!-- Player 1 Panel -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
+                            <StackPanel Orientation="Vertical" Margin="24,0,24,0" HorizontalAlignment="Center">
+                                <!-- Player label (visible only in multiplayer) -->
+                                <TextBlock Text="PLAYER 1"
+                                           Foreground="#FFD0D0D0"
+                                           FontSize="27"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,8"
+                                           Visibility="{Binding Player2Visible, Converter={StaticResource BoolToVis}}"/>
 
-					    <StackPanel Orientation="Horizontal" Margin="0,4">
-						    <TextBlock Text="Max Combo: "
-                                       Foreground="#FFB0B0B0"
-                                       FontSize="15"/>
-						    <TextBlock Text="{Binding MaxCombo}"
-                                       Foreground="#FFD0D0D0"
-                                       FontSize="15"
-                                       FontWeight="SemiBold"/>
-					    </StackPanel>
+                                <!-- Grade -->
+                                <TextBlock Text="{Binding Grade1}"
+                                           Foreground="{Binding GradeColor1}"
+                                           FontSize="204"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect Color="#FFD4AF37"
+                                                          BlurRadius="18"
+                                                          ShadowDepth="0"
+                                                          Opacity="0.9"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
 
-					    <StackPanel Orientation="Horizontal" Margin="0,4">
-						    <TextBlock Text="Perfect: "
-                                       Foreground="#FFB0B0B0"
-                                       FontSize="15"/>
-						    <TextBlock Text="{Binding PerfectHits}"
-                                       Foreground="#FFD0D0D0"
-                                       FontSize="15"
-                                       FontWeight="SemiBold"/>
-					    </StackPanel>
+                                <!-- Score -->
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Center"
+                                            Margin="0,0,0,16">
+                                    <TextBlock Text="SCORE "
+                                               Foreground="#FFD4AF37"
+                                               FontSize="41"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding TotalScore1}"
+                                               Foreground="#FFD4AF37"
+                                               FontSize="41"
+                                               FontWeight="Bold"/>
+                                </StackPanel>
 
-					    <StackPanel Orientation="Horizontal" Margin="0,4">
-						    <TextBlock Text="Good: "
-                                       Foreground="#FFB0B0B0"
-                                       FontSize="15"/>
-						    <TextBlock Text="{Binding GoodHits}"
-                                       Foreground="#FFD0D0D0"
-                                       FontSize="15"
-                                       FontWeight="SemiBold"/>
-					    </StackPanel>
+                                <!-- Player name -->
+                                <TextBlock Text="{Binding Player1Name}"
+                                           Foreground="#FFD0D0D0"
+                                           FontSize="24"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,8"/>
+                            </StackPanel>
 
-					    <StackPanel Orientation="Horizontal" Margin="0,4">
-						    <TextBlock Text="Bad: "
-                                       Foreground="#FFB0B0B0"
-                                       FontSize="15"/>
-						    <TextBlock Text="{Binding BadHits}"
-                                       Foreground="#FFD0D0D0"
-                                       FontSize="15"
-                                       FontWeight="SemiBold"/>
-					    </StackPanel>
+                            <!-- Stats -->
+                            <StackPanel Margin="12,24,12,24" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                       <TextBlock Text="Accuracy: " Foreground="#FFB0B0B0" FontSize="26"/>
+                                    <TextBlock Text="{Binding Accuracy1}" Foreground="#FFD0D0D0" FontSize="26" FontWeight="SemiBold"/>
+                                </StackPanel>
 
-				    </StackPanel>
-			</StackPanel>
-		</Border>
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="Miss: " Foreground="#FFB0B0B0" FontSize="26"/>
+                                    <TextBlock Text="{Binding MissHits1}" Foreground="#FFD0D0D0" FontSize="26" FontWeight="SemiBold"/>
+                                </StackPanel>
 
-		<!-- Bottom Home button -->
-		<StackPanel Grid.Row="2"
-                    HorizontalAlignment="Center"
-                    Margin="0,0,0,24">
-			<Button Content="Home"
-                    Width="120"
-                    Height="40"
-                    Command="{Binding DataContext.TitleScreenCommand,
-                                      RelativeSource={RelativeSource AncestorType=Window}}"
-                    ToolTip="Return to title screen"/>
-		</StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="Max Combo: " Foreground="#FFB0B0B0" FontSize="26"/>
+                                    <TextBlock Text="{Binding MaxCombo1}" Foreground="#FFD0D0D0" FontSize="26" FontWeight="SemiBold"/>
+                                </StackPanel>
 
-	</Grid>
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="Perfect: " Foreground="#FFB0B0B0" FontSize="26"/>
+                                    <TextBlock Text="{Binding PerfectHits1}" Foreground="#FFD0D0D0" FontSize="26" FontWeight="SemiBold"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="Good: " Foreground="#FFB0B0B0" FontSize="26"/>
+                                    <TextBlock Text="{Binding GoodHits1}" Foreground="#FFD0D0D0" FontSize="26" FontWeight="SemiBold"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="Bad: " Foreground="#FFB0B0B0" FontSize="26"/>
+                                    <TextBlock Text="{Binding BadHits1}" Foreground="#FFD0D0D0" FontSize="26" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Player 2 Panel (mirrors player 1), visibility controlled by Player2Visible -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" Visibility="{Binding Player2Visible, Converter={StaticResource BoolToVis}}">
+                            <StackPanel Orientation="Vertical" Margin="24,0,24,0" HorizontalAlignment="Center">
+                                <!-- Player label (visible only in multiplayer) -->
+                                <TextBlock Text="PLAYER 2"
+                                           Foreground="#FFD0D0D0"
+                                           FontSize="27"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,8"
+                                           Visibility="{Binding Player2Visible, Converter={StaticResource BoolToVis}}"/>
+
+                                <!-- Grade -->
+                                <TextBlock Text="{Binding Grade2}"
+                                           Foreground="{Binding GradeColor2}"
+                                           FontSize="204"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect Color="#FFD4AF37"
+                                                          BlurRadius="18"
+                                                          ShadowDepth="0"
+                                                          Opacity="0.9"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
+
+                                <!-- Score -->
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Center"
+                                            Margin="0,0,0,16">
+                                    <TextBlock Text="SCORE "
+                                               Foreground="#FFD4AF37"
+                                               FontSize="41"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding TotalScore2}"
+                                               Foreground="#FFD4AF37"
+                                               FontSize="41"
+                                               FontWeight="Bold"/>
+                                </StackPanel>
+
+                                <!-- Player name -->
+                                <TextBlock Text="{Binding Player2Name}"
+                                           Foreground="#FFD0D0D0"
+                                           FontSize="24"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,8"/>
+                            </StackPanel>
+
+                            <!-- Stats -->
+                            <StackPanel Margin="12,24,12,24" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="Accuracy: " Foreground="#FFB0B0B0" FontSize="26"/>
+                                    <TextBlock Text="{Binding Accuracy2}" Foreground="#FFD0D0D0" FontSize="26" FontWeight="SemiBold"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="Miss: " Foreground="#FFB0B0B0" FontSize="26"/>
+                                    <TextBlock Text="{Binding MissHits2}" Foreground="#FFD0D0D0" FontSize="26" FontWeight="SemiBold"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="Max Combo: " Foreground="#FFB0B0B0" FontSize="26"/>
+                                    <TextBlock Text="{Binding MaxCombo2}" Foreground="#FFD0D0D0" FontSize="26" FontWeight="SemiBold"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="Perfect: " Foreground="#FFB0B0B0" FontSize="26"/>
+                                    <TextBlock Text="{Binding PerfectHits2}" Foreground="#FFD0D0D0" FontSize="26" FontWeight="SemiBold"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="Good: " Foreground="#FFB0B0B0" FontSize="26"/>
+                                    <TextBlock Text="{Binding GoodHits2}" Foreground="#FFD0D0D0" FontSize="26" FontWeight="SemiBold"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="Bad: " Foreground="#FFB0B0B0" FontSize="26"/>
+                                    <TextBlock Text="{Binding BadHits2}" Foreground="#FFD0D0D0" FontSize="26" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Bottom Home button -->
+                <StackPanel Grid.Row="2"
+                            HorizontalAlignment="Center"
+                            Margin="0,0,0,24">
+                    <Button Content="Home"
+                            Width="120"
+                            Height="40"
+                            Command="{Binding DataContext.TitleScreenCommand,
+                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                            ToolTip="Return to title screen"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Viewbox>
 </UserControl>

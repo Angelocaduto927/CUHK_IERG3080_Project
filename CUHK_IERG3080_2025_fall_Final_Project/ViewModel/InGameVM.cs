@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -339,11 +340,15 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     var beforeBad = score.BadHit;
                     var beforeMiss = score.MissHit;
 
+                    // Determine note color from binding key name (Red vs Blue)
+                    var binding = settings.KeyBindings.FirstOrDefault(x => x.Value == key);
+                    Note.NoteType noteType = binding.Key != null && binding.Key.Contains("Blue") ? Note.NoteType.Blue : Note.NoteType.Red;
+
                     // Perform the key handling (this updates score counters synchronously).
                     _engine.HandleKeyPress(i, key);
 
                     // Trigger a brief hit-circle color flash for the player who pressed
-                    TriggerHitEffect(i);
+                    TriggerHitEffect(i, noteType);
 
                     // Detect which hit counter increased and show text accordingly.
                     string hitText = null;
@@ -465,12 +470,22 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         // Trigger a brief hit-circle flash for the given player index.
         // Uses async Task.Delay so no additional timers or removal of existing code required.
-        private async void TriggerHitEffect(int playerIdx)
+        private async void TriggerHitEffect(int playerIdx, Note.NoteType noteType)
         {
             const int flashMs = 120;
 
-            // Play hit sound effect when a hit effect is triggered
-            AudioManager.PlayHitSound();
+            // Play color-specific hit sound effect when a hit effect is triggered
+            try
+            {
+                if (noteType == Note.NoteType.Red)
+                    AudioManager.PlayFx("hit_red.wav");
+                else
+                    AudioManager.PlayFx("hit_blue.wav");
+            }
+            catch
+            {
+                // Swallow to avoid breaking gameplay on audio failure
+            }
 
             if (playerIdx == 0)
             {

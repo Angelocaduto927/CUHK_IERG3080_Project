@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 
-namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
+namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
 {
 	public class BoolToVisibilityConverter : IValueConverter
 	{
@@ -18,7 +18,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 			return value is Visibility v && v == Visibility.Visible;
 		}
 	}
+}
 
+namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
+{
 	public class RelayCommand<T> : ICommand
 	{
 		private readonly Action<T> _execute;

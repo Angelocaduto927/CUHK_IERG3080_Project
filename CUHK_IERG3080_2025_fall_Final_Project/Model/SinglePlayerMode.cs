@@ -13,12 +13,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
     {
         public int PlayerCount { get; }
         public List<PlayerManager> _players;
-        //public GameEngine _engine;
         public string ModeName => "Single Player";
         public void Initialize()
         {
-            //_engine = new GameEngine();
-
             foreach (PlayerManager player in _players)
             {
                 string chartPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Chart", $"{SongManager.CurrentSong}_{player.Difficulty.CurrentDifficulty}.json");
@@ -33,7 +30,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
                     note.SpawnTime = note.HitTime - (Hyperparameters.Length / note.Speed);
                 }
             }
-            //_engine.Initialize(_players);
         }
         public SinglePlayerMode()
         {

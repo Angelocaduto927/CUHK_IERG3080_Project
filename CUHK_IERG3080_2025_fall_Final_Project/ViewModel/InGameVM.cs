@@ -243,7 +243,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 }
 
                 vm.LastSeenStamp = stamp;
-                vm.X = note.X - 30;
+                vm.X = note.X - note.Speed * (1/60);
             }
 
             for (int i = noteCollection.Count - 1; i >= 0; i--)

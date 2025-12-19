@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
@@ -10,32 +11,23 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
     {
         public int PlayerCount { get; }
         public List<PlayerManager> _players;
-        private GameEngine _engine;
         public string ModeName => "Local Multi Player";
         public void Initialize()
         {
-            _engine = new GameEngine();
             foreach (PlayerManager player in _players)
             {
-                (player.Chart, player.ScoreSet) = new JsonLoader().LoadFromJson($"{SongManager.CurrentSong}_{player.Difficulty}.json");
+                string file_path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Chart", $"{SongManager.CurrentSong}_{player.Difficulty.CurrentDifficulty}.json");
+                (player.Chart, player.ScoreSet) = new JsonLoader().LoadFromJson(file_path);
                 player.Score.SetScoreSet(player.ScoreSet);
-                for (int i = 0; i < player.Chart.Count; i++)
+                player.noteManager.Set_allNotes(player.Chart);
+                foreach (Note note in player.Chart)
                 {
-                    Note note = player.Chart[i];
                     note.X = Hyperparameters.SpawnZoneXCoordinate;
-                    if (player.PlayerIndex == 1)
-                    {
-                        note.Y = Hyperparameters.MultiPlayerUpperYCoordinate;
-                    }
-                    else
-                    {
-                        note.Y = Hyperparameters.MultiPlayerLowerYCoordinate;
-                    }
+                    note.Y = Hyperparameters.SinglePlayerYCoordinate;
                     note.Speed = player.Speed;
                     note.SpawnTime = note.HitTime - (Hyperparameters.Length / note.Speed);
                 }
             }
-            _engine.Initialize(_players);
         }
         public LocalMultiPlayerMode()
         {

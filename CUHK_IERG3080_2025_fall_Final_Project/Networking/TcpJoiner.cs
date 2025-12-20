@@ -14,10 +14,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         private CancellationTokenSource _cts;
         private Task _readTask;
 
-        public bool IsConnected { get { return _client != null && _client.Connected; } }
+        private int _disconnecting = 0; // ✅ single-flight guard
 
-        public string RoomId { get; private set; } = "room1";
-        public int LocalSlot { get; private set; } = 0;
+        public bool IsConnected => _client != null && _client.Connected;
 
         public event Action<string> OnLog;
         public event Action<JoinOkMsg> OnJoinOk;
@@ -39,16 +38,25 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             catch (Exception ex)
             {
                 CleanupSocket();
+                try { _cts?.Dispose(); } catch { }
+                _cts = null;
                 throw new Exception("Connect failed: " + ex.Message);
             }
 
             _codec = new NetCodec(_client.GetStream());
+
             Log("[Joiner] Connected to " + hostIp + ":" + port + ", sending Join...");
 
-            _readTask = _codec.ReadLoopAsync(async msg =>
+            // ✅ Read loop in background; completion triggers disconnect cleanup (no UI block)
+            _readTask = _codec.ReadLoopAsync(HandleIncomingAsync, _cts.Token);
+            _readTask.ContinueWith(t =>
             {
-                await HandleIncomingAsync(msg).ConfigureAwait(false);
-            }, _cts.Token);
+                // observe faults
+                try { _ = t.Exception; } catch { }
+
+                // EOF / network error -> disconnect without sending Abort
+                _ = DisconnectAsync("Disconnected", sendAbort: false);
+            }, TaskScheduler.Default);
 
             await _codec.SendAsync(new JoinMsg { Name = playerName }, _cts.Token).ConfigureAwait(false);
         }
@@ -61,79 +69,92 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
         private Task HandleIncomingAsync(NetMsg msg)
         {
-            var ok = msg as JoinOkMsg;
-            if (ok != null)
+            // JoinOk
+            if (msg is JoinOkMsg ok)
             {
-                RoomId = ok.RoomId;
-                LocalSlot = ok.Slot;
-                Log("[Joiner] JoinOk: slot=" + ok.Slot + " msg=" + ok.Message);
-                if (OnJoinOk != null) OnJoinOk(ok);
+                Log("[Joiner] JoinOk: slot=" + ok.Slot + " room=" + ok.RoomId);
+                OnJoinOk?.Invoke(ok);
                 return Task.CompletedTask;
             }
 
-            var rej = msg as JoinRejectMsg;
-            if (rej != null)
+            // JoinReject
+            if (msg is JoinRejectMsg rej)
             {
                 Log("[Joiner] JoinRejected: " + rej.Reason);
-                if (OnJoinRejected != null) OnJoinRejected(rej.Reason);
-                _ = DisconnectAsync("Join rejected");
+                OnJoinRejected?.Invoke(rej.Reason);
+
+                // ✅ server already decided, just disconnect (no Abort back)
+                _ = DisconnectAsync("Join rejected: " + rej.Reason, sendAbort: false);
                 return Task.CompletedTask;
             }
 
-            var ab = msg as AbortMsg;
-            if (ab != null)
+            // Abort from remote
+            if (msg is AbortMsg ab)
             {
                 Log("[Joiner] Abort: " + ab.Reason);
-                _ = DisconnectAsync(ab.Reason);
+
+                // ✅ 关键：收到 Abort 不要回发 Abort（避免乒乓/重入）
+                _ = DisconnectAsync("Remote abort: " + ab.Reason, sendAbort: false);
                 return Task.CompletedTask;
             }
 
-            if (OnMessage != null) OnMessage(msg);
+            OnMessage?.Invoke(msg);
             return Task.CompletedTask;
         }
 
-        public async Task DisconnectAsync(string reason)
+        public async Task DisconnectAsync(string reason, bool sendAbort = true)
         {
-            if (_cts == null) return;
+            if (Interlocked.Exchange(ref _disconnecting, 1) == 1) return;
+
+            var cts = _cts;
+            var codec = _codec;
+
+            // ✅ 先把字段置空，避免重入时继续用旧对象
+            _cts = null;
+            _codec = null;
 
             try
             {
-                if (_codec != null)
-                    await _codec.SendAsync(new AbortMsg { Reason = reason }, _cts.Token).ConfigureAwait(false);
+                try
+                {
+                    if (sendAbort && codec != null && cts != null && !cts.IsCancellationRequested)
+                        await codec.SendAsync(new AbortMsg { Reason = reason }, cts.Token).ConfigureAwait(false);
+                }
+                catch { }
+
+                try { cts?.Cancel(); } catch { }
+
+                // ✅ 关闭 socket 让 ReadLineAsync 立刻退出
+                CleanupSocket();
+
+                if (_readTask != null)
+                {
+                    try { await _readTask.ConfigureAwait(false); } catch { }
+                    _readTask = null;
+                }
+
+                try { cts?.Dispose(); } catch { }
+
+                OnDisconnected?.Invoke();
             }
-            catch { }
-
-            try { _cts.Cancel(); } catch { }
-
-            CleanupSocket();
-
-            if (_readTask != null)
+            finally
             {
-                try { await _readTask.ConfigureAwait(false); } catch { }
-                _readTask = null;
+                // 不要恢复 _disconnecting，避免同一次对象被重复 disconnect
             }
-
-            try { _cts.Dispose(); } catch { }
-            _cts = null;
-
-            if (OnDisconnected != null) OnDisconnected();
         }
 
         private void CleanupSocket()
         {
-            try { if (_client != null) _client.Close(); } catch { }
+            try { _client?.Close(); } catch { }
             _client = null;
-            _codec = null;
         }
 
-        private void Log(string s)
-        {
-            if (OnLog != null) OnLog(s);
-        }
+        private void Log(string s) => OnLog?.Invoke(s);
 
+        // ✅ 关键：Dispose 不允许阻塞 UI 线程
         public void Dispose()
         {
-            try { DisconnectAsync("Dispose").GetAwaiter().GetResult(); } catch { }
+            _ = DisconnectAsync("Dispose", sendAbort: false);
         }
     }
 }

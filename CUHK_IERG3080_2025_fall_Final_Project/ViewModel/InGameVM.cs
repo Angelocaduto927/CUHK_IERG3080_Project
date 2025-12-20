@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
@@ -14,29 +15,29 @@ using System.Windows.Input;
 using System.Windows.Media;
 using CUHK_IERG3080_2025_fall_Final_Project.Shared;
 
-
 namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
-    public class InGameVM : INotifyPropertyChanged
+    public class InGameVM : INotifyPropertyChanged, IDisposable
     {
-
         private OnlineSession _session;
         private bool _started;
         private bool _isOnline;
         private bool _startScheduled;
+        private bool _disposed;
+        private bool _leftOnline = false;
+
         private readonly TaskCompletionSource<bool> _engineReadyTcs =
             new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
 
         private GameEngine _engine;
         private bool _initialized = false;
         private readonly Action _onGameOver;
         private readonly MusicManager _musicManager;
 
-        // ✅ CHANGED: 用 Rendering 代替 DispatcherTimer
+        // ✅ Rendering loop
         private bool _renderingAttached = false;
-        private double _lastRenderUpdateMs = -9999;  // 用于限帧
-        private const double TargetFrameMs = 16.0;   // 60fps
+        private double _lastRenderUpdateMs = -9999;
+        private const double TargetFrameMs = 16.0;
 
         // Note collections for rendering
         public ObservableCollection<NoteVM> Player1Notes { get; } = new ObservableCollection<NoteVM>();
@@ -47,6 +48,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private readonly Dictionary<Note, NoteVM> _p2Map = new Dictionary<Note, NoteVM>();
 
         private int _frameStamp = 0;
+
+        // ✅ 远端权威分数缓存（按 Slot=1/2 存）
+        private readonly bool[] _netValid = new bool[3];
+        private readonly int[] _netScore = new int[3];
+        private readonly int[] _netCombo = new int[3];
+        private readonly double[] _netAcc = new double[3];
 
         // Game info + Hyperparameters
         public double BandWidth => Hyperparameters.BandWidth;
@@ -75,22 +82,60 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         public double CurrentTime => _engine?.CurrentTime / 1000.0 ?? 0;
         public double SongDuration => 180.0;
-        public bool IsMultiplayer => IsOnline || (_engine?.Players?.Count > 1);
 
+        public bool IsMultiplayer => _isOnline || (_engine?.Players?.Count > 1);
 
         // Player 1 Properties
         public string P1Name => (_engine?.Players != null && _engine.Players.Count > 0) ? _engine.Players[0].PlayerName : "Player 1";
-        public int P1Score => (_engine?.Players != null && _engine.Players.Count > 0) ? _engine.Players[0].Score.Score : 0;
-        public int P1Combo => (_engine?.Players != null && _engine.Players.Count > 0) ? _engine.Players[0].Score.Combo : 0;
-        public double P1Accuracy => (_engine?.Players != null && _engine.Players.Count > 0) ? _engine.Players[0].Score.Accuracy : 100;
+        public int P1Score => GetDisplayedScore(slot: 1);
+        public int P1Combo => GetDisplayedCombo(slot: 1);
+        public double P1Accuracy => GetDisplayedAccuracy(slot: 1);
 
         // Player 2 Properties
         public string P2Name => (_engine?.Players != null && _engine.Players.Count > 1) ? _engine.Players[1].PlayerName : "Player 2";
-        public int P2Score => (_engine?.Players != null && _engine.Players.Count > 1) ? _engine.Players[1].Score.Score : 0;
-        public int P2Combo => (_engine?.Players != null && _engine.Players.Count > 1) ? _engine.Players[1].Score.Combo : 0;
-        public double P2Accuracy => (_engine?.Players != null && _engine.Players.Count > 1) ? _engine.Players[1].Score.Accuracy : 100;
+        public int P2Score => GetDisplayedScore(slot: 2);
+        public int P2Combo => GetDisplayedCombo(slot: 2);
+        public double P2Accuracy => GetDisplayedAccuracy(slot: 2);
 
-        // --- Hit effect brushes (for hit-circle color flash) ---
+        private bool IsLocalSlot(int slot)
+        {
+            return _isOnline && _session != null && _session.IsConnected && _session.LocalSlot == slot;
+        }
+
+        private int GetDisplayedScore(int slot)
+        {
+            int idx = slot - 1;
+            int engineScore = (_engine?.Players != null && idx >= 0 && idx < _engine.Players.Count) ? _engine.Players[idx].Score.Score : 0;
+
+            if (!_isOnline) return engineScore;
+            if (IsLocalSlot(slot)) return engineScore;
+            if (_netValid[slot]) return _netScore[slot];
+            return engineScore;
+        }
+
+        private int GetDisplayedCombo(int slot)
+        {
+            int idx = slot - 1;
+            int engineCombo = (_engine?.Players != null && idx >= 0 && idx < _engine.Players.Count) ? _engine.Players[idx].Score.Combo : 0;
+
+            if (!_isOnline) return engineCombo;
+            if (IsLocalSlot(slot)) return engineCombo;
+            if (_netValid[slot]) return _netCombo[slot];
+            return engineCombo;
+        }
+
+        private double GetDisplayedAccuracy(int slot)
+        {
+            int idx = slot - 1;
+            double engineAcc = (_engine?.Players != null && idx >= 0 && idx < _engine.Players.Count) ? _engine.Players[idx].Score.Accuracy : 100;
+
+            if (!_isOnline) return engineAcc;
+            if (IsLocalSlot(slot)) return engineAcc;
+            if (_netValid[slot]) return _netAcc[slot];
+            return engineAcc;
+        }
+
+        // --- Hit effect brushes ---
         private readonly Brush _p1StrokeDefault;
         private readonly Brush _p1FillDefault;
         private readonly Brush _p2StrokeDefault;
@@ -101,7 +146,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private Brush _p2EllipseStroke;
         private Brush _p2EllipseFill;
 
-        // --- New: hit text, visibility and color for each player ---
+        // --- Hit text ---
         private string _p1HitText = string.Empty;
         private bool _p1HitVisible = false;
         private Brush _p1HitBrush = Brushes.White;
@@ -110,135 +155,18 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private bool _p2HitVisible = false;
         private Brush _p2HitBrush = Brushes.White;
 
-        public string P1HitText
-        {
-            get => _p1HitText;
-            set
-            {
-                if (_p1HitText != value)
-                {
-                    _p1HitText = value;
-                    OnPropertyChanged(nameof(P1HitText));
-                }
-            }
-        }
+        public string P1HitText { get => _p1HitText; set { if (_p1HitText != value) { _p1HitText = value; OnPropertyChanged(nameof(P1HitText)); } } }
+        public bool P1HitVisible { get => _p1HitVisible; set { if (_p1HitVisible != value) { _p1HitVisible = value; OnPropertyChanged(nameof(P1HitVisible)); } } }
+        public Brush P1HitBrush { get => _p1HitBrush; set { if (!Equals(_p1HitBrush, value)) { _p1HitBrush = value; OnPropertyChanged(nameof(P1HitBrush)); } } }
 
-        public bool P1HitVisible
-        {
-            get => _p1HitVisible;
-            set
-            {
-                if (_p1HitVisible != value)
-                {
-                    _p1HitVisible = value;
-                    OnPropertyChanged(nameof(P1HitVisible));
-                }
-            }
-        }
+        public string P2HitText { get => _p2HitText; set { if (_p2HitText != value) { _p2HitText = value; OnPropertyChanged(nameof(P2HitText)); } } }
+        public bool P2HitVisible { get => _p2HitVisible; set { if (_p2HitVisible != value) { _p2HitVisible = value; OnPropertyChanged(nameof(P2HitVisible)); } } }
+        public Brush P2HitBrush { get => _p2HitBrush; set { if (!Equals(_p2HitBrush, value)) { _p2HitBrush = value; OnPropertyChanged(nameof(P2HitBrush)); } } }
 
-        public Brush P1HitBrush
-        {
-            get => _p1HitBrush;
-            set
-            {
-                if (!Equals(_p1HitBrush, value))
-                {
-                    _p1HitBrush = value;
-                    OnPropertyChanged(nameof(P1HitBrush));
-                }
-            }
-        }
-
-        public string P2HitText
-        {
-            get => _p2HitText;
-            set
-            {
-                if (_p2HitText != value)
-                {
-                    _p2HitText = value;
-                    OnPropertyChanged(nameof(P2HitText));
-                }
-            }
-        }
-
-        public bool P2HitVisible
-        {
-            get => _p2HitVisible;
-            set
-            {
-                if (_p2HitVisible != value)
-                {
-                    _p2HitVisible = value;
-                    OnPropertyChanged(nameof(P2HitVisible));
-                }
-            }
-        }
-
-        public Brush P2HitBrush
-        {
-            get => _p2HitBrush;
-            set
-            {
-                if (!Equals(_p2HitBrush, value))
-                {
-                    _p2HitBrush = value;
-                    OnPropertyChanged(nameof(P2HitBrush));
-                }
-            }
-        }
-
-        public Brush P1EllipseStroke
-        {
-            get => _p1EllipseStroke;
-            set
-            {
-                if (!Equals(_p1EllipseStroke, value))
-                {
-                    _p1EllipseStroke = value;
-                    OnPropertyChanged(nameof(P1EllipseStroke));
-                }
-            }
-        }
-
-        public Brush P1EllipseFill
-        {
-            get => _p1EllipseFill;
-            set
-            {
-                if (!Equals(_p1EllipseFill, value))
-                {
-                    _p1EllipseFill = value;
-                    OnPropertyChanged(nameof(P1EllipseFill));
-                }
-            }
-        }
-
-        public Brush P2EllipseStroke
-        {
-            get => _p2EllipseStroke;
-            set
-            {
-                if (!Equals(_p2EllipseStroke, value))
-                {
-                    _p2EllipseStroke = value;
-                    OnPropertyChanged(nameof(P2EllipseStroke));
-                }
-            }
-        }
-
-        public Brush P2EllipseFill
-        {
-            get => _p2EllipseFill;
-            set
-            {
-                if (!Equals(_p2EllipseFill, value))
-                {
-                    _p2EllipseFill = value;
-                    OnPropertyChanged(nameof(P2EllipseFill));
-                }
-            }
-        }
+        public Brush P1EllipseStroke { get => _p1EllipseStroke; set { if (!Equals(_p1EllipseStroke, value)) { _p1EllipseStroke = value; OnPropertyChanged(nameof(P1EllipseStroke)); } } }
+        public Brush P1EllipseFill { get => _p1EllipseFill; set { if (!Equals(_p1EllipseFill, value)) { _p1EllipseFill = value; OnPropertyChanged(nameof(P1EllipseFill)); } } }
+        public Brush P2EllipseStroke { get => _p2EllipseStroke; set { if (!Equals(_p2EllipseStroke, value)) { _p2EllipseStroke = value; OnPropertyChanged(nameof(P2EllipseStroke)); } } }
+        public Brush P2EllipseFill { get => _p2EllipseFill; set { if (!Equals(_p2EllipseFill, value)) { _p2EllipseFill = value; OnPropertyChanged(nameof(P2EllipseFill)); } } }
 
         public InGameVM() : this(null) { }
 
@@ -246,14 +174,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             _onGameOver = onGameOver;
 
-            // Initialize default brushes to match existing XAML colors
-            _p1StrokeDefault = new SolidColorBrush(Color.FromRgb(0xFF, 0x6B, 0x4E)); // #FF6B4E
-            _p1FillDefault = new SolidColorBrush(Color.FromArgb(0x44, 0xFF, 0x6B, 0x4E)); // #44FF6B4E
+            _p1StrokeDefault = new SolidColorBrush(Color.FromRgb(0xFF, 0x6B, 0x4E));
+            _p1FillDefault = new SolidColorBrush(Color.FromArgb(0x44, 0xFF, 0x6B, 0x4E));
+            _p2StrokeDefault = new SolidColorBrush(Color.FromRgb(0x4E, 0x9A, 0xFF));
+            _p2FillDefault = new SolidColorBrush(Color.FromArgb(0x44, 0x4E, 0x9A, 0xFF));
 
-            _p2StrokeDefault = new SolidColorBrush(Color.FromRgb(0x4E, 0x9A, 0xFF)); // #4E9AFF
-            _p2FillDefault = new SolidColorBrush(Color.FromArgb(0x44, 0x4E, 0x9A, 0xFF)); // #444E9AFF (semi-transparent blue)
-
-            // Set initial public brushes
             P1EllipseStroke = _p1StrokeDefault;
             P1EllipseFill = _p1FillDefault;
             P2EllipseStroke = _p2StrokeDefault;
@@ -264,21 +189,28 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             _musicManager = new MusicManager();
             _musicManager.MusicEnded += OnMusicEnded;
 
-
-
             _isOnline = GameModeManager.CurrentMode is OnlineMultiPlayerMode
-            && GameModeManager.OnlineSession != null
-            && GameModeManager.OnlineSession.IsConnected;
+                        && GameModeManager.OnlineSession != null
+                        && GameModeManager.OnlineSession.IsConnected;
 
             if (_isOnline)
             {
                 _session = GameModeManager.OnlineSession;
+
+                // ✅ Slot1->index0, Slot2->index1
+                _localPlayerIndex = Math.Max(0, (_session.LocalSlot - 1));
+
                 _session.OnStart += OnStartFromNet;
 
-                if (_session.LastStartMsg != null)   // ★新增
+                // ✅ Input 仍然用于“驱动对方轨道 note 消失/推进”
+                _session.OnInput += OnInputFromNet;
+
+                // ✅ 权威击打结果（分数/效果）
+                _session.OnHitResult += OnHitResultFromNet;
+
+                if (_session.LastStartMsg != null)
                     OnStartFromNet(_session.LastStartMsg);
             }
-
 
             EnsureInitialized();
         }
@@ -304,15 +236,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     var playersField = GameModeManager.CurrentMode.GetType().GetField("_players");
                     var players = playersField?.GetValue(GameModeManager.CurrentMode) as List<PlayerManager>;
 
-                    if (IsOnline && players != null)
+                    if (_isOnline && players != null)
                     {
-                        // 如果你的 OnlineMode 意外只创建了 1 个 player，这里补齐到 2 个
                         while (players.Count < 2)
-                        {
                             players.Add(new PlayerManager(players.Count, isLocalPlayer: false));
-                        }
                     }
-
 
                     if (players != null && players.Count > 0)
                     {
@@ -321,31 +249,23 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
                         AudioManager.StopBackgroundMusic();
 
-                        // ★告诉“等待开始”的逻辑：引擎准备好了
                         _engineReadyTcs.TrySetResult(true);
 
-                        // ★非 Online：保持原逻辑（初始化完立刻开始）
                         if (!_isOnline)
-                        {
                             StartLocalGameNow();
-                        }
-                        // ★Online：什么都不做，等 StartMsg 来触发 StartLocalGameNow()
 
                         OnPropertyChanged(nameof(IsMultiplayer));
                         OnPropertyChanged("");
-
-
                     }
                 }
             }), System.Windows.Threading.DispatcherPriority.Loaded);
         }
 
-
-
         private void OnStartFromNet(StartMsg msg)
         {
             if (msg == null) return;
-            if (_startScheduled) return;   // 防止重复 start
+            if (_disposed) return;
+            if (_startScheduled) return;
             _startScheduled = true;
 
             _ = BeginStartAtAsync(msg);
@@ -353,24 +273,19 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private async Task BeginStartAtAsync(StartMsg msg)
         {
-            // 等待引擎/谱面初始化完成（EnsureInitialized 会 set）
             await _engineReadyTcs.Task;
 
+            if (_disposed) return;
             if (_started) return;
             _started = true;
 
             long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-
-            // 兼容：如果你还没实现 StartAtUnixMs，就退回用 StartInMs
-            long startAt = (msg.StartAtUnixMs > 0)
-                ? msg.StartAtUnixMs
-                : now + msg.StartInMs;
+            long startAt = (msg.StartAtUnixMs > 0) ? msg.StartAtUnixMs : now + msg.StartInMs;
 
             int delayMs = (int)Math.Max(0, startAt - now);
-            if (delayMs > 0)
-                await Task.Delay(delayMs);
+            if (delayMs > 0) await Task.Delay(delayMs);
 
-            // ⚠️ UI/渲染相关操作放 UI 线程更稳
+            if (_disposed) return;
             Application.Current.Dispatcher.Invoke(StartLocalGameNow);
         }
 
@@ -389,9 +304,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             _engine.StartGame();
             StartRenderLoop();
 
-            OnPropertyChanged(""); // 触发 UI 全刷新
+            OnPropertyChanged("");
         }
-
 
         private void StartRenderLoop()
         {
@@ -407,80 +321,315 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             _renderingAttached = false;
         }
 
-        // ✅ CHANGED: Rendering 回调（跟屏幕同步），并限帧到 60fps
         private void OnRendering(object sender, EventArgs e)
         {
+            if (_disposed) return;
             if (_engine?.State != GameEngine.GameState.Playing) return;
 
-            double t = _engine.CurrentTime; // ms
+            double t = _engine.CurrentTime;
             if (t - _lastRenderUpdateMs < TargetFrameMs) return;
             _lastRenderUpdateMs = t;
 
             UpdateFrame();
         }
 
+        private int _localPlayerIndex = 0;
+
+        private void PlayTapSound(Note.NoteType noteType)
+        {
+            try
+            {
+                if (noteType == Note.NoteType.Red) AudioManager.PlayFx("hit_red.wav");
+                else AudioManager.PlayFx("hit_blue.wav");
+            }
+            catch { }
+        }
+
         private void OnKeyDown(object sender, KeyEventArgs e)
         {
+            if (_disposed) return;
             if (_engine?.State != GameEngine.GameState.Playing) return;
 
             var key = e.Key == Key.System ? e.SystemKey : e.Key;
 
-            for (int i = 0; i < _engine.Players.Count; i++)
+            // ✅ Online：只处理本地玩家那一条轨
+            int start = 0;
+            int end = _engine.Players.Count;
+
+            if (_isOnline)
+            {
+                start = Math.Max(0, Math.Min(_localPlayerIndex, _engine.Players.Count - 1));
+                end = start + 1;
+            }
+
+            for (int i = start; i < end; i++)
             {
                 var settings = PlayerSettingsManager.GetSettings(i);
-                if (settings.KeyBindings.ContainsValue(key))
+                if (!settings.KeyBindings.ContainsValue(key))
+                    continue;
+
+                var binding = settings.KeyBindings.FirstOrDefault(x => x.Value == key);
+                Note.NoteType noteType =
+                    (binding.Key != null && binding.Key.Contains("Blue"))
+                        ? Note.NoteType.Blue
+                        : Note.NoteType.Red;
+
+                // ✅ 本地：任何有效键都响 tap
+                PlayTapSound(noteType);
+
+                // ✅ 本地按键无论是否空打，都要闪一下
+                TriggerHitEffect(i, noteType);
+
+                // ✅ Online：把“我的敲击”发给对方（用于对方那边驱动我的轨道 note 消失/推进）
+                if (_isOnline && _session != null && _session.IsConnected)
                 {
-                    // Snapshot score counters before the key press so we can detect which counter changed.
-                    var player = _engine.Players[i];
-                    var score = player.Score;
-                    var beforePerfect = score.PerfectHit;
-                    var beforeGood = score.GoodHit;
-                    var beforeBad = score.BadHit;
-                    var beforeMiss = score.MissHit;
-
-                    // Determine note color from binding key name (Red vs Blue)
-                    var binding = settings.KeyBindings.FirstOrDefault(x => x.Value == key);
-                    Note.NoteType noteType = binding.Key != null && binding.Key.Contains("Blue") ? Note.NoteType.Blue : Note.NoteType.Red;
-
-                    // Perform the key handling (this updates score counters synchronously).
-                    _engine.HandleKeyPress(i, key);
-
-                    // Trigger a brief hit-circle color flash for the player who pressed
-                    TriggerHitEffect(i, noteType);
-
-                    // Detect which hit counter increased and show text accordingly.
-                    string hitText = null;
-                    Brush hitBrush = Brushes.White;
-                    if (score.PerfectHit > beforePerfect)
+                    try
                     {
-                        hitText = "Perfect";
-                        hitBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0xD7, 0x00)); // Gold #FFD700
+                        _ = _session.SendInputAsync(_session.LocalSlot, noteType.ToString(), _engine.CurrentTime);
                     }
-                    else if (score.GoodHit > beforeGood)
-                    {
-                        hitText = "Good";
-                        hitBrush = new SolidColorBrush(Color.FromRgb(0x32, 0xCD, 0x32)); // LimeGreen
-                    }
-                    else if (score.BadHit > beforeBad)
-                    {
-                        hitText = "Bad";
-                        hitBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0x8C, 0x8C)); // Light red
-                    }
-                    else if (score.MissHit > beforeMiss)
-                    {
-                        hitText = "Miss";
-                        hitBrush = new SolidColorBrush(Color.FromRgb(0x8B, 0x00, 0x00)); // Dark red
-                    }
+                    catch { }
+                }
 
-                    if (!string.IsNullOrEmpty(hitText))
-                    {
-                        ShowHitText(i, hitText, hitBrush);
-                    }
+                var player = _engine.Players[i];
+                var score = player.Score;
+                var beforePerfect = score.PerfectHit;
+                var beforeGood = score.GoodHit;
+                var beforeBad = score.BadHit;
+                var beforeMiss = score.MissHit;
 
-                    e.Handled = true;
-                    break;
+                _engine.HandleKeyPress(i, key);
+
+                bool isPerfect = score.PerfectHit > beforePerfect;
+                bool isGood = score.GoodHit > beforeGood;
+                bool isBad = score.BadHit > beforeBad;
+                bool isMiss = score.MissHit > beforeMiss;
+
+                string result = "Tap";
+                string hitText = null;
+                Brush hitBrush = Brushes.White;
+
+                if (isPerfect)
+                {
+                    result = "Perfect";
+                    hitText = "Perfect";
+                    hitBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0xD7, 0x00));
+                }
+                else if (isGood)
+                {
+                    result = "Good";
+                    hitText = "Good";
+                    hitBrush = new SolidColorBrush(Color.FromRgb(0x32, 0xCD, 0x32));
+                }
+                else if (isBad)
+                {
+                    result = "Bad";
+                    hitText = "Bad";
+                    hitBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0x8C, 0x8C));
+                }
+                else if (isMiss)
+                {
+                    result = "Miss";
+                    hitText = "Miss";
+                    hitBrush = new SolidColorBrush(Color.FromRgb(0x8B, 0x00, 0x00));
+                }
+
+                if (!string.IsNullOrEmpty(hitText))
+                    ShowHitText(i, hitText, hitBrush);
+
+                // ✅ Online：发送“权威击打结果”
+                if (_isOnline && _session != null && _session.IsConnected)
+                {
+                    try
+                    {
+                        _ = _session.SendHitResultAsync(
+                            slot: _session.LocalSlot,
+                            noteType: noteType.ToString(),
+                            atMs: _engine.CurrentTime,
+                            result: result,
+                            score: score.Score,
+                            combo: score.Combo,
+                            accuracy: score.Accuracy
+                        );
+                    }
+                    catch { }
+                }
+
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // ✅ Online：收到对方 InputMsg：这里只用于“驱动对方轨道 note 消失/推进”
+        private void OnInputFromNet(InputMsg msg)
+        {
+            if (_disposed) return;
+            if (!_isOnline) return;
+            if (msg == null) return;
+
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (_disposed) return;
+                _ = ApplyRemoteInputAtAsync(msg);
+            }));
+        }
+
+        private async Task ApplyRemoteInputAtAsync(InputMsg msg)
+        {
+            await _engineReadyTcs.Task;
+            if (_disposed) return;
+
+            int waitGuard = 0;
+            while (!_disposed && (_engine == null || _engine.State != GameEngine.GameState.Playing))
+            {
+                await Task.Delay(10);
+                if (++waitGuard > 2000) return;
+            }
+            if (_disposed) return;
+
+            int idx = msg.Slot - 1;
+            if (idx < 0 || _engine?.Players == null || idx >= _engine.Players.Count) return;
+
+            // 忽略本地 slot（保险）
+            if (_session != null && msg.Slot == _session.LocalSlot) return;
+
+            // 时间对齐
+            double targetMs = msg.AtMs;
+            double nowMs = _engine.CurrentTime;
+            int delay = (int)Math.Max(0, targetMs - nowMs);
+            if (delay > 0) await Task.Delay(delay);
+
+            if (_disposed) return;
+            if (_engine?.State != GameEngine.GameState.Playing) return;
+
+            if (!TryMapNoteTypeToKey(idx, msg.NoteType, out var key))
+                return;
+
+            // ✅ 只调用引擎用于 note 推进/消失
+            _engine.HandleKeyPress(idx, key);
+        }
+
+        // ✅ Online：收到对方权威 HitResultMsg，用于显示分数/效果
+        private void OnHitResultFromNet(HitResultMsg msg)
+        {
+            if (_disposed) return;
+            if (!_isOnline) return;
+            if (msg == null) return;
+
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (_disposed) return;
+                _ = ApplyRemoteHitResultAtAsync(msg);
+            }));
+        }
+
+        private async Task ApplyRemoteHitResultAtAsync(HitResultMsg msg)
+        {
+            await _engineReadyTcs.Task;
+            if (_disposed) return;
+
+            int waitGuard = 0;
+            while (!_disposed && (_engine == null || _engine.State != GameEngine.GameState.Playing))
+            {
+                await Task.Delay(10);
+                if (++waitGuard > 2000) return;
+            }
+            if (_disposed) return;
+
+            if (_session != null && msg.Slot == _session.LocalSlot) return;
+
+            double targetMs = msg.AtMs;
+            double nowMs = _engine.CurrentTime;
+            int delay = (int)Math.Max(0, targetMs - nowMs);
+            if (delay > 0) await Task.Delay(delay);
+
+            if (_disposed) return;
+            if (_engine?.State != GameEngine.GameState.Playing) return;
+
+            int slot = msg.Slot;
+            if (slot != 1 && slot != 2) return;
+
+            _netValid[slot] = true;
+            _netScore[slot] = msg.Score;
+            _netCombo[slot] = msg.Combo;
+            _netAcc[slot] = msg.Accuracy;
+
+            if (slot == 1)
+            {
+                OnPropertyChanged(nameof(P1Score));
+                OnPropertyChanged(nameof(P1Combo));
+                OnPropertyChanged(nameof(P1Accuracy));
+            }
+            else
+            {
+                OnPropertyChanged(nameof(P2Score));
+                OnPropertyChanged(nameof(P2Combo));
+                OnPropertyChanged(nameof(P2Accuracy));
+            }
+
+            int playerIdx = slot - 1;
+            var noteTypeEnum = ParseNoteType(msg.NoteType);
+
+            TriggerHitEffect(playerIdx, noteTypeEnum);
+
+            var result = msg.Result ?? "Tap";
+            if (!result.Equals("Tap", StringComparison.OrdinalIgnoreCase))
+            {
+                var brush = BrushForResult(result);
+                ShowHitText(playerIdx, result, brush);
+            }
+        }
+
+        private static Brush BrushForResult(string result)
+        {
+            if (string.IsNullOrWhiteSpace(result)) return Brushes.White;
+
+            if (result.Equals("Perfect", StringComparison.OrdinalIgnoreCase))
+                return new SolidColorBrush(Color.FromRgb(0xFF, 0xD7, 0x00));
+            if (result.Equals("Good", StringComparison.OrdinalIgnoreCase))
+                return new SolidColorBrush(Color.FromRgb(0x32, 0xCD, 0x32));
+            if (result.Equals("Bad", StringComparison.OrdinalIgnoreCase))
+                return new SolidColorBrush(Color.FromRgb(0xFF, 0x8C, 0x8C));
+            if (result.Equals("Miss", StringComparison.OrdinalIgnoreCase))
+                return new SolidColorBrush(Color.FromRgb(0x8B, 0x00, 0x00));
+
+            return Brushes.White;
+        }
+
+        private static Note.NoteType ParseNoteType(string s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return Note.NoteType.Red;
+            return s.IndexOf("Blue", StringComparison.OrdinalIgnoreCase) >= 0
+                ? Note.NoteType.Blue
+                : Note.NoteType.Red;
+        }
+
+        private bool TryMapNoteTypeToKey(int playerIdx, string noteType, out Key key)
+        {
+            key = Key.None;
+
+            var settings = PlayerSettingsManager.GetSettings(playerIdx);
+            if (settings == null || settings.KeyBindings == null) return false;
+
+            bool wantBlue = noteType != null && noteType.IndexOf("Blue", StringComparison.OrdinalIgnoreCase) >= 0;
+            string wantWord = wantBlue ? "Blue" : "Red";
+
+            foreach (var kv in settings.KeyBindings)
+            {
+                if (!string.IsNullOrEmpty(kv.Key) && kv.Key.IndexOf(wantWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    key = kv.Value;
+                    return true;
                 }
             }
+
+            var any = settings.KeyBindings.FirstOrDefault();
+            if (!Equals(any.Value, Key.None))
+            {
+                key = any.Value;
+                return true;
+            }
+
+            return false;
         }
 
         private int _lastP1Score = int.MinValue;
@@ -517,6 +666,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
             if (_engine.IsGameFinished())
             {
+                // ✅ 关键：结束时发送最终结算（Summary），再断线
+                LeaveOnlineOnce("Game finished", sendSummary: true);
+
                 StopRenderLoop();
                 _engine.StopGame();
                 AudioManager.StopBackgroundMusic();
@@ -539,6 +691,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (activeNotes == null) return;
 
             const double laneTop = 50;
+            const double xOffset = 30;
 
             for (int i = 0; i < activeNotes.Count; i++)
             {
@@ -552,7 +705,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 }
 
                 vm.LastSeenStamp = stamp;
-                vm.X = note.X - note.Speed * (1/60);
+                vm.X = note.X - xOffset;
             }
 
             for (int i = noteCollection.Count - 1; i >= 0; i--)
@@ -566,93 +719,168 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             }
         }
 
-        // Trigger a brief hit-circle flash for the given player index.
-        // Uses async Task.Delay so no additional timers or removal of existing code required.
         private async void TriggerHitEffect(int playerIdx, Note.NoteType noteType)
         {
             const int flashMs = 120;
 
-            // Play color-specific hit sound effect when a hit effect is triggered
-            try
-            {
-                if (noteType == Note.NoteType.Red)
-                    AudioManager.PlayFx("hit_red.wav");
-                else
-                    AudioManager.PlayFx("hit_blue.wav");
-            }
-            catch
-            {
-                // Swallow to avoid breaking gameplay on audio failure
-            }
+            Brush flashFill =
+                (noteType == Note.NoteType.Red)
+                    ? new SolidColorBrush(Color.FromArgb(0x88, 0xFF, 0x80, 0x80))
+                    : new SolidColorBrush(Color.FromArgb(0x88, 0x80, 0xA8, 0xFF));
 
             if (playerIdx == 0)
             {
-                // highlight (semi-white)
                 P1EllipseStroke = new SolidColorBrush(Colors.White);
-                P1EllipseFill = new SolidColorBrush(Color.FromArgb(0x88, 0xFF, 0xFF, 0xFF));
+                P1EllipseFill = flashFill;
                 await Task.Delay(flashMs);
+                if (_disposed) return;
                 P1EllipseStroke = _p1StrokeDefault;
                 P1EllipseFill = _p1FillDefault;
             }
             else if (playerIdx == 1)
             {
                 P2EllipseStroke = new SolidColorBrush(Colors.White);
-                P2EllipseFill = new SolidColorBrush(Color.FromArgb(0x88, 0xFF, 0xFF, 0xFF));
+                P2EllipseFill = flashFill;
                 await Task.Delay(flashMs);
+                if (_disposed) return;
                 P2EllipseStroke = _p2StrokeDefault;
                 P2EllipseFill = _p2FillDefault;
             }
         }
 
-        // Show hit text above the player's ellipse briefly.
         private async void ShowHitText(int playerIdx, string text, Brush brush)
         {
             const int showMs = 600;
 
             if (playerIdx == 0)
             {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    P1HitText = text;
-                    P1HitBrush = brush;
-                    P1HitVisible = true;
-                });
+                P1HitText = text;
+                P1HitBrush = brush;
+                P1HitVisible = true;
 
                 await Task.Delay(showMs);
+                if (_disposed) return;
 
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    P1HitVisible = false;
-                    P1HitText = string.Empty;
-                });
+                P1HitVisible = false;
+                P1HitText = string.Empty;
             }
             else if (playerIdx == 1)
             {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    P2HitText = text;
-                    P2HitBrush = brush;
-                    P2HitVisible = true;
-                });
+                P2HitText = text;
+                P2HitBrush = brush;
+                P2HitVisible = true;
 
                 await Task.Delay(showMs);
+                if (_disposed) return;
 
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    P2HitVisible = false;
-                    P2HitText = string.Empty;
-                });
+                P2HitVisible = false;
+                P2HitText = string.Empty;
             }
+        }
+
+        // =========================
+        // ✅ GameOver 结算同步：发送 MatchSummaryMsg
+        // =========================
+        private MatchSummaryMsg BuildLocalSummary()
+        {
+            try
+            {
+                if (_engine?.Players == null || _engine.Players.Count == 0) return null;
+
+                int idx = 0;
+                if (_isOnline)
+                    idx = Math.Max(0, Math.Min(_localPlayerIndex, _engine.Players.Count - 1));
+
+                var p = _engine.Players[idx];
+                var sc = p?.Score;
+                if (sc == null) return null;
+
+                int slot = (_isOnline && _session != null && _session.LocalSlot > 0) ? _session.LocalSlot : (idx + 1);
+
+                int totalNotes = (int)sc.PerfectHit + (int)sc.GoodHit + (int)sc.BadHit + (int)sc.MissHit;
+
+                return new MatchSummaryMsg
+                {
+                    Slot = slot,
+                    PlayerName = p?.PlayerName ?? ("Player " + slot),
+
+                    Score = (int)sc.Score,
+                    PerfectHit = (int)sc.PerfectHit,
+                    GoodHit = (int)sc.GoodHit,
+                    BadHit = (int)sc.BadHit,
+                    MissHit = (int)sc.MissHit,
+
+                    MaxCombo = (int)sc.MaxCombo,
+                    TotalNotes = totalNotes,
+                    Accuracy = (double)sc.Accuracy
+                };
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private async Task TrySendMatchSummaryAsync(MatchSummaryMsg summary)
+        {
+            if (summary == null) return;
+            if (_session == null || !_session.IsConnected) return;
+
+            // 反射调用：避免你还没把 OnlineSession 增加 SendMatchSummaryAsync 时这里直接编译失败
+            try
+            {
+                MethodInfo mi = _session.GetType().GetMethod("SendMatchSummaryAsync");
+                if (mi == null) return;
+
+                var t = mi.Invoke(_session, new object[] { summary }) as Task;
+                if (t != null) await t.ConfigureAwait(false);
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
+        private void LeaveOnlineOnce(string reason, bool sendSummary)
+        {
+            if (_leftOnline) return;
+            if (!_isOnline) return;
+            if (_session == null) return;
+
+            _leftOnline = true;
+
+            if (!sendSummary)
+            {
+                try { _ = _session.LeaveAsync(reason); } catch { }
+                return;
+            }
+
+            var summary = BuildLocalSummary();
+
+            _ = Task.Run(async () =>
+            {
+                try { await TrySendMatchSummaryAsync(summary).ConfigureAwait(false); } catch { }
+                try { await Task.Delay(200).ConfigureAwait(false); } catch { }
+
+                try { await _session.LeaveAsync(reason).ConfigureAwait(false); } catch { }
+            });
         }
 
         public void Cleanup()
         {
-            StopRenderLoop();
+            if (_disposed) return;
+            _disposed = true;
 
+            // ✅ Cleanup 不发送结算（避免重复/异常）
+            LeaveOnlineOnce("Cleanup", sendSummary: false);
+
+            StopRenderLoop();
 
             if (_session != null)
             {
                 _session.OnStart -= OnStartFromNet;
+                _session.OnInput -= OnInputFromNet;
+                _session.OnHitResult -= OnHitResultFromNet;
             }
 
             var window = Application.Current.MainWindow;
@@ -673,19 +901,20 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             Player2Notes.Clear();
         }
 
+        public void Dispose()
+        {
+            Cleanup();
+        }
+
         private void OnMusicEnded(object sender, EventArgs e)
         {
+            // ✅ 音乐结束也发送结算
+            LeaveOnlineOnce("Music ended", sendSummary: true);
             _onGameOver?.Invoke();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
         private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        private bool IsOnline =>
-            GameModeManager.CurrentMode is OnlineMultiPlayerMode
-             && GameModeManager.OnlineSession != null
-             && GameModeManager.OnlineSession.IsConnected;
-
     }
 
     public class NoteVM : INotifyPropertyChanged

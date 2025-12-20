@@ -11,17 +11,17 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
     internal class DifficultySelectionVM : ViewModelBase, IDisposable
     {
-        // ===== Online sync fields =====
         private OnlineSession _session;
-        private Action<SelectSongMsg> _onSelectSongHandler;
         private bool _handlingRemote;
 
-        // 歌曲信息
+        private Action<SelectDifficultyMsg> _onSelectDifficultyHandler;
+        private Action<int> _onConnectedHandler;
+        private Action<string> _onDisconnectedHandler;
+
         public string SongName { get; }
         public string SongCoverPath { get; private set; }
         public string SongDisplayName { get; private set; }
 
-        // 是否多人模式（LocalMulti / OnlineMulti 都算）
         public bool IsMultiplayer { get; }
 
         private bool IsOnlineConnected =>
@@ -36,7 +36,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public bool CanEditP1 => !IsOnlineConnected || LocalSlot == 1;
         public bool CanEditP2 => !IsOnlineConnected || LocalSlot == 2;
 
-        // ===== Player 1 selection =====
         private bool _isP1EasySelected;
         private bool _isP1HardSelected;
 
@@ -46,20 +45,16 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             set
             {
                 if (_isP1EasySelected == value) return;
-
-                // joiner 不允许点 P1（除非是网络同步触发）
                 if (!CanEditP1 && !_handlingRemote) return;
 
                 _isP1EasySelected = value;
-
                 if (value)
                 {
                     _isP1HardSelected = false;
-                    SetDifficultyInternal(playerIndex: 0, difficulty: "Easy");
+                    SetDifficultyInternal(0, "Easy");
                     OnPropertyChanged(nameof(IsP1HardSelected));
 
-                    // 只有“本机允许控制的玩家”才发消息
-                    TrySendLocalDifficulty("Easy");
+                    TrySendLocalDifficulty(slot: 1, difficulty: "Easy");
                 }
 
                 OnPropertyChanged(nameof(IsP1EasySelected));
@@ -73,18 +68,16 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             set
             {
                 if (_isP1HardSelected == value) return;
-
                 if (!CanEditP1 && !_handlingRemote) return;
 
                 _isP1HardSelected = value;
-
                 if (value)
                 {
                     _isP1EasySelected = false;
-                    SetDifficultyInternal(playerIndex: 0, difficulty: "Hard");
+                    SetDifficultyInternal(0, "Hard");
                     OnPropertyChanged(nameof(IsP1EasySelected));
 
-                    TrySendLocalDifficulty("Hard");
+                    TrySendLocalDifficulty(slot: 1, difficulty: "Hard");
                 }
 
                 OnPropertyChanged(nameof(IsP1HardSelected));
@@ -92,7 +85,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             }
         }
 
-        // ===== Player 2 selection =====
         private bool _isP2EasySelected;
         private bool _isP2HardSelected;
 
@@ -102,19 +94,16 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             set
             {
                 if (_isP2EasySelected == value) return;
-
-                // host 不允许点 P2（除非是网络同步触发）
                 if (!CanEditP2 && !_handlingRemote) return;
 
                 _isP2EasySelected = value;
-
                 if (value)
                 {
                     _isP2HardSelected = false;
-                    SetDifficultyInternal(playerIndex: 1, difficulty: "Easy");
+                    SetDifficultyInternal(1, "Easy");
                     OnPropertyChanged(nameof(IsP2HardSelected));
 
-                    TrySendLocalDifficulty("Easy");
+                    TrySendLocalDifficulty(slot: 2, difficulty: "Easy");
                 }
 
                 OnPropertyChanged(nameof(IsP2EasySelected));
@@ -128,18 +117,16 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             set
             {
                 if (_isP2HardSelected == value) return;
-
                 if (!CanEditP2 && !_handlingRemote) return;
 
                 _isP2HardSelected = value;
-
                 if (value)
                 {
                     _isP2EasySelected = false;
-                    SetDifficultyInternal(playerIndex: 1, difficulty: "Hard");
+                    SetDifficultyInternal(1, "Hard");
                     OnPropertyChanged(nameof(IsP2EasySelected));
 
-                    TrySendLocalDifficulty("Hard");
+                    TrySendLocalDifficulty(slot: 2, difficulty: "Hard");
                 }
 
                 OnPropertyChanged(nameof(IsP2HardSelected));
@@ -147,7 +134,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             }
         }
 
-        // ===== Play button =====
         public bool IsPlayButtonEnabled
         {
             get
@@ -158,14 +144,13 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 {
                     bool p2Selected = IsP2EasySelected || IsP2HardSelected;
 
-                    // ✅ Online joiner 禁用 Play（只等 host 开始）
+                    // Online joiner 禁用 Play（只等 host 开始）
                     if (IsOnlineConnected && GameModeManager.OnlineSession != null && !GameModeManager.OnlineSession.IsHost)
                         return false;
 
                     return p1Selected && p2Selected;
                 }
 
-                // 单人：如果是 online（理论不会出现），同样禁 joiner
                 if (IsOnlineConnected && GameModeManager.OnlineSession != null && !GameModeManager.OnlineSession.IsHost)
                     return false;
 
@@ -185,6 +170,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
             AttachOnlineIfNeeded();
             LoadFromModel();
+            ApplyCachedDifficultiesIfAny();
             RaiseAll();
         }
 
@@ -195,25 +181,21 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (GameModeManager.OnlineSession == null) return;
 
             _session = GameModeManager.OnlineSession;
-            if (!_session.IsConnected) return;
 
-            _onSelectSongHandler = msg =>
+            _onSelectDifficultyHandler = msg =>
             {
                 if (msg == null) return;
-                if (!string.Equals(msg.SongId, SongName, StringComparison.OrdinalIgnoreCase)) return;
                 if (string.IsNullOrWhiteSpace(msg.Difficulty)) return;
 
-                // 关键：通过“我是不是 Host”来推断这个消息是谁发来的
-                // - Joiner 收到的一定是 Host 发的 => 更新 P1（index 0）
-                // - Host 收到的一定是 Joiner 发的 => 更新 P2（index 1）
-                int targetIndex = _session.IsHost ? 1 : 0;
+                int idx = msg.Slot - 1;
+                if (idx < 0 || idx > 1) return;
 
                 Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     _handlingRemote = true;
                     try
                     {
-                        ApplyRemoteDifficulty(targetIndex, msg.Difficulty);
+                        ApplyRemoteDifficulty(idx, msg.Difficulty);
                     }
                     finally
                     {
@@ -222,38 +204,61 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 }));
             };
 
-            _session.OnSelectSong += _onSelectSongHandler;
+            _onConnectedHandler = _ =>
+            {
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    ApplyCachedDifficultiesIfAny();
+                    RaiseAll();
+                }));
+            };
 
-            // 连接状态变化会影响 CanEdit / Play
+            _onDisconnectedHandler = _ =>
+            {
+                Application.Current.Dispatcher.BeginInvoke(new Action(RaiseAll));
+            };
+
+            // ✅ 同样：不要用 IsConnected 作为订阅条件
+            _session.OnSelectDifficulty += _onSelectDifficultyHandler;
+            _session.OnConnected += _onConnectedHandler;
+            _session.OnDisconnected += _onDisconnectedHandler;
+
             OnPropertyChanged(nameof(CanEditP1));
             OnPropertyChanged(nameof(CanEditP2));
             OnPropertyChanged(nameof(IsPlayButtonEnabled));
         }
 
-        private void TrySendLocalDifficulty(string difficulty)
+        private void ApplyCachedDifficultiesIfAny()
+        {
+            var s = _session;
+            if (s == null) return;
+
+            if (!string.IsNullOrWhiteSpace(s.Slot1Difficulty))
+                ApplyRemoteDifficulty(0, s.Slot1Difficulty);
+
+            if (!string.IsNullOrWhiteSpace(s.Slot2Difficulty))
+                ApplyRemoteDifficulty(1, s.Slot2Difficulty);
+        }
+
+        private void TrySendLocalDifficulty(int slot, string difficulty)
         {
             if (!IsOnlineConnected) return;
             if (_session == null || !_session.IsConnected) return;
             if (_handlingRemote) return;
 
             // 只让“本机控制的玩家”发
-            if (LocalSlot == 1 && !CanEditP1) return;
-            if (LocalSlot == 2 && !CanEditP2) return;
+            if (slot == 1 && !CanEditP1) return;
+            if (slot == 2 && !CanEditP2) return;
 
             try
             {
-                // 复用 SelectSongMsg：SongId=当前歌，Difficulty=本玩家难度
-                _ = _session.SendSelectSongAsync(SongName, difficulty); // fire-and-forget
+                _ = _session.SendSelectDifficultyAsync(slot, difficulty);
             }
-            catch
-            {
-                // 不要让 UI 崩
-            }
+            catch { }
         }
 
         private void ApplyRemoteDifficulty(int playerIndex, string difficulty)
         {
-            // 更新 UI 选中状态（不要走 setter，避免再发回去）
             if (playerIndex == 0)
             {
                 _isP1EasySelected = string.Equals(difficulty, "Easy", StringComparison.OrdinalIgnoreCase);
@@ -271,9 +276,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 OnPropertyChanged(nameof(IsP2HardSelected));
             }
 
-            // 同步到模型（后面 Initialize() 会用 Difficulty 去加载谱）
             SetDifficultyInternal(playerIndex, difficulty);
-
             OnPropertyChanged(nameof(IsPlayButtonEnabled));
         }
 
@@ -340,16 +343,22 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (players == null) return;
             if (playerIndex < 0 || playerIndex >= players.Count) return;
 
-            players[playerIndex].Difficulty.CurrentDifficulty = difficulty;
+            if (players[playerIndex]?.Difficulty != null)
+                players[playerIndex].Difficulty.CurrentDifficulty = difficulty;
         }
 
         public void Dispose()
         {
-            if (_session != null && _onSelectSongHandler != null)
+            if (_session != null)
             {
-                _session.OnSelectSong -= _onSelectSongHandler;
+                if (_onSelectDifficultyHandler != null) _session.OnSelectDifficulty -= _onSelectDifficultyHandler;
+                if (_onConnectedHandler != null) _session.OnConnected -= _onConnectedHandler;
+                if (_onDisconnectedHandler != null) _session.OnDisconnected -= _onDisconnectedHandler;
             }
-            _onSelectSongHandler = null;
+
+            _onSelectDifficultyHandler = null;
+            _onConnectedHandler = null;
+            _onDisconnectedHandler = null;
             _session = null;
         }
     }

@@ -88,13 +88,16 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                 case MsgType.Start: return _json.Deserialize<StartMsg>(line);
                 case MsgType.Input: return _json.Deserialize<InputMsg>(line);
 
+                // ✅ 新增
+                case MsgType.HitResult: return _json.Deserialize<HitResultMsg>(line);
+                case MsgType.MatchSummary: return _json.Deserialize<MatchSummaryMsg>(line);
+
+
                 case MsgType.Abort: return _json.Deserialize<AbortMsg>(line);
                 case MsgType.System: return _json.Deserialize<SystemMsg>(line);
 
-
                 case MsgType.SelectDifficulty: return _json.Deserialize<SelectDifficultyMsg>(line);
                 case MsgType.Ready: return _json.Deserialize<ReadyMsg>(line);
-
 
                 default:
                     return baseMsg;

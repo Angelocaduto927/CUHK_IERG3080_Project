@@ -22,5 +22,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
 
             Closed += (s, e) => VM.OnWindowClosed();
         }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

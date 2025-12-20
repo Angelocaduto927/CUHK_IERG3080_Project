@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
@@ -12,14 +13,29 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         private TcpHost _host;
         private TcpJoiner _joiner;
 
+        private int _shuttingDown = 0;
+
         public bool IsHost { get; private set; }
         public bool IsConnected { get; private set; }
 
         public int LocalSlot { get; private set; } = 0;
         public string LocalName { get; private set; } = "Player";
         public string RoomId { get; private set; } = "room1";
-
         public int Port { get; private set; } = 5050;
+
+        // ✅ 缓存：Joiner 晚订阅也不会丢 Start / 选歌
+        public StartMsg LastStartMsg { get; private set; }
+        public SelectSongMsg LastSelectSongMsg { get; private set; }
+
+        // ✅ 房间状态缓存
+        public string Slot1Difficulty { get; private set; }
+        public string Slot2Difficulty { get; private set; }
+        public bool Slot1Ready { get; private set; }
+        public bool Slot2Ready { get; private set; }
+
+        // ✅ GameOver 结算缓存（关键：Shutdown 不清空）
+        public MatchSummaryMsg LastSummarySlot1 { get; private set; }
+        public MatchSummaryMsg LastSummarySlot2 { get; private set; }
 
         public string[] ShareAddresses
         {
@@ -32,19 +48,34 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                     .ToArray();
             }
         }
-        public StartMsg LastStartMsg { get; private set; }
-
 
         public event Action<string> OnLog;
         public event Action<int> OnConnected;
         public event Action<string> OnDisconnected;
+
         public event Action<SelectSongMsg> OnSelectSong;
+        public event Action<SelectDifficultyMsg> OnSelectDifficulty;
+        public event Action<ReadyMsg> OnReady;
+
         public event Action<StartMsg> OnStart;
         public event Action<InputMsg> OnInput;
 
+        // ✅ 实时权威判定/分数（InGame 显示用）
+        public event Action<HitResultMsg> OnHitResult;
+
+        // ✅ 最终结算（GameOver 用）
+        public event Action<MatchSummaryMsg> OnMatchSummary;
+
+        // =========================
+        // Host / Join
+        // =========================
         public async Task StartHostAsync(int port, string name, string roomId = "room1")
         {
-            Cleanup();
+            await ShutdownAsync("Restart host").ConfigureAwait(false);
+
+            // ✅ 新开房/新局：清结算
+            LastSummarySlot1 = null;
+            LastSummarySlot2 = null;
 
             Port = port;
             LocalName = name;
@@ -52,23 +83,52 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
             IsHost = true;
             LocalSlot = 1;
+            IsConnected = false;
 
             _host = new TcpHost { RoomId = roomId };
             _host.OnLog += Log;
+
             _host.OnClientConnected += clientName =>
             {
                 IsConnected = true;
                 Log("[Session] Client '" + clientName + "' connected.");
-                if (OnConnected != null) OnConnected(LocalSlot);
+                OnConnected?.Invoke(LocalSlot);
+
+                // ✅ Joiner 连上后，把当前状态补发（避免不同步）
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        if (LastSelectSongMsg != null)
+                            await _host.SendAsync(LastSelectSongMsg).ConfigureAwait(false);
+
+                        if (!string.IsNullOrWhiteSpace(Slot1Difficulty))
+                            await _host.SendAsync(new SelectDifficultyMsg { Slot = 1, Difficulty = Slot1Difficulty }).ConfigureAwait(false);
+
+                        if (!string.IsNullOrWhiteSpace(Slot2Difficulty))
+                            await _host.SendAsync(new SelectDifficultyMsg { Slot = 2, Difficulty = Slot2Difficulty }).ConfigureAwait(false);
+
+                        await _host.SendAsync(new ReadyMsg { Slot = 1, IsReady = Slot1Ready }).ConfigureAwait(false);
+                        await _host.SendAsync(new ReadyMsg { Slot = 2, IsReady = Slot2Ready }).ConfigureAwait(false);
+
+                        // ✅ 如果已经有结算，也补发（可选）
+                        if (LastSummarySlot1 != null) await _host.SendAsync(LastSummarySlot1).ConfigureAwait(false);
+                        if (LastSummarySlot2 != null) await _host.SendAsync(LastSummarySlot2).ConfigureAwait(false);
+                    }
+                    catch { }
+                });
             };
+
             _host.OnClientDisconnected += () =>
             {
                 IsConnected = false;
-                if (OnDisconnected != null) OnDisconnected("Client disconnected");
+                OnDisconnected?.Invoke("Client disconnected");
             };
+
             _host.OnMessage += HandleIncoming;
 
-            await _host.StartAsync(port);
+            await _host.StartAsync(port).ConfigureAwait(false);
+
             Log("[Session] Host started.");
             Log("[Session] Share addresses:");
             foreach (var a in ShareAddresses) Log("  " + a);
@@ -76,68 +136,141 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
         public async Task JoinHostAsync(string hostIp, int port, string name)
         {
-            Cleanup();
+            await ShutdownAsync("Restart join").ConfigureAwait(false);
+
+            // ✅ 新连接：清结算
+            LastSummarySlot1 = null;
+            LastSummarySlot2 = null;
 
             Port = port;
             LocalName = name;
 
             IsHost = false;
+            IsConnected = false;
+            LocalSlot = 0;
 
             _joiner = new TcpJoiner();
             _joiner.OnLog += Log;
+
             _joiner.OnJoinOk += ok =>
             {
                 LocalSlot = ok.Slot;
                 RoomId = ok.RoomId;
                 IsConnected = true;
-                if (OnConnected != null) OnConnected(LocalSlot);
+                OnConnected?.Invoke(LocalSlot);
             };
+
             _joiner.OnJoinRejected += reason =>
             {
                 IsConnected = false;
-                if (OnDisconnected != null) OnDisconnected("Join rejected: " + reason);
+                OnDisconnected?.Invoke("Join rejected: " + reason);
             };
+
             _joiner.OnDisconnected += () =>
             {
                 IsConnected = false;
-                if (OnDisconnected != null) OnDisconnected("Disconnected");
+                OnDisconnected?.Invoke("Disconnected");
             };
+
             _joiner.OnMessage += HandleIncoming;
 
-            await _joiner.ConnectAndJoinAsync(hostIp, port, name);
+            await _joiner.ConnectAndJoinAsync(hostIp, port, name).ConfigureAwait(false);
         }
 
+        // =========================
+        // Lobby sync
+        // =========================
         public Task SendSelectSongAsync(string songId, string difficulty)
         {
-            return SendAsync(new SelectSongMsg { SongId = songId, Difficulty = difficulty });
+            var msg = new SelectSongMsg { SongId = songId, Difficulty = difficulty };
+            LastSelectSongMsg = msg;
+
+            // 如果你这里是全局难度，也可同步写入
+            if (!string.IsNullOrWhiteSpace(difficulty))
+            {
+                Slot1Difficulty = difficulty;
+                Slot2Difficulty = difficulty;
+            }
+
+            return SendAsync(msg);
         }
 
+        public Task SendSelectDifficultyAsync(int slot, string difficulty)
+        {
+            if (slot == 1) Slot1Difficulty = difficulty;
+            if (slot == 2) Slot2Difficulty = difficulty;
+
+            return SendAsync(new SelectDifficultyMsg { Slot = slot, Difficulty = difficulty });
+        }
+
+        public Task SendReadyAsync(int slot, bool isReady)
+        {
+            if (slot == 1) Slot1Ready = isReady;
+            if (slot == 2) Slot2Ready = isReady;
+
+            return SendAsync(new ReadyMsg { Slot = slot, IsReady = isReady });
+        }
+
+        // =========================
+        // Game sync
+        // =========================
         public Task SendStartAsync(int startInMs = 1500)
         {
             long startAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + startInMs;
             var msg = new StartMsg { StartInMs = startInMs, StartAtUnixMs = startAt };
 
-            // Host 本机也要开始：直接触发本地 OnStart（否则 Host 只发给 Joiner）
             LastStartMsg = msg;
-    
             OnStart?.Invoke(msg);
 
             return SendAsync(msg);
         }
-
 
         public Task SendInputAsync(int slot, string noteType, double atMs)
         {
             return SendAsync(new InputMsg { Slot = slot, NoteType = noteType, AtMs = atMs });
         }
 
-        public async Task LeaveAsync(string reason = "Leave")
+        public Task SendHitResultAsync(int slot, string noteType, double atMs, string result, int score, int combo, double accuracy)
         {
-            try { await SendAsync(new AbortMsg { Reason = reason }); } catch { }
-            Cleanup();
-            if (OnDisconnected != null) OnDisconnected(reason);
+            return SendAsync(new HitResultMsg
+            {
+                Slot = slot,
+                NoteType = noteType ?? "Red",
+                AtMs = atMs,
+                Result = string.IsNullOrWhiteSpace(result) ? "Tap" : result,
+                Score = score,
+                Combo = combo,
+                Accuracy = accuracy
+            });
         }
 
+        // ✅ GameOver：发送最终结算（本地先缓存）
+        public Task SendMatchSummaryAsync(MatchSummaryMsg msg)
+        {
+            CacheSummary(msg);
+            return SendAsync(msg);
+        }
+
+        private void CacheSummary(MatchSummaryMsg msg)
+        {
+            if (msg == null) return;
+            if (msg.Slot == 1) LastSummarySlot1 = msg;
+            else if (msg.Slot == 2) LastSummarySlot2 = msg;
+        }
+
+        // =========================
+        // Disconnect
+        // =========================
+        public async Task LeaveAsync(string reason = "Leave")
+        {
+            try { await SendAsync(new AbortMsg { Reason = reason }).ConfigureAwait(false); } catch { }
+            await ShutdownAsync(reason).ConfigureAwait(false);
+            OnDisconnected?.Invoke(reason);
+        }
+
+        // =========================
+        // Internal send / receive
+        // =========================
         private Task SendAsync(NetMsg msg)
         {
             if (IsHost)
@@ -148,66 +281,126 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
         private void HandleIncoming(NetMsg msg)
         {
+            if (msg is SelectSongMsg sel)
+            {
+                LastSelectSongMsg = sel;
 
-            if (msg is SelectDifficultyMsg dif) { OnSelectDifficulty?.Invoke(dif); return; }
+                if (!string.IsNullOrWhiteSpace(sel.Difficulty))
+                {
+                    Slot1Difficulty = sel.Difficulty;
+                    Slot2Difficulty = sel.Difficulty;
+                }
+
+                OnSelectSong?.Invoke(sel);
+                return;
+            }
+
+            if (msg is SelectDifficultyMsg dif)
+            {
+                if (dif.Slot == 1) Slot1Difficulty = dif.Difficulty;
+                if (dif.Slot == 2) Slot2Difficulty = dif.Difficulty;
+
+                OnSelectDifficulty?.Invoke(dif);
+                return;
+            }
 
             if (msg is ReadyMsg r)
             {
                 if (r.Slot == 1) Slot1Ready = r.IsReady;
                 if (r.Slot == 2) Slot2Ready = r.IsReady;
+
                 OnReady?.Invoke(r);
                 return;
             }
 
-            var sel = msg as SelectSongMsg;
-            if (sel != null) { if (OnSelectSong != null) OnSelectSong(sel); return; }
-
-            var st = msg as StartMsg;
-            if (st != null)
+            if (msg is StartMsg st)
             {
-                LastStartMsg = st;           // ★新增
+                LastStartMsg = st;
                 OnStart?.Invoke(st);
                 return;
             }
 
-
-            var inp = msg as InputMsg;
-            if (inp != null) { if (OnInput != null) OnInput(inp); return; }
-
-            var ab = msg as AbortMsg;
-            if (ab != null)
+            if (msg is InputMsg inp)
             {
-                IsConnected = false;
-                if (OnDisconnected != null) OnDisconnected(ab.Reason);
-                Cleanup();
+                OnInput?.Invoke(inp);
                 return;
             }
 
-            var sys = msg as SystemMsg;
-            if (sys != null) { Log("[SYS] " + sys.Text); return; }
+            if (msg is HitResultMsg hr)
+            {
+                OnHitResult?.Invoke(hr);
+                return;
+            }
+
+            if (msg is MatchSummaryMsg sum)
+            {
+                CacheSummary(sum);
+                OnMatchSummary?.Invoke(sum);
+                return;
+            }
+
+            if (msg is AbortMsg ab)
+            {
+                IsConnected = false;
+                OnDisconnected?.Invoke(ab.Reason);
+                _ = ShutdownAsync("Remote abort");
+                return;
+            }
+
+            if (msg is SystemMsg sys)
+            {
+                Log("[SYS] " + sys.Text);
+                return;
+            }
         }
 
-        private void Log(string s)
-        {
-            if (OnLog != null) OnLog(s);
-        }
+        private void Log(string s) => OnLog?.Invoke(s);
 
-        private void Cleanup()
+        // =========================
+        // Shutdown / Dispose
+        // =========================
+        public async Task ShutdownAsync(string reason = "Shutdown")
         {
-            try { if (_host != null) _host.Dispose(); } catch { }
-            try { if (_joiner != null) _joiner.Dispose(); } catch { }
-            _host = null;
-            _joiner = null;
+            if (Interlocked.Exchange(ref _shuttingDown, 1) == 1) return;
 
-            IsConnected = false;
-            IsHost = false;
-            LocalSlot = 0;
-            LastStartMsg = null;
+            try
+            {
+                if (_host != null)
+                {
+                    try { await _host.StopAsync().ConfigureAwait(false); } catch { }
+                    try { _host.Dispose(); } catch { }
+                    _host = null;
+                }
+
+                if (_joiner != null)
+                {
+                    try { await _joiner.DisconnectAsync(reason).ConfigureAwait(false); } catch { }
+                    try { _joiner.Dispose(); } catch { }
+                    _joiner = null;
+                }
+
+                IsConnected = false;
+                IsHost = false;
+                LocalSlot = 0;
+
+                // ✅ 注意：不清掉 LastSummarySlot1/2（GameOver 需要）
+                LastStartMsg = null;
+                LastSelectSongMsg = null;
+
+                Slot1Difficulty = null;
+                Slot2Difficulty = null;
+                Slot1Ready = false;
+                Slot2Ready = false;
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _shuttingDown, 0);
+            }
         }
 
         public void Dispose()
         {
-            Cleanup();
+            try { ShutdownAsync("Dispose").GetAwaiter().GetResult(); } catch { }
         }
 
         private static string[] GetLanIPv4Addresses()
@@ -225,36 +418,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             }
             catch
             {
-                return new string[0];
+                return Array.Empty<string>();
             }
-    
         }
-
-        public bool Slot1Ready { get; private set; }
-        public bool Slot2Ready { get; private set; }
-
-        public event Action<SelectDifficultyMsg> OnSelectDifficulty;
-        public event Action<ReadyMsg> OnReady;
-
-
-        public Task SendSelectDifficultyAsync(int slot, string difficulty)
-        {
-            return SendAsync(new SelectDifficultyMsg { Slot = slot, Difficulty = difficulty });
-        }
-
-        public Task SendReadyAsync(int slot, bool isReady)
-        {
-            // 本地也记录（这样就算没人订阅事件，状态也不会丢）
-            if (slot == 1) Slot1Ready = isReady;
-            if (slot == 2) Slot2Ready = isReady;
-
-            return SendAsync(new ReadyMsg { Slot = slot, IsReady = isReady });
-        }
-
-
-
-
-
     }
-
 }

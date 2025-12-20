@@ -9,11 +9,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Shared
         public const string JoinOk = "JoinOk";         // Host -> Client
         public const string JoinReject = "JoinReject"; // Host -> Client
 
-        public const string Start = "Start";           // Host -> Both (或 Host->Client, Host 本地直接触发)
+        public const string Start = "Start";           // Host -> Both
         public const string Input = "Input";           // Both directions
         public const string SelectSong = "SelectSong"; // Host -> Client
 
-        public const string Abort = "Abort";           // Host/Client -> other (断线/退出/错误)
+        public const string Abort = "Abort";           // Host/Client -> other
         public const string Ping = "Ping";             // optional
         public const string Pong = "Pong";             // optional
         public const string System = "System";         // optional log
@@ -21,6 +21,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Shared
         public const string SelectDifficulty = "SelectDifficulty";
         public const string Ready = "Ready";
 
+        // ✅ 新增：击打结果（权威分数/判定/效果）
+        public const string HitResult = "HitResult";
+
+        public const string MatchSummary = "MatchSummary";
     }
 
     // === 基类 ===
@@ -41,7 +45,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Shared
     [Serializable]
     public sealed class JoinOkMsg : NetMsg
     {
-        public int Slot { get; set; }          // 1 or 2（你是 P1 还是 P2）
+        public int Slot { get; set; }          // 1 or 2
         public string RoomId { get; set; } = "room1";
         public string Message { get; set; } = "";
         public JoinOkMsg() { Type = MsgType.JoinOk; }
@@ -54,38 +58,50 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Shared
         public JoinRejectMsg() { Type = MsgType.JoinReject; }
     }
 
-    // === Start ===（第一版用相对延迟，简单稳定）
+    // === Start ===
     [Serializable]
     public sealed class StartMsg : NetMsg
     {
         public int StartInMs { get; set; } = 2000;
-
-        // 新增：绝对开始时间（UTC Unix ms），用于“同时开始”
         public long StartAtUnixMs { get; set; } = 0;
-
         public StartMsg() { Type = MsgType.Start; }
     }
-
 
     // === 选歌同步（房主发）===
     [Serializable]
     public sealed class SelectSongMsg : NetMsg
     {
-        public string SongId { get; set; } = "";      // 例如 "IRIS_OUT"
-        public string Difficulty { get; set; } = "";  // 例如 "Easy"/"Hard"
+        public string SongId { get; set; } = "";
+        public string Difficulty { get; set; } = "";
         public SelectSongMsg() { Type = MsgType.SelectSong; }
     }
 
-    // === 输入同步（核心）===
-    // AtMs：使用“游戏引擎时间轴 ms”（你 GameEngine.CurrentTime 就是 ms）
-    // NoteType：用字符串 "Red"/"Blue"
+    // === 输入同步（驱动对方轨道 note 消失/推进用）===
     [Serializable]
     public sealed class InputMsg : NetMsg
     {
-        public int Slot { get; set; }           // 谁按的：1 or 2
+        public int Slot { get; set; }           // 1 or 2
         public string NoteType { get; set; } = "Red";
         public double AtMs { get; set; }        // ms on engine timeline
         public InputMsg() { Type = MsgType.Input; }
+    }
+
+    // ✅ 新增：击打结果（由击打者本机计算完发送）
+    // Result: "Perfect"/"Good"/"Bad"/"Miss"/"Tap"
+    [Serializable]
+    public sealed class HitResultMsg : NetMsg
+    {
+        public int Slot { get; set; }               // 谁打的：1/2
+        public string NoteType { get; set; } = "Red";
+        public double AtMs { get; set; }            // 引擎时间轴 ms（用于对齐效果）
+        public string Result { get; set; } = "Tap"; // Perfect/Good/Bad/Miss/Tap
+
+        // 权威显示值（对方端不再本地判定）
+        public int Score { get; set; } = 0;
+        public int Combo { get; set; } = 0;
+        public double Accuracy { get; set; } = 100;
+
+        public HitResultMsg() { Type = MsgType.HitResult; }
     }
 
     // === Abort / 断线 / 错误 ===
@@ -101,15 +117,13 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Shared
     {
         public string Text { get; set; } = "";
         public SystemMsg() { Type = MsgType.System; }
-
-
     }
 
     [Serializable]
     public sealed class SelectDifficultyMsg : NetMsg
     {
         public int Slot { get; set; }        // 1 or 2
-        public string Difficulty { get; set; } = "Easy"; // "Easy"/"Hard"
+        public string Difficulty { get; set; } = "Easy";
         public SelectDifficultyMsg() { Type = MsgType.SelectDifficulty; }
     }
 
@@ -121,4 +135,22 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Shared
         public ReadyMsg() { Type = MsgType.Ready; }
     }
 
+    [Serializable]
+    public sealed class MatchSummaryMsg : NetMsg
+    {
+        public int Slot { get; set; } = 1;          // 1 or 2
+        public string PlayerName { get; set; } = "";
+
+        public int Score { get; set; } = 0;
+        public int PerfectHit { get; set; } = 0;
+        public int GoodHit { get; set; } = 0;
+        public int BadHit { get; set; } = 0;
+        public int MissHit { get; set; } = 0;
+
+        public int MaxCombo { get; set; } = 0;
+        public int TotalNotes { get; set; } = 0;
+        public double Accuracy { get; set; } = 0;
+
+        public MatchSummaryMsg() { Type = MsgType.MatchSummary; }
+    }
 }

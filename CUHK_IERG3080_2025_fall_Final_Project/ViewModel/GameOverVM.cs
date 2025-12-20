@@ -1,14 +1,18 @@
-﻿using System;
+﻿using CUHK_IERG3080_2025_fall_Final_Project.Model;
+using CUHK_IERG3080_2025_fall_Final_Project.Networking;
+using CUHK_IERG3080_2025_fall_Final_Project.Shared;
+using CUHK_IERG3080_2025_fall_Final_Project.Utility;
+using System;
 using System.Collections;
 using System.Reflection;
-using CUHK_IERG3080_2025_fall_Final_Project.Model;
-using CUHK_IERG3080_2025_fall_Final_Project.Utility;
+using System.Windows;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
     internal class GameOverVM : ViewModelBase
     {
         private readonly Action _navigateToTitleScreen;
+        private readonly OnlineSession _session;
 
         // Player 1
         public string Player1Name { get; private set; }
@@ -42,15 +46,103 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             _navigateToTitleScreen = navigateToTitleScreen;
 
+            // ✅ Online 时：GameOver 优先读 Session 的最终结算缓存
+            _session = (GameModeManager.CurrentMode is OnlineMultiPlayerMode) ? GameModeManager.OnlineSession : null;
+
+            if (_session != null)
+            {
+                _session.OnMatchSummary += _ =>
+                {
+                    // 网络回调可能不在 UI 线程
+                    Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
+                    {
+                        LoadScoreData();
+                    }));
+                };
+            }
+
             LoadScoreData();
         }
 
         private void LoadScoreData()
         {
             var players = GetCurrentModePlayers();
+
+            // ✅ 1) Online：如果拿得到最终结算，就用最终结算（最权威）
+            if (TryLoadFromOnlineSummary(players))
+            {
+                NotifyAll();
+                return;
+            }
+
+            // ✅ 2) fallback：原来逻辑（本地 _players[i].Score）
+            LoadFromLocalPlayers(players);
+            NotifyAll();
+        }
+
+        private bool TryLoadFromOnlineSummary(IList players)
+        {
+            if (_session == null) return false;
+
+            var s1 = _session.LastSummarySlot1;
+            var s2 = _session.LastSummarySlot2;
+
+            if (s1 == null && s2 == null) return false;
+
+            // 名字 fallback：优先 Summary，其次 players
+            string p1NameFallback = (players != null && players.Count > 0) ? (players[0] as dynamic)?.PlayerName : "Player 1";
+            string p2NameFallback = (players != null && players.Count > 1) ? (players[1] as dynamic)?.PlayerName : "Player 2";
+
+            ApplySummaryToPlayer(1, s1, p1NameFallback);
+            ApplySummaryToPlayer(2, s2, p2NameFallback);
+
+            Player2Visible = (s2 != null) || (players != null && players.Count > 1);
+            return true;
+        }
+
+        private void ApplySummaryToPlayer(int idx, MatchSummaryMsg s, string nameFallback)
+        {
+            if (s == null)
+            {
+                SetDefaultValuesForPlayer(idx);
+                CalculateGradeForPlayer(idx);
+                if (idx == 1) Player1Name = nameFallback ?? "Player 1";
+                else Player2Name = nameFallback ?? "Player 2";
+                return;
+            }
+
+            if (idx == 1)
+            {
+                Player1Name = string.IsNullOrWhiteSpace(s.PlayerName) ? (nameFallback ?? "Player 1") : s.PlayerName;
+                TotalScore1 = s.Score;
+                PerfectHits1 = s.PerfectHit;
+                GoodHits1 = s.GoodHit;
+                BadHits1 = s.BadHit;
+                MissHits1 = s.MissHit;
+                MaxCombo1 = s.MaxCombo;
+                TotalNotes1 = (s.TotalNotes > 0) ? s.TotalNotes : (PerfectHits1 + GoodHits1 + BadHits1 + MissHits1);
+                Accuracy1 = $"{s.Accuracy:F1}%";
+                CalculateGradeForPlayer(1);
+            }
+            else
+            {
+                Player2Name = string.IsNullOrWhiteSpace(s.PlayerName) ? (nameFallback ?? "Player 2") : s.PlayerName;
+                TotalScore2 = s.Score;
+                PerfectHits2 = s.PerfectHit;
+                GoodHits2 = s.GoodHit;
+                BadHits2 = s.BadHit;
+                MissHits2 = s.MissHit;
+                MaxCombo2 = s.MaxCombo;
+                TotalNotes2 = (s.TotalNotes > 0) ? s.TotalNotes : (PerfectHits2 + GoodHits2 + BadHits2 + MissHits2);
+                Accuracy2 = $"{s.Accuracy:F1}%";
+                CalculateGradeForPlayer(2);
+            }
+        }
+
+        private void LoadFromLocalPlayers(IList players)
+        {
             if (players != null && players.Count > 0)
             {
-                // Player 1
                 dynamic player1 = players[0];
                 dynamic score1 = player1?.Score;
                 Player1Name = player1?.PlayerName ?? "Player 1";
@@ -80,7 +172,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 Player1Name = "Player 1";
             }
 
-            // Player 2 (optional)
             if (players != null && players.Count > 1)
             {
                 Player2Visible = true;
@@ -113,8 +204,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 CalculateGradeForPlayer(2);
                 Player2Name = "Player 2";
             }
+        }
 
-            // Notify bindings
+        private void NotifyAll()
+        {
             OnPropertyChanged(nameof(Player1Name));
             OnPropertyChanged(nameof(TotalScore1));
             OnPropertyChanged(nameof(PerfectHits1));
@@ -170,7 +263,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void CalculateGradeForPlayer(int playerIdx)
         {
-            int perfect = playerIdx == 1 ? PerfectHits1 : PerfectHits2;
             int total = playerIdx == 1 ? TotalNotes1 : TotalNotes2;
             int totalscore = playerIdx == 1 ? TotalScore1 : TotalScore2;
 
@@ -184,37 +276,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             }
             else
             {
-                //double perfectRatio = (double)perfect / total;
-                if (totalscore >= 96000)
-                {
-                    grade = "S";
-                    color = "#FFD4AF37";
-                }
-                else if (totalscore >= 92000)
-                {
-                    grade = "A";
-                    color = "#FFFFE08A";
-                }
-                else if (totalscore >= 82000)
-                {
-                    grade = "B";
-                    color = "#FF3B82F6";
-                }
-                else if (totalscore >= 72000)
-                {
-                    grade = "C";
-                    color = "#FF1E3A8A";
-                }
-                else if (totalscore >= 60000)
-                {
-                    grade = "D";
-                    color = "#FF6B7280";
-                }
-                else
-                {
-                    grade = "F";
-                    color = "#FF991B1B";
-                }
+                if (totalscore >= 96000) { grade = "S"; color = "#FFD4AF37"; }
+                else if (totalscore >= 92000) { grade = "A"; color = "#FFFFE08A"; }
+                else if (totalscore >= 82000) { grade = "B"; color = "#FF3B82F6"; }
+                else if (totalscore >= 72000) { grade = "C"; color = "#FF1E3A8A"; }
+                else if (totalscore >= 60000) { grade = "D"; color = "#FF6B7280"; }
+                else { grade = "F"; color = "#FF991B1B"; }
             }
 
             if (playerIdx == 1)

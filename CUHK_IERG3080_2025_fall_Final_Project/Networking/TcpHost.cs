@@ -36,6 +36,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             _cts = new CancellationTokenSource();
 
             _listener = new TcpListener(IPAddress.Any, port);
+
+            // 允许快速重启监听（降低 “地址只能用一次” 概率）
+            try { _listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true); } catch { }
+            try { _listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false); } catch { }
+
             _listener.Start();
 
             Log("[Host] Listening on 0.0.0.0:" + port);
@@ -81,6 +86,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                 catch { break; }
 
                 if (ct.IsCancellationRequested) break;
+
+                try { incoming.NoDelay = true; } catch { }
 
                 if (_client != null)
                 {

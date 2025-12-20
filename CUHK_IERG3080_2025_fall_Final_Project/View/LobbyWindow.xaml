@@ -54,8 +54,8 @@
                     <Button Content="Copy Selected"
                             DockPanel.Dock="Bottom"
                             Margin="0,8,0,0"
-                            Height="30"
-                            Command="{Binding CopyAddressCommand}"/>
+                            Height="35"
+                            Command="{Binding CopyAddressCommand}" Click="Button_Click"/>
                 </DockPanel>
             </GroupBox>
 

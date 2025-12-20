@@ -50,6 +50,7 @@
                 <DockPanel Margin="8">
                     <ListBox ItemsSource="{Binding ShareAddresses}"
                              SelectedItem="{Binding SelectedShareAddress}"
+                             SelectedIndex="0"
                              MinHeight="140"/>
                     <Button Content="Copy Selected"
                             DockPanel.Dock="Bottom"

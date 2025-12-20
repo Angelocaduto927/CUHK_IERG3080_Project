@@ -1,6 +1,7 @@
 ﻿using CUHK_IERG3080_2025_fall_Final_Project.Shared;
 using System;
 using System.Linq;
+using System.Net; // ✅ add
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading;
@@ -37,15 +38,19 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         public MatchSummaryMsg LastSummarySlot1 { get; private set; }
         public MatchSummaryMsg LastSummarySlot2 { get; private set; }
 
+        // ✅ 只提供一个可分享地址（不再显示 localhost，也不列出多网卡）
         public string[] ShareAddresses
         {
             get
             {
-                return GetLanIPv4Addresses()
-                    .Select(ip => ip + ":" + Port)
-                    .Prepend("localhost:" + Port)
-                    .Distinct()
-                    .ToArray();
+                var ips = GetLanIPv4Addresses();
+                var best = ChooseBestShareIp(ips);
+
+                // 没拿到 LAN IP（极少数情况，比如无网卡/权限/奇怪环境），才 fallback
+                if (string.IsNullOrWhiteSpace(best))
+                    best = "127.0.0.1";
+
+                return new[] { $"{best}:{Port}" };
             }
         }
 
@@ -130,7 +135,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             await _host.StartAsync(port).ConfigureAwait(false);
 
             Log("[Session] Host started.");
-            Log("[Session] Share addresses:");
+            Log("[Session] Share address:");
             foreach (var a in ShareAddresses) Log("  " + a);
         }
 
@@ -401,6 +406,33 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         public void Dispose()
         {
             try { ShutdownAsync("Dispose").GetAwaiter().GetResult(); } catch { }
+        }
+
+        // =========================
+        // IP picking helpers
+        // =========================
+        private static string ChooseBestShareIp(string[] ips)
+        {
+            if (ips == null || ips.Length == 0) return null;
+
+            // 优先 RFC1918 私网段（最符合“发给朋友同一局域网连接”）
+            var privateIp = ips.FirstOrDefault(IsRfc1918);
+            if (!string.IsNullOrWhiteSpace(privateIp)) return privateIp;
+
+            // 其次就用第一个可用 IP（已经过滤 169.254）
+            return ips[0];
+        }
+
+        private static bool IsRfc1918(string ip)
+        {
+            if (!IPAddress.TryParse(ip, out var addr)) return false;
+            if (addr.AddressFamily != AddressFamily.InterNetwork) return false;
+
+            var b = addr.GetAddressBytes();
+            if (b[0] == 10) return true;
+            if (b[0] == 192 && b[1] == 168) return true;
+            if (b[0] == 172 && b[1] >= 16 && b[1] <= 31) return true;
+            return false;
         }
 
         private static string[] GetLanIPv4Addresses()

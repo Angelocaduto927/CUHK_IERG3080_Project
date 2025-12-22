@@ -20,12 +20,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.View
                 Close();
             };
 
-            Closed += (s, e) => VM.OnWindowClosed();
+            // ✅ 关闭窗口时：如果不是 OK（DialogResult != true），就断开连接
+            Closed += (s, e) => VM.OnWindowClosed(DialogResult == true);
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-
         }
     }
 }

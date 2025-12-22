@@ -22,7 +22,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 if (ReferenceEquals(_currentViewModel, value)) return;
 
-                // ✅ 切页前 Dispose 旧 VM
                 try
                 {
                     if (_currentViewModel is IDisposable d)
@@ -44,8 +43,40 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public ICommand GameOverCommand { get; set; }
         public ICommand DifficultySelectionCommand { get; set; }
 
+        // ✅ 回 Title 之前：断开在线连接 + 清理全局 OnlineSession
+        private void DisconnectOnlineAndClear(string reason = "Leave")
+        {
+            var s = GameModeManager.OnlineSession;
+            if (s == null) return;
+
+            // 先解绑事件，避免离开时触发一些重复逻辑
+            try
+            {
+                if (_hookedSession == s)
+                {
+                    _hookedSession.OnStart -= OnOnlineStart;
+                    _hookedSession.OnDisconnected -= OnOnlineDisconnected;
+                    _hookedSession = null;
+                }
+            }
+            catch { }
+
+            try
+            {
+                // fire-and-forget：不要阻塞 UI
+                _ = s.LeaveAsync(reason);
+            }
+            catch { }
+
+            try { GameModeManager.OnlineSession = null; } catch { }
+            try { GameModeManager.SetMode(GameModeManager.Mode.SinglePlayer); } catch { }
+        }
+
         private void TitleScreen(object obj)
         {
+            // ✅ 关键：从“选歌 Back / 任何 Back”回 Title 时，自动断开联机
+            DisconnectOnlineAndClear("Leave");
+
             CurrentViewModel = new TitleScreenVM(() => SongSelection(null));
         }
 
@@ -69,10 +100,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private void Setting(object obj)
         {
             var previous = CurrentViewModel;
-            CurrentViewModel = new SettingVM(() =>
-            {
-                CurrentViewModel = previous;
-            });
+            CurrentViewModel = new SettingVM(() => { CurrentViewModel = previous; });
             EnsureOnlineHooks();
         }
 
@@ -151,7 +179,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             if (string.IsNullOrWhiteSpace(reason)) return false;
 
-            // InGameVM 主动 Leave 的 reason（不要弹窗，不要强制回 Title）
             if (reason == "Game finished" || reason == "Music ended" || reason == "Cleanup") return true;
             if (reason == "Leave" || reason == "Dispose" || reason.StartsWith("Restart", StringComparison.OrdinalIgnoreCase)) return true;
             return false;
@@ -174,11 +201,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 }
                 catch { }
 
-                // ✅ 清理全局 session，避免还在 Online 模式下出各种空引用
                 try { GameModeManager.OnlineSession = null; } catch { }
                 try { GameModeManager.SetMode(GameModeManager.Mode.SinglePlayer); } catch { }
 
-                // ✅ 解绑事件，避免旧 session 残留触发
                 try
                 {
                     if (_hookedSession != null)
@@ -190,7 +215,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 }
                 catch { }
 
-                // ✅ 强制回到 TitleScreen
                 try { TitleScreen(null); } catch { }
             }));
         }

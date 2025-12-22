@@ -67,14 +67,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             get { return IsConnected ? ("Connected as Player " + Session.LocalSlot) : "Not connected"; }
         }
 
-        // ✅ 对外暴露 ICommand（最稳）
         public ICommand StartHostCommand { get; }
         public ICommand JoinHostCommand { get; }
         public ICommand CopyAddressCommand { get; }
         public ICommand OkCommand { get; }
         public ICommand CloseCommand { get; }
 
-        // Window 会订阅这个事件来 Close + DialogResult
         public event Action<bool> RequestClose;
 
         public LobbyViewModel()
@@ -117,12 +115,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     Logs.Add("[Lobby] Not connected yet.");
                     return;
                 }
-                if (RequestClose != null) RequestClose(true);
+                RequestClose?.Invoke(true); // ✅ OK：保留连接
             });
 
             CloseCommand = new RelayCommand(_ =>
             {
-                if (RequestClose != null) RequestClose(false);
+                RequestClose?.Invoke(false); // ✅ Cancel/Close：会触发 OnWindowClosed(false) 做断开
             });
         }
 
@@ -189,7 +187,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             }
         }
 
-
         private void CopySelectedAddress()
         {
             if (string.IsNullOrWhiteSpace(SelectedShareAddress)) return;
@@ -231,9 +228,18 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             else a();
         }
 
-        public void OnWindowClosed()
+        // ✅ keepSession=true 表示按 OK 进入游戏流程，连接交给 GameModeManager.OnlineSession 管
+        // ✅ keepSession=false 表示取消/点 X，必须断开，避免“回到 Title 但还连着”
+        public void OnWindowClosed(bool keepSession)
         {
-            // 暂时不 Dispose Session，避免 OK 之后断线
+            if (keepSession) return;
+
+            try
+            {
+                // fire-and-forget：不要在 UI 线程阻塞
+                _ = Session.LeaveAsync("Leave");
+            }
+            catch { }
         }
 
         private bool TryParseEndpoint(string input, int defaultPort, out string host, out int port)
@@ -244,11 +250,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (string.IsNullOrWhiteSpace(input)) return false;
 
             input = input.Trim();
-
-            // 兼容中文冒号：192.168.1.5：5050
             input = input.Replace('：', ':');
 
-            // 支持用户粘贴 http://192.168.1.5:5050/xxx
             if (input.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                 input.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
@@ -262,11 +265,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 return false;
             }
 
-            // 去掉可能的路径部分 192.168.1.5:5050/abc
             int slash = input.IndexOf('/');
             if (slash >= 0) input = input.Substring(0, slash);
 
-            // 支持 host:port（只处理一个冒号的情况，避免 IPv6 麻烦）
             int firstColon = input.IndexOf(':');
             int lastColon = input.LastIndexOf(':');
             if (firstColon > 0 && firstColon == lastColon)
@@ -283,11 +284,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 }
             }
 
-            // 否则就是纯 host/ip
             host = input;
             port = defaultPort;
             return true;
         }
+
         private bool _isBusy;
         public bool IsBusy
         {
@@ -299,7 +300,5 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 CommandManager.InvalidateRequerySuggested();
             }
         }
-
     }
-
 }

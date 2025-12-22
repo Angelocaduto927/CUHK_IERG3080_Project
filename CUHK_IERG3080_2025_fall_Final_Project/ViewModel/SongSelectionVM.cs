@@ -18,7 +18,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private Action<int> _onConnectedHandler;
         private Action<string> _onDisconnectedHandler;
 
-        // Joiner 应该不能改选歌 & 不能按 Play（只跟随 Host）
         public bool CanChangeSelection
         {
             get
@@ -58,7 +57,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             get
             {
                 var s = _session;
-                if (s != null && s.IsConnected && !s.IsHost) return false; // joiner 禁用
+                if (s != null && s.IsConnected && !s.IsHost) return false;
 
                 return (IsEasyASelected || IsHardASelected || IsEasyBSelected || IsHardBSelected);
             }
@@ -84,7 +83,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 if (msg == null) return;
 
-                // 只有 Joiner 才需要“收到 Host 选择 -> 更新本地”
                 if (_session.IsHost) return;
 
                 Application.Current.Dispatcher.Invoke(() =>
@@ -115,7 +113,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 Application.Current.Dispatcher.Invoke(RaiseAll);
             };
 
-            // ✅ 不要用 IsConnected 作为订阅条件（Joiner 可能“进页面时还没 JoinOk”，会导致永远收不到同步）
             _session.OnSelectSong += _onSelectSongHandler;
             _session.OnConnected += _onConnectedHandler;
             _session.OnDisconnected += _onDisconnectedHandler;
@@ -144,14 +141,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void SetSongAndDifficulty(string song, string difficulty)
         {
-            // Online joiner 禁止自己点（只跟随 host）
             if (_session != null && _session.IsConnected && !_session.IsHost && !_handlingRemote)
                 return;
 
-            // 1) 本地更新
             SetSongAndDifficultyInternal(song, difficulty);
 
-            // 2) Host 发给 Joiner
             if (_session != null && _session.IsConnected && _session.IsHost && !_handlingRemote)
             {
                 try

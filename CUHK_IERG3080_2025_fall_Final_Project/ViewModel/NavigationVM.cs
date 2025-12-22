@@ -43,13 +43,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public ICommand GameOverCommand { get; set; }
         public ICommand DifficultySelectionCommand { get; set; }
 
-        // ✅ 回 Title 之前：断开在线连接 + 清理全局 OnlineSession
         private void DisconnectOnlineAndClear(string reason = "Leave")
         {
             var s = GameModeManager.OnlineSession;
             if (s == null) return;
 
-            // 先解绑事件，避免离开时触发一些重复逻辑
             try
             {
                 if (_hookedSession == s)
@@ -63,7 +61,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
             try
             {
-                // fire-and-forget：不要阻塞 UI
                 _ = s.LeaveAsync(reason);
             }
             catch { }
@@ -74,7 +71,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void TitleScreen(object obj)
         {
-            // ✅ 关键：从“选歌 Back / 任何 Back”回 Title 时，自动断开联机
             DisconnectOnlineAndClear("Leave");
 
             CurrentViewModel = new TitleScreenVM(() => SongSelection(null));

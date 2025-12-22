@@ -13,9 +13,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
         private static bool _isInitialized = false;
         private static bool _bgmOpened = false;
 
-        // Volume settings
-        private const double BackgroundVolume = 0.1; // 30% volume for background music
-        private const double EffectVolume = 0.8; // 80% volume for sound effects
+        private const double BackgroundVolume = 0.1; 
+        private const double EffectVolume = 0.8; 
 
 
         public static void Initialize()
@@ -30,7 +29,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
 
         private static void OnMediaEnded(object sender, EventArgs e)
         {
-            // Loop the background music
             _backgroundMusicPlayer.Position = TimeSpan.Zero;
             _backgroundMusicPlayer.Play();
         }
@@ -89,9 +87,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
             _isInitialized = false;
         }
 
-
-        // Unified FX player. By default it creates a dedicated MediaPlayer and closes it after playback.
-        // Pass reuseSharedPlayer = true to use the shared _effectPlayer (keeps previous click behavior).
         public static void PlayFx(string fileName, bool reuseSharedPlayer = false)
         {
             try
@@ -101,7 +96,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
 
                 if (reuseSharedPlayer)
                 {
-                    // Use the shared effect player (click behavior previously used this player)
                     if (_effectPlayer == null)
                     {
                         _effectPlayer = new MediaPlayer();
@@ -113,7 +107,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
                 }
                 else
                 {
-                    // Create a dedicated player and ensure resources are released after playback
                     var player = new MediaPlayer();
                     player.Open(uri);
                     player.Volume = EffectVolume;
@@ -136,47 +129,38 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
             }
         }
 
-        // Shared click handler (replaces the previous PlayClickSound method).
-        // It directly calls PlayFx. The additional parameter previously passed was redundant,
-        // so we use the simpler call.
         private static readonly RoutedEventHandler SharedClickHandler = (s, e) =>
         {
             PlayFx("click.wav");
         };
 
-        // Attached property for enabling/disabling click sound
         public static readonly DependencyProperty EnableClickSoundProperty =
             DependencyProperty.RegisterAttached(
-                "EnableClickSound", // The name of the property
-                typeof(bool),       // The type of the property
-                typeof(AudioManager), // The class that owns the property
-                new PropertyMetadata(false, OnEnableClickSoundChanged)); // Default value and callback
+                "EnableClickSound",
+                typeof(bool),
+                typeof(AudioManager),
+                new PropertyMetadata(false, OnEnableClickSoundChanged));
 
-        // Property to get the value of the attached property
         public static bool GetEnableClickSound(UIElement element)
         {
             return (bool)element.GetValue(EnableClickSoundProperty);
         }
 
-        // Property to set the value of the attached property
         public static void SetEnableClickSound(UIElement element, bool value)
         {
             element.SetValue(EnableClickSoundProperty, value);
         }
 
-        // This callback is triggered when the value of EnableClickSound changes
         private static void OnEnableClickSoundChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is Button button)
             {
                 if ((bool)e.NewValue)
                 {
-                    // Subscribe to the Click event of the button to play the click sound
                     button.Click += SharedClickHandler;
                 }
                 else
                 {
-                    // Unsubscribe from the Click event of the button
                     button.Click -= SharedClickHandler;
                 }
             }

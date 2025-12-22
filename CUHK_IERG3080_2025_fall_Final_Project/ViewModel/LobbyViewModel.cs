@@ -140,12 +140,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     Logs.Add("[Lobby] Not connected yet.");
                     return;
                 }
-                RequestClose?.Invoke(true); // ✅ OK：保留连接
+                RequestClose?.Invoke(true);
             });
 
             CloseCommand = new RelayCommand(_ =>
             {
-                RequestClose?.Invoke(false); // ✅ Cancel/Close：会触发 OnWindowClosed(false) 做断开
+                RequestClose?.Invoke(false);
             });
         }
 
@@ -265,8 +265,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             else a();
         }
 
-        // ✅ keepSession=true 表示按 OK 进入游戏流程，连接交给 GameModeManager.OnlineSession 管
-        // ✅ keepSession=false 表示取消/点 X，必须断开，避免“回到 Title 但还连着”
         public void OnWindowClosed(bool keepSession)
         {
             if (keepSession) return;

@@ -13,7 +13,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
     {
         private MediaPlayer _musicPlayer;
 
-        // 事件：音乐结束
         public event EventHandler MusicEnded;
 
         public MusicManager()

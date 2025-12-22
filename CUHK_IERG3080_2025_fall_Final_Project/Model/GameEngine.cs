@@ -9,7 +9,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
     {
         private readonly Stopwatch _stopwatch;
         private List<PlayerManager> _players;
-        private double? _songDurationMs;
 
         public enum GameState { NotStarted, Playing, Finished }
         public GameState State { get; private set; }
@@ -22,16 +21,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         {
             _stopwatch = new Stopwatch();
             State = GameState.NotStarted;
-        }
-
-        public void SetSongDuration(double durationMs)
-        {
-            if (durationMs <= 0)
-            {
-                _songDurationMs = null;
-                return;
-            }
-            _songDurationMs = durationMs;
         }
 
         public void UpdatePlayerSpeed(int playerIndex, int newSpeed)
@@ -117,12 +106,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         // NoteManager.HasPendingNotes 是 O(1)
         public bool IsGameFinished()
         {
-            if (State != GameState.Playing)
-                return false;
-            if (_songDurationMs.HasValue)
-            {
-                return CurrentTime >= _songDurationMs.Value;
-            }
             if (_players == null || _players.Count == 0)
                 return false;
 
@@ -132,7 +115,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
                     return false;
             }
 
-            return false;
+            return true;
         }
 
         private Note.NoteType? GetNoteTypeFromKey(System.Windows.Input.Key key, int playerIndex)

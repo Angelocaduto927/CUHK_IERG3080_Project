@@ -958,16 +958,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private void OnMusicEnded(object sender, EventArgs e)
         {
             LeaveOnlineOnce("Music ended", sendSummary: true);
-            StopRenderLoop();
-
-            if (_engine != null && _engine.State == GameEngine.GameState.Playing)
-            {
-                _engine.StopGame();
-            }
-
-            AudioManager.StopBackgroundMusic();
-            _disposed = true;
-
             _onGameOver?.Invoke();
             Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
             {

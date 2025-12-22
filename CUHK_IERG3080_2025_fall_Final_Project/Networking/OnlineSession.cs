@@ -53,6 +53,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         public MatchSummaryMsg LastSummarySlot1 { get; private set; }
         public MatchSummaryMsg LastSummarySlot2 { get; private set; }
 
+        // ✅ Helper flags
+        public bool HasSummarySlot1 => LastSummarySlot1 != null;
+        public bool HasSummarySlot2 => LastSummarySlot2 != null;
+        public bool HasBothSummaries => LastSummarySlot1 != null && LastSummarySlot2 != null;
+
+
         // ✅ 只提供一个可分享地址（不再显示 localhost，也不列出多网卡）
         public string[] ShareAddresses
         {

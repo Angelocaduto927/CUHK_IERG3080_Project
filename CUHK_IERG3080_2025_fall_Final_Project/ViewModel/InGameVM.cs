@@ -24,7 +24,13 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private bool _isOnline;
         private bool _startScheduled;
         private bool _disposed;
-        private bool _leftOnline = false;
+        // ✅ Local finish waiting (do NOT disconnect until both players finished)
+        private bool _localFinished = false;
+        private bool _gameOverTriggered = false;
+        private bool _waitingForOther = false;
+        private string _waitingText = "Waiting for the other player to finish...";
+        private bool _musicDisposed = false;
+
 
         private readonly TaskCompletionSource<bool> _engineReadyTcs =
             new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -89,6 +95,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public int P2Score => GetDisplayedScore(slot: 2);
         public int P2Combo => GetDisplayedCombo(slot: 2);
         public double P2Accuracy => GetDisplayedAccuracy(slot: 2);
+
+        // ✅ UI hint: show "waiting for other player" overlay after local finished
+        public bool IsWaitingForOther => _waitingForOther;
+        public string WaitingText => _waitingText;
+
 
         private bool IsLocalSlot(int slot)
         {
@@ -195,6 +206,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 _session.OnInput += OnInputFromNet;
 
                 _session.OnHitResult += OnHitResultFromNet;
+
+                _session.OnMatchSummary += OnMatchSummaryFromNet;
 
                 if (_session.LastStartMsg != null)
                     OnStartFromNet(_session.LastStartMsg);
@@ -446,6 +459,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             if (_disposed) return;
             if (!_isOnline) return;
+            if (_localFinished) return;
             if (msg == null) return;
 
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>
@@ -491,6 +505,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             if (_disposed) return;
             if (!_isOnline) return;
+            if (_localFinished) return;
             if (msg == null) return;
 
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>
@@ -644,12 +659,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
             if (_engine.IsGameFinished())
             {
-                LeaveOnlineOnce("Game finished", sendSummary: true);
-
-                StopRenderLoop();
-                _engine.StopGame();
-                AudioManager.StopBackgroundMusic();
-                _onGameOver?.Invoke();
+                OnLocalGameFinished("Game finished");
+                return;
             }
         }
 
@@ -795,47 +806,114 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             }
         }
 
-        private async Task TrySendMatchSummaryAsync(MatchSummaryMsg summary)
+        private void StopSongPlayback()
         {
-            if (summary == null) return;
-            if (_session == null || !_session.IsConnected) return;
+            if (_musicDisposed) return;
+            _musicDisposed = true;
 
-            try
-            {
-                MethodInfo mi = _session.GetType().GetMethod("SendMatchSummaryAsync");
-                if (mi == null) return;
-
-                var t = mi.Invoke(_session, new object[] { summary }) as Task;
-                if (t != null) await t.ConfigureAwait(false);
-            }
-            catch
-            {
-            }
+            try { _musicManager.MusicEnded -= OnMusicEnded; } catch { }
+            try { _musicManager.Dispose(); } catch { }
         }
 
-        private void LeaveOnlineOnce(string reason, bool sendSummary)
+        private void OnMatchSummaryFromNet(MatchSummaryMsg msg)
         {
-            if (_leftOnline) return;
+            if (_disposed) return;
             if (!_isOnline) return;
-            if (_session == null) return;
+            if (!_localFinished) return;
 
-            _leftOnline = true;
-
-            if (!sendSummary)
+            Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
             {
-                try { _ = _session.LeaveAsync(reason); } catch { }
+                if (_disposed) return;
+                CheckAndFinalizeAfterBothFinished();
+            }));
+        }
+
+        private void SetWaiting(bool on)
+        {
+            if (_waitingForOther == on) return;
+            _waitingForOther = on;
+            _waitingText = on ? "Waiting for the other player to finish..." : string.Empty;
+            OnPropertyChanged(nameof(IsWaitingForOther));
+            OnPropertyChanged(nameof(WaitingText));
+        }
+
+        // ✅ Local finished: send summary, then WAIT for the other player (do NOT disconnect yet)
+        private void OnLocalGameFinished(string reason)
+        {
+            if (_disposed) return;
+            if (_localFinished) return;
+
+            _localFinished = true;
+
+            // stop local gameplay
+            StopRenderLoop();
+            try { _engine?.StopGame(); } catch { }
+            try { AudioManager.StopBackgroundMusic(); } catch { }
+
+            StopSongPlayback();
+
+            if (!_isOnline)
+            {
+                NavigateGameOverOnce();
                 return;
             }
+
+            SetWaiting(true);
 
             var summary = BuildLocalSummary();
 
             _ = Task.Run(async () =>
             {
-                try { await TrySendMatchSummaryAsync(summary).ConfigureAwait(false); } catch { }
-                try { await Task.Delay(200).ConfigureAwait(false); } catch { }
+                try
+                {
+                    if (_session != null)
+                        await _session.SendMatchSummaryAsync(summary).ConfigureAwait(false);
+                }
+                catch { }
 
-                try { await _session.LeaveAsync(reason).ConfigureAwait(false); } catch { }
+                // check on UI thread
+                Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
+                {
+                    if (_disposed) return;
+                    CheckAndFinalizeAfterBothFinished();
+                }));
             });
+        }
+
+        // ✅ Only when BOTH summaries arrived, we go GameOver together and then disconnect.
+        private void CheckAndFinalizeAfterBothFinished()
+        {
+            if (_disposed) return;
+
+            if (!_isOnline || _session == null)
+            {
+                NavigateGameOverOnce();
+                return;
+            }
+
+            if (!_localFinished) return;
+
+            bool both = _session.LastSummarySlot1 != null && _session.LastSummarySlot2 != null;
+            if (!both)
+            {
+                SetWaiting(true);
+                return;
+            }
+
+            SetWaiting(false);
+
+            // disconnect online session now (avoid "still绑定在一起" after match)
+            try { _ = _session.LeaveAsync("Game finished"); } catch { }
+
+            NavigateGameOverOnce();
+        }
+
+        private void NavigateGameOverOnce()
+        {
+            if (_gameOverTriggered) return;
+            _gameOverTriggered = true;
+
+            try { _onGameOver?.Invoke(); } catch { }
         }
 
         public void Cleanup()
@@ -843,7 +921,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (_disposed) return;
             _disposed = true;
 
-            LeaveOnlineOnce("Cleanup", sendSummary: false);
+            if (_isOnline && _session != null && _session.IsConnected)
+            {
+                try { _ = _session.LeaveAsync("Cleanup"); } catch { }
+            }
 
             StopRenderLoop();
 
@@ -852,17 +933,14 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 _session.OnStart -= OnStartFromNet;
                 _session.OnInput -= OnInputFromNet;
                 _session.OnHitResult -= OnHitResultFromNet;
+                _session.OnMatchSummary -= OnMatchSummaryFromNet;
             }
 
             var window = Application.Current.MainWindow;
             if (window != null)
                 window.PreviewKeyDown -= OnKeyDown;
 
-            if (_musicManager != null)
-            {
-                _musicManager.MusicEnded -= OnMusicEnded;
-                _musicManager.Dispose();
-            }
+            StopSongPlayback();
 
             _engine?.Dispose();
 
@@ -879,8 +957,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void OnMusicEnded(object sender, EventArgs e)
         {
-            LeaveOnlineOnce("Music ended", sendSummary: true);
-            _onGameOver?.Invoke();
+            Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
+            {
+                OnLocalGameFinished("Music ended");
+            }));
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

@@ -68,7 +68,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void Setting(object obj)
         {
-            CurrentViewModel = new SettingVM();
+            var previous = CurrentViewModel;
+            CurrentViewModel = new SettingVM(() =>
+            {
+                CurrentViewModel = previous;
+            });
             EnsureOnlineHooks();
         }
 

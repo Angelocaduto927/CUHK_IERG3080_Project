@@ -40,7 +40,7 @@
 
                 <!-- Score Display Container -->
                 <Border Grid.Row="1"
-                        Width="860"
+                        Width="Auto"
                         Background="#CC1E1E1E"
                         BorderBrush="#FFD4AF37"
                         BorderThickness="2"

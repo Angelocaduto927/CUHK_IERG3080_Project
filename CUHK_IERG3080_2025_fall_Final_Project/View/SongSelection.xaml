@@ -13,9 +13,7 @@
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsEnabled}" Value="False">
                     <Setter Property="Background" Value="#D3D3D3"/>
-                    <!-- Gray color -->
                     <Setter Property="Foreground" Value="#A9A9A9"/>
-                    <!-- Darker gray text -->
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -23,21 +21,16 @@
     <Viewbox Stretch="UniformToFill">
         <Grid Width="1536" Height="1024">
             <Grid.Background>
-                <!-- Background image -->
                 <ImageBrush ImageSource="/Assets/Image/SongSelectBG.png"
                               Stretch="Fill"/>
             </Grid.Background>
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" MinHeight="80" />
-                <!-- Title -->
                 <RowDefinition />
-                <!-- Center cards -->
                 <RowDefinition Height="Auto" MinHeight="350" />
-                <!-- Footer (Back / Play) -->
             </Grid.RowDefinitions>
 
-            <!-- Title -->
             <TextBlock Grid.Row="0"
                        Text="Song Selection"
                        Foreground="#FFFFFF"
@@ -46,12 +39,10 @@
                        HorizontalAlignment="Center"
                        Margin="0,4,0,12" Width="374" />
 
-            <!-- Centered cards -->
             <StackPanel Grid.Row="1"
                         Orientation="Horizontal"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center" Height="500" Width="616">
-                <!-- Left card: image used as card background -->
                 <Border Width="300"
                         Height="500"
                         Margin="0,0,16,0"
@@ -81,13 +72,11 @@
                         </Style>
                     </Border.Style>
 
-                    <!-- Overlay + content -->
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="145*"/>
                             <RowDefinition Height="111*"/>
                         </Grid.RowDefinitions>
-                        <!-- Dark overlay so text/buttons are readable over image -->
                         <Rectangle Fill="#40000000" RadiusX="6" RadiusY="6" Grid.RowSpan="2" />
 
                         <Grid Grid.RowSpan="2">
@@ -112,35 +101,13 @@
                                         Orientation="Vertical"
                                         HorizontalAlignment="Center"
                                         Margin="0,8,0,0" Width="150">
-                                <!--
-                                <ToggleButton Content="EASY"
-                                              Width="150"
-                                              Height="60"
-                                              FontSize="25"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              Margin="0,0,0,8"
-                                              Padding="6,4"
-                                              FontWeight="Bold"
-                                              Background="#40000000"
-                                              Foreground="#C0000000"
-                                              IsChecked="{Binding IsEasyASelected, Mode=TwoWay}" />
-                                <ToggleButton Content="HARD"
-                                              Width="150"
-                                              Height="60"
-                                              FontSize="25"
-                                              Padding="6,4"
-                                              FontWeight="Bold"
-                                              Background="#40000000"
-                                              Foreground="#C0000000"
-                                              IsChecked="{Binding IsHardASelected, Mode=TwoWay}" /> -->
+                                
                             </StackPanel>
 
                         </Grid>
                     </Grid>
                 </Border>
 
-                <!-- Right card: image background -->
                 <Border Width="300"
                         Height="500"
                         Margin="0,0,16,0"
@@ -180,7 +147,6 @@
                                 <RowDefinition Height="111*" />
                             </Grid.RowDefinitions>
 
-                            <!-- Dark overlay -->
                             <Rectangle Fill="#40000000" RadiusX="6" RadiusY="6" Grid.RowSpan="2" />
 
                             <Grid Grid.RowSpan="2">
@@ -208,28 +174,6 @@
                                             HorizontalAlignment="Center"
                                             Margin="0,8,0,0" Width="150">
 
-                                    <!--
-                                    <ToggleButton Content="EASY"
-                                                  Width="150"
-                                                  Height="60"
-                                                  FontSize="25"
-                                                  Margin="0,0,0,8"
-                                                  Padding="6,4"
-                                                  FontWeight="Bold"
-                                                  Background="#40000000"
-                                                  Foreground="#C0000000"
-                                                  IsChecked="{Binding IsEasyBSelected, Mode=TwoWay}" />
-
-                                    <ToggleButton Content="HARD"
-                                                  Width="150"
-                                                  Height="60"
-                                                  FontSize="25"
-                                                  Margin="0,0,0,8"
-                                                  Padding="6,4"
-                                                  FontWeight="Bold"
-                                                  Background="#40000000"
-                                                  Foreground="#C0000000"
-                                                  IsChecked="{Binding IsHardBSelected, Mode=TwoWay}" /> -->
                                 </StackPanel>
                             </Grid>
                         </Grid>
@@ -237,7 +181,6 @@
                 </Border>
             </StackPanel>
 
-            <!-- Footer with Back and Play buttons bound to NavigationVM commands on the window DataContext -->
             <Grid Grid.Row="2" Margin="0,12,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -258,15 +201,6 @@
                                 Command="{Binding DataContext.TitleScreenCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 ToolTip="Back to title" />
 
-                    <!--
-                    <Button Content="PLAY"
-                                Width="200"
-                                Height="60"
-                                HorizontalAlignment="Center"
-                                FontSize="20"
-                                Command="{Binding DataContext.InGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                ToolTip="Start game"
-                                IsEnabled="{Binding IsPlayButtonEnabled}" /> -->
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top">

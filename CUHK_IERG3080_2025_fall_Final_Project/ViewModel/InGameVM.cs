@@ -24,7 +24,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private bool _isOnline;
         private bool _startScheduled;
         private bool _disposed;
-        // ✅ Local finish waiting (do NOT disconnect until both players finished)
         private bool _localFinished = false;
         private bool _gameOverTriggered = false;
         private bool _waitingForOther = false;
@@ -96,7 +95,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public int P2Combo => GetDisplayedCombo(slot: 2);
         public double P2Accuracy => GetDisplayedAccuracy(slot: 2);
 
-        // ✅ UI hint: show "waiting for other player" overlay after local finished
         public bool IsWaitingForOther => _waitingForOther;
         public string WaitingText => _waitingText;
 
@@ -837,7 +835,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             OnPropertyChanged(nameof(WaitingText));
         }
 
-        // ✅ Local finished: send summary, then WAIT for the other player (do NOT disconnect yet)
         private void OnLocalGameFinished(string reason)
         {
             if (_disposed) return;
@@ -845,7 +842,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
             _localFinished = true;
 
-            // stop local gameplay
             StopRenderLoop();
             try { _engine?.StopGame(); } catch { }
             try { AudioManager.StopBackgroundMusic(); } catch { }
@@ -871,7 +867,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 }
                 catch { }
 
-                // check on UI thread
                 Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
                 {
                     if (_disposed) return;
@@ -880,7 +875,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             });
         }
 
-        // ✅ Only when BOTH summaries arrived, we go GameOver together and then disconnect.
         private void CheckAndFinalizeAfterBothFinished()
         {
             if (_disposed) return;
@@ -902,7 +896,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
             SetWaiting(false);
 
-            // disconnect online session now (avoid "still绑定在一起" after match)
             try { _ = _session.LeaveAsync("Game finished"); } catch { }
 
             NavigateGameOverOnce();

@@ -13,7 +13,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Top row -->
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,10">
             <TextBlock Text="Name:" VerticalAlignment="Center" Margin="0,0,8,0"/>
             <TextBox Width="140" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,14,0"/>
@@ -27,7 +26,6 @@
             <Button Content="Close" Width="90" Command="{Binding CloseCommand}"/>
         </StackPanel>
 
-        <!-- Host/Join row -->
         <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,0,0,10">
             <Button Content="Start Host" Width="120" Margin="0,0,10,0"
                     Command="{Binding StartHostCommand}"/>
@@ -38,7 +36,6 @@
             <TextBox Width="180" Text="{Binding HostIp, UpdateSourceTrigger=PropertyChanged}"/>
         </StackPanel>
 
-        <!-- Middle -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="260"/>
@@ -65,7 +62,6 @@
             </GroupBox>
         </Grid>
 
-        <!-- Bottom -->
         <DockPanel Grid.Row="3" Margin="0,12,0,0">
             <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" />
             <Button Content="OK (Go Song Select)"

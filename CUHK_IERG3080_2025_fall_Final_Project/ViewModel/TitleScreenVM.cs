@@ -41,14 +41,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 bool? ok = lobby.ShowDialog();
                 if (ok == true)
                 {
-                    // ★关键：把已经连接好的 Session 保存到全局
                     GameModeManager.OnlineSession = lobby.VM.Session;
 
                     _navigateToSongSelection?.Invoke();
                 }
                 else
                 {
-                    // 可选：取消就清掉，避免残留
                     GameModeManager.OnlineSession = null;
                 }
             });

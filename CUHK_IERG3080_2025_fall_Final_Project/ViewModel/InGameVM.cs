@@ -34,28 +34,23 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private readonly Action _onGameOver;
         private readonly MusicManager _musicManager;
 
-        // ✅ Rendering loop
         private bool _renderingAttached = false;
         private double _lastRenderUpdateMs = -9999;
         private const double TargetFrameMs = 16.0;
 
-        // Note collections for rendering
         public ObservableCollection<NoteVM> Player1Notes { get; } = new ObservableCollection<NoteVM>();
         public ObservableCollection<NoteVM> Player2Notes { get; } = new ObservableCollection<NoteVM>();
 
-        // Note -> NoteVM reuse maps
         private readonly Dictionary<Note, NoteVM> _p1Map = new Dictionary<Note, NoteVM>();
         private readonly Dictionary<Note, NoteVM> _p2Map = new Dictionary<Note, NoteVM>();
 
         private int _frameStamp = 0;
 
-        // ✅ 远端权威分数缓存（按 Slot=1/2 存）
         private readonly bool[] _netValid = new bool[3];
         private readonly int[] _netScore = new int[3];
         private readonly int[] _netCombo = new int[3];
         private readonly double[] _netAcc = new double[3];
 
-        // Game info + Hyperparameters
         public double BandWidth => Hyperparameters.BandWidth;
         public double EllipseS => Hyperparameters.EllipseSize;
         public double BandMid => BandWidth / 2 - 30;
@@ -85,13 +80,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         public bool IsMultiplayer => _isOnline || (_engine?.Players?.Count > 1);
 
-        // Player 1 Properties
         public string P1Name => (_engine?.Players != null && _engine.Players.Count > 0) ? _engine.Players[0].PlayerName : "Player 1";
         public int P1Score => GetDisplayedScore(slot: 1);
         public int P1Combo => GetDisplayedCombo(slot: 1);
         public double P1Accuracy => GetDisplayedAccuracy(slot: 1);
 
-        // Player 2 Properties
         public string P2Name => (_engine?.Players != null && _engine.Players.Count > 1) ? _engine.Players[1].PlayerName : "Player 2";
         public int P2Score => GetDisplayedScore(slot: 2);
         public int P2Combo => GetDisplayedCombo(slot: 2);
@@ -135,7 +128,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             return engineAcc;
         }
 
-        // --- Hit effect brushes ---
         private readonly Brush _p1StrokeDefault;
         private readonly Brush _p1FillDefault;
         private readonly Brush _p2StrokeDefault;
@@ -146,7 +138,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private Brush _p2EllipseStroke;
         private Brush _p2EllipseFill;
 
-        // --- Hit text ---
         private string _p1HitText = string.Empty;
         private bool _p1HitVisible = false;
         private Brush _p1HitBrush = Brushes.White;
@@ -197,15 +188,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 _session = GameModeManager.OnlineSession;
 
-                // ✅ Slot1->index0, Slot2->index1
                 _localPlayerIndex = Math.Max(0, (_session.LocalSlot - 1));
 
                 _session.OnStart += OnStartFromNet;
 
-                // ✅ Input 仍然用于“驱动对方轨道 note 消失/推进”
                 _session.OnInput += OnInputFromNet;
 
-                // ✅ 权威击打结果（分数/效果）
                 _session.OnHitResult += OnHitResultFromNet;
 
                 if (_session.LastStartMsg != null)
@@ -352,7 +340,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
             var key = e.Key == Key.System ? e.SystemKey : e.Key;
 
-            // ✅ Online：只处理本地玩家那一条轨
             int start = 0;
             int end = _engine.Players.Count;
 
@@ -374,13 +361,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                         ? Note.NoteType.Blue
                         : Note.NoteType.Red;
 
-                // ✅ 本地：任何有效键都响 tap
                 PlayTapSound(noteType);
 
-                // ✅ 本地按键无论是否空打，都要闪一下
                 TriggerHitEffect(i, noteType);
 
-                // ✅ Online：把“我的敲击”发给对方（用于对方那边驱动我的轨道 note 消失/推进）
                 if (_isOnline && _session != null && _session.IsConnected)
                 {
                     try
@@ -436,7 +420,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 if (!string.IsNullOrEmpty(hitText))
                     ShowHitText(i, hitText, hitBrush);
 
-                // ✅ Online：发送“权威击打结果”
                 if (_isOnline && _session != null && _session.IsConnected)
                 {
                     try
@@ -459,7 +442,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             }
         }
 
-        // ✅ Online：收到对方 InputMsg：这里只用于“驱动对方轨道 note 消失/推进”
         private void OnInputFromNet(InputMsg msg)
         {
             if (_disposed) return;
@@ -489,10 +471,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             int idx = msg.Slot - 1;
             if (idx < 0 || _engine?.Players == null || idx >= _engine.Players.Count) return;
 
-            // 忽略本地 slot（保险）
             if (_session != null && msg.Slot == _session.LocalSlot) return;
 
-            // 时间对齐
             double targetMs = msg.AtMs;
             double nowMs = _engine.CurrentTime;
             int delay = (int)Math.Max(0, targetMs - nowMs);
@@ -504,11 +484,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (!TryMapNoteTypeToKey(idx, msg.NoteType, out var key))
                 return;
 
-            // ✅ 只调用引擎用于 note 推进/消失
             _engine.HandleKeyPress(idx, key);
         }
 
-        // ✅ Online：收到对方权威 HitResultMsg，用于显示分数/效果
         private void OnHitResultFromNet(HitResultMsg msg)
         {
             if (_disposed) return;
@@ -666,7 +644,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
             if (_engine.IsGameFinished())
             {
-                // ✅ 关键：结束时发送最终结算（Summary），再断线
                 LeaveOnlineOnce("Game finished", sendSummary: true);
 
                 StopRenderLoop();
@@ -778,9 +755,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             }
         }
 
-        // =========================
-        // ✅ GameOver 结算同步：发送 MatchSummaryMsg
-        // =========================
         private MatchSummaryMsg BuildLocalSummary()
         {
             try
@@ -826,7 +800,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (summary == null) return;
             if (_session == null || !_session.IsConnected) return;
 
-            // 反射调用：避免你还没把 OnlineSession 增加 SendMatchSummaryAsync 时这里直接编译失败
             try
             {
                 MethodInfo mi = _session.GetType().GetMethod("SendMatchSummaryAsync");
@@ -837,7 +810,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             }
             catch
             {
-                // ignore
             }
         }
 
@@ -871,7 +843,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (_disposed) return;
             _disposed = true;
 
-            // ✅ Cleanup 不发送结算（避免重复/异常）
             LeaveOnlineOnce("Cleanup", sendSummary: false);
 
             StopRenderLoop();
@@ -908,7 +879,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void OnMusicEnded(object sender, EventArgs e)
         {
-            // ✅ 音乐结束也发送结算
             LeaveOnlineOnce("Music ended", sendSummary: true);
             _onGameOver?.Invoke();
         }

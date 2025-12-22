@@ -32,8 +32,9 @@
                         <!-- Hit Line -->
                     <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
                                 Fill="#FF6B4E" Canvas.Left="270"/>
-
-                    <!-- Hit Text (above ellipse) -->
+                        <TextBlock Text="Player 1" FontSize="20" FontWeight="Bold" Canvas.Left="90" Canvas.Top="10" Foreground="#FF6B4E">
+                        </TextBlock>
+                        <!-- Hit Text (above ellipse) -->
                     <TextBlock Text="{Binding P1HitText}" FontSize="20" FontWeight="Bold" Width="70" TextAlignment="Center"
                                Canvas.Left="235" Canvas.Top="10" Visibility="{Binding P1HitVisible, Converter={StaticResource BoolToVis}}"
                                Foreground="{Binding P1HitBrush}">
@@ -90,7 +91,8 @@
                     <!-- Hit Line -->
                     <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
                               Fill="#4E9AFF" Canvas.Left="270"/>
-
+                        <TextBlock Text="Player 2" FontSize="20" FontWeight="Bold" Canvas.Left="90" Canvas.Top="10" Foreground="#4E9AFF">
+                        </TextBlock>
                     <!-- Hit Text (above ellipse) -->
                     <TextBlock Text="{Binding P2HitText}" FontSize="20" FontWeight="Bold" Width="70" TextAlignment="Center"
                                Canvas.Left="235" Canvas.Top="10" Visibility="{Binding P2HitVisible, Converter={StaticResource BoolToVis}}"

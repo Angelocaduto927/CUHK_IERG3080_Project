@@ -14,7 +14,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private readonly Action _navigateToTitleScreen;
         private readonly OnlineSession _session;
 
-        // Player 1
         public string Player1Name { get; private set; }
         public int TotalScore1 { get; private set; }
         public int PerfectHits1 { get; private set; }
@@ -27,7 +26,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public string GradeColor1 { get; private set; }
         public string Accuracy1 { get; private set; }
 
-        // Player 2
         public string Player2Name { get; private set; }
         public int TotalScore2 { get; private set; }
         public int PerfectHits2 { get; private set; }
@@ -46,14 +44,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             _navigateToTitleScreen = navigateToTitleScreen;
 
-            // ✅ Online 时：GameOver 优先读 Session 的最终结算缓存
             _session = (GameModeManager.CurrentMode is OnlineMultiPlayerMode) ? GameModeManager.OnlineSession : null;
 
             if (_session != null)
             {
                 _session.OnMatchSummary += _ =>
                 {
-                    // 网络回调可能不在 UI 线程
                     Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
                     {
                         LoadScoreData();
@@ -68,14 +64,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             var players = GetCurrentModePlayers();
 
-            // ✅ 1) Online：如果拿得到最终结算，就用最终结算（最权威）
             if (TryLoadFromOnlineSummary(players))
             {
                 NotifyAll();
                 return;
             }
 
-            // ✅ 2) fallback：原来逻辑（本地 _players[i].Score）
             LoadFromLocalPlayers(players);
             NotifyAll();
         }
@@ -89,7 +83,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
             if (s1 == null && s2 == null) return false;
 
-            // 名字 fallback：优先 Summary，其次 players
             string p1NameFallback = (players != null && players.Count > 0) ? (players[0] as dynamic)?.PlayerName : "Player 1";
             string p2NameFallback = (players != null && players.Count > 1) ? (players[1] as dynamic)?.PlayerName : "Player 2";
 

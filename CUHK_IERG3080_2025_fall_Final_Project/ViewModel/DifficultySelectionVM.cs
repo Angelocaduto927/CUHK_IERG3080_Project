@@ -32,7 +32,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private int LocalSlot =>
             GameModeManager.OnlineSession != null ? GameModeManager.OnlineSession.LocalSlot : 0;
 
-        // 在线：每台机器只能改自己那一侧（Host=Slot1 控 P1；Joiner=Slot2 控 P2）
         public bool CanEditP1 => !IsOnlineConnected || LocalSlot == 1;
         public bool CanEditP2 => !IsOnlineConnected || LocalSlot == 2;
 
@@ -46,6 +45,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 if (_isP1EasySelected == value) return;
                 if (!CanEditP1 && !_handlingRemote) return;
+
+                if (!value && _isP1EasySelected) return;
 
                 _isP1EasySelected = value;
                 if (value)
@@ -69,6 +70,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 if (_isP1HardSelected == value) return;
                 if (!CanEditP1 && !_handlingRemote) return;
+
+                if (!value && _isP1HardSelected) return;
 
                 _isP1HardSelected = value;
                 if (value)
@@ -96,6 +99,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 if (_isP2EasySelected == value) return;
                 if (!CanEditP2 && !_handlingRemote) return;
 
+                if (!value && _isP2EasySelected) return;
+
                 _isP2EasySelected = value;
                 if (value)
                 {
@@ -118,6 +123,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 if (_isP2HardSelected == value) return;
                 if (!CanEditP2 && !_handlingRemote) return;
+
+                if (!value && _isP2HardSelected) return;
 
                 _isP2HardSelected = value;
                 if (value)
@@ -144,7 +151,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 {
                     bool p2Selected = IsP2EasySelected || IsP2HardSelected;
 
-                    // Online joiner 禁用 Play（只等 host 开始）
                     if (IsOnlineConnected && GameModeManager.OnlineSession != null && !GameModeManager.OnlineSession.IsHost)
                         return false;
 
@@ -218,7 +224,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 Application.Current.Dispatcher.BeginInvoke(new Action(RaiseAll));
             };
 
-            // ✅ 同样：不要用 IsConnected 作为订阅条件
             _session.OnSelectDifficulty += _onSelectDifficultyHandler;
             _session.OnConnected += _onConnectedHandler;
             _session.OnDisconnected += _onDisconnectedHandler;
@@ -246,7 +251,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (_session == null || !_session.IsConnected) return;
             if (_handlingRemote) return;
 
-            // 只让“本机控制的玩家”发
             if (slot == 1 && !CanEditP1) return;
             if (slot == 2 && !CanEditP2) return;
 

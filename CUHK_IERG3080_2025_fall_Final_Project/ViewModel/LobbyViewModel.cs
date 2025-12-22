@@ -2,6 +2,7 @@
 using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 using System;
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -67,15 +68,16 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             get { return IsConnected ? ("Connected as Player " + Session.LocalSlot) : "Not connected"; }
         }
 
-        // ✅ 对外暴露 ICommand（最稳）
         public ICommand StartHostCommand { get; }
         public ICommand JoinHostCommand { get; }
         public ICommand CopyAddressCommand { get; }
         public ICommand OkCommand { get; }
         public ICommand CloseCommand { get; }
 
-        // Window 会订阅这个事件来 Close + DialogResult
         public event Action<bool> RequestClose;
+
+        // ✅ 防止断线事件重复触发导致重复 Close/弹窗
+        private int _autoCloseOnce = 0;
 
         public LobbyViewModel()
         {
@@ -97,6 +99,27 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 {
                     IsConnected = false;
                     Logs.Add("[Lobby] Disconnected: " + reason);
+
+                    // ✅ 如果是用户主动 Close/Leave，不要再弹窗/自动关（避免“我点关闭还提示断线”）
+                    if (IsNormalLeaveReason(reason)) return;
+
+                    // ✅ 关键：LobbyWindow 期间断线 -> 立刻关 LobbyWindow，让 UI 回到 TitleScreen
+                    if (Interlocked.Exchange(ref _autoCloseOnce, 1) == 1) return;
+
+                    try
+                    {
+                        // 可选：你如果不想弹窗，把下面 MessageBox 整段删掉也行
+                        string title = "Disconnected";
+                        string msg = Session.IsHost
+                            ? "Joiner disconnected.\nReason: " + (string.IsNullOrWhiteSpace(reason) ? "Disconnected" : reason)
+                            : "Disconnected from host.\nReason: " + (string.IsNullOrWhiteSpace(reason) ? "Disconnected" : reason);
+
+                        MessageBox.Show(msg, title, MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                    catch { }
+
+                    // 关闭对话框（TitleScreenVM.ShowDialog() 返回 false，然后停留在 Title）
+                    try { RequestClose?.Invoke(false); } catch { }
                 });
             };
 
@@ -117,13 +140,21 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     Logs.Add("[Lobby] Not connected yet.");
                     return;
                 }
-                if (RequestClose != null) RequestClose(true);
+                RequestClose?.Invoke(true);
             });
 
             CloseCommand = new RelayCommand(_ =>
             {
-                if (RequestClose != null) RequestClose(false);
+                RequestClose?.Invoke(false);
             });
+        }
+
+        private static bool IsNormalLeaveReason(string reason)
+        {
+            if (string.IsNullOrWhiteSpace(reason)) return false;
+            if (reason == "Leave" || reason == "Dispose") return true;
+            if (reason.StartsWith("Restart", StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
         }
 
         private async Task StartHostAsync()
@@ -134,6 +165,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 int port;
                 if (!TryParsePort(out port)) return;
+
+                Interlocked.Exchange(ref _autoCloseOnce, 0);
 
                 Logs.Add("[Lobby] Starting host...");
                 await Session.StartHostAsync(port, Name, RoomId);
@@ -176,6 +209,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 HostIp = host;
                 PortText = port.ToString();
 
+                Interlocked.Exchange(ref _autoCloseOnce, 0);
+
                 Logs.Add("[Lobby] Joining " + host + ":" + port + " ...");
                 await Session.JoinHostAsync(host, port, Name);
             }
@@ -188,7 +223,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 IsBusy = false;
             }
         }
-
 
         private void CopySelectedAddress()
         {
@@ -231,9 +265,15 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             else a();
         }
 
-        public void OnWindowClosed()
+        public void OnWindowClosed(bool keepSession)
         {
-            // 暂时不 Dispose Session，避免 OK 之后断线
+            if (keepSession) return;
+
+            try
+            {
+                _ = Session.LeaveAsync("Leave");
+            }
+            catch { }
         }
 
         private bool TryParseEndpoint(string input, int defaultPort, out string host, out int port)
@@ -244,11 +284,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (string.IsNullOrWhiteSpace(input)) return false;
 
             input = input.Trim();
-
-            // 兼容中文冒号：192.168.1.5：5050
             input = input.Replace('：', ':');
 
-            // 支持用户粘贴 http://192.168.1.5:5050/xxx
             if (input.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                 input.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
@@ -262,11 +299,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 return false;
             }
 
-            // 去掉可能的路径部分 192.168.1.5:5050/abc
             int slash = input.IndexOf('/');
             if (slash >= 0) input = input.Substring(0, slash);
 
-            // 支持 host:port（只处理一个冒号的情况，避免 IPv6 麻烦）
             int firstColon = input.IndexOf(':');
             int lastColon = input.LastIndexOf(':');
             if (firstColon > 0 && firstColon == lastColon)
@@ -283,11 +318,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 }
             }
 
-            // 否则就是纯 host/ip
             host = input;
             port = defaultPort;
             return true;
         }
+
         private bool _isBusy;
         public bool IsBusy
         {
@@ -299,7 +334,5 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 CommandManager.InvalidateRequerySuggested();
             }
         }
-
     }
-
 }

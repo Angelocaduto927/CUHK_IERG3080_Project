@@ -11,7 +11,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
     internal class SettingVM : ViewModelBase, IDisposable
     {
-        // Player 1 Speed
         private readonly Action _navigationBack;
         private readonly OnlineSession _session;
 
@@ -100,7 +99,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void UpdateRunningGameSpeed(int playerIndex, double newSpeed)
         {
-            // 通过 GameModeManager 获取当前模式的玩家
             if (GameModeManager.CurrentMode != null)
             {
                 var playersField = GameModeManager.CurrentMode.GetType().GetField("_players");
@@ -134,13 +132,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public string P1Red1 => _listeningFor == "P1Red1" ? "Enter a key..." : GetBindingDisplay(0, "Red1", "D");
         public string P1Red2 => _listeningFor == "P1Red2" ? "Enter a key..." : GetBindingDisplay(0, "Red2", "F");
 
-        // Player 2 Key Bindings (display)
         public string P2Blue1 => _listeningFor == "P2Blue1" ? "Enter a key..." : GetBindingDisplay(1, "Blue1", "O");
         public string P2Blue2 => _listeningFor == "P2Blue2" ? "Enter a key..." : GetBindingDisplay(1, "Blue2", "P");
         public string P2Red1 => _listeningFor == "P2Red1" ? "Enter a key..." : GetBindingDisplay(1, "Red1", "Q");
         public string P2Red2 => _listeningFor == "P2Red2" ? "Enter a key..." : GetBindingDisplay(1, "Red2", "W");
 
-        // Commands for rebinding
         public ICommand RebindP1Blue1Command { get; }
         public ICommand RebindP1Blue2Command { get; }
         public ICommand RebindP1Red1Command { get; }
@@ -154,7 +150,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private string _listeningFor = null;
         private Window _window;
 
-        // All binding names we manage
         private static readonly string[] BindingNames = new[] { "Blue1", "Blue2", "Red1", "Red2" };
 
         public SettingVM() : this(null) { }
@@ -164,7 +159,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             _navigationBack = navigationBack;
             _session = GameModeManager.OnlineSession;
 
-            // Load current speeds
             _player1Speed = PlayerSettingsManager.GetSettings(0).Speed;
             _player2Speed = PlayerSettingsManager.GetSettings(1).Speed;
 
@@ -230,7 +224,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
             var key = e.Key == Key.System ? e.SystemKey : e.Key;
 
-            // Allow Escape to cancel
             if (key == Key.Escape)
             {
                 _listeningFor = null;
@@ -239,7 +232,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 return;
             }
 
-            // Disallow modifier-only keys for assignment
             if (!IsAssignableKey(key))
             {
                 MessageBox.Show($"Key '{key}' cannot be assigned.", "Invalid Key", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -256,7 +248,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private void StartListening(string binding)
         {
             _listeningFor = binding;
-            RefreshBindings(); // show "Enter a key..."
+            RefreshBindings();
         }
 
         private string GetBindingDisplay(int playerIdx, string bindingName, string fallback)
@@ -325,6 +317,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     if (s.KeyBindings.ContainsKey(bn))
                         snapshot.Add(Tuple.Create(p, bn, s.KeyBindings[bn], true));
                     else
+                    {
                         snapshot.Add(Tuple.Create(p, bn, GetDefaultKey(p, bn), false));
                 }
             }
@@ -361,8 +354,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                         var s = PlayerSettingsManager.GetSettings(pIdx);
 
                         if (!s.KeyBindings.ContainsKey(bName))
+                        {
                             s.KeyBindings.Add(bName, Key.None);
                         else
+                        {
                             s.KeyBindings[bName] = Key.None;
 
                         PlayerSettingsManager.UpdateSettings(pIdx, s);
@@ -371,6 +366,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     targetSettings = PlayerSettingsManager.GetSettings(targetPlayer);
                     targetSettings.KeyBindings[targetBinding] = newKey;
                     PlayerSettingsManager.UpdateSettings(targetPlayer, targetSettings);
+                }
+                else
+                {
                 }
             }
 
@@ -431,9 +429,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 key == Key.LeftAlt || key == Key.RightAlt ||
                 key == Key.LeftShift || key == Key.RightShift ||
                 key == Key.LWin || key == Key.RWin)
-            {
                 return false;
-            }
 
             return true;
         }

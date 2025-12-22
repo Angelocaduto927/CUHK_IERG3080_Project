@@ -18,6 +18,19 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
         private int _shuttingDown = 0;
 
+        // =========================
+        // ✅ Heartbeat / disconnect detection
+        // =========================
+        private CancellationTokenSource _hbCts;
+        private Task _hbTask;
+        private long _lastRxUtcMs = 0;
+        private int _disconnectNotified = 0;
+
+        private const int HeartbeatIntervalMs = 2000;
+        private const int HeartbeatTimeoutMs = 8000;
+        private const string PingText = "__PING__";
+        private const string PongText = "__PONG__";
+
         public bool IsHost { get; private set; }
         public bool IsConnected { get; private set; }
 
@@ -76,11 +89,96 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         public event Action<SharedUpdatePlayerSettingMsg> OnPlayerSetting;
 
         // =========================
+        // Heartbeat helpers
+        // =========================
+        private static long NowMs() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+        private void ResetDisconnectGuard()
+        {
+            Interlocked.Exchange(ref _disconnectNotified, 0);
+        }
+
+        private void MarkRx()
+        {
+            Interlocked.Exchange(ref _lastRxUtcMs, NowMs());
+        }
+
+        private void NotifyDisconnectedOnce(string reason)
+        {
+            if (Interlocked.Exchange(ref _disconnectNotified, 1) == 1) return;
+            OnDisconnected?.Invoke(reason);
+        }
+
+        private void StopHeartbeat()
+        {
+            try { _hbCts?.Cancel(); } catch { }
+            try { _hbCts?.Dispose(); } catch { }
+            _hbCts = null;
+            _hbTask = null;
+        }
+
+        private void StartHeartbeat()
+        {
+            StopHeartbeat();
+
+            // 新连接：允许再次触发断线提示
+            ResetDisconnectGuard();
+
+            MarkRx();
+
+            _hbCts = new CancellationTokenSource();
+            var ct = _hbCts.Token;
+
+            _hbTask = Task.Run(async () =>
+            {
+                while (!ct.IsCancellationRequested)
+                {
+                    try { await Task.Delay(HeartbeatIntervalMs, ct).ConfigureAwait(false); }
+                    catch { break; }
+
+                    if (ct.IsCancellationRequested) break;
+                    if (!IsConnected) break;
+
+                    long age = NowMs() - Interlocked.Read(ref _lastRxUtcMs);
+                    if (age > HeartbeatTimeoutMs)
+                    {
+                        await ForceDisconnectAsync("Connection timeout").ConfigureAwait(false);
+                        break;
+                    }
+
+                    try
+                    {
+                        // 发送 ping（对方会回 pong，双方都能刷新 lastRx）
+                        await SendAsync(new SystemMsg { Text = PingText }).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        await ForceDisconnectAsync("Connection lost").ConfigureAwait(false);
+                        break;
+                    }
+                }
+            }, ct);
+        }
+
+        private async Task ForceDisconnectAsync(string reason)
+        {
+            StopHeartbeat();
+
+            try { await ShutdownAsync(reason).ConfigureAwait(false); } catch { }
+
+            IsConnected = false;
+            NotifyDisconnectedOnce(reason);
+        }
+
+        // =========================
         // Host / Join
         // =========================
         public async Task StartHostAsync(int port, string name, string roomId = "room1")
         {
             await ShutdownAsync("Restart host").ConfigureAwait(false);
+
+            // 新 session：允许再次触发断线提示
+            ResetDisconnectGuard();
 
             // ✅ 新开房/新局：清结算
             LastSummarySlot1 = null;
@@ -102,6 +200,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                 IsConnected = true;
                 Log("[Session] Client '" + clientName + "' connected.");
                 OnConnected?.Invoke(LocalSlot);
+
+                // ✅ 连接建立后开始心跳检测（用于断网/进程被关的断联检测）
+                StartHeartbeat();
 
                 // ✅ Joiner 连上后，把当前状态补发（避免不同步）
                 _ = Task.Run(async () =>
@@ -134,7 +235,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             _host.OnClientDisconnected += () =>
             {
                 IsConnected = false;
-                OnDisconnected?.Invoke("Client disconnected");
+                _ = ForceDisconnectAsync("Client disconnected");
             };
 
             _host.OnMessage += HandleIncoming;
@@ -149,6 +250,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         public async Task JoinHostAsync(string hostIp, int port, string name)
         {
             await ShutdownAsync("Restart join").ConfigureAwait(false);
+
+            // 新 session：允许再次触发断线提示
+            ResetDisconnectGuard();
 
             // ✅ 新连接：清结算
             LastSummarySlot1 = null;
@@ -179,18 +283,22 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                     }
                     catch { }
                 });
+
+                // ✅ Join 成功后开始心跳
+                StartHeartbeat();
             };
 
             _joiner.OnJoinRejected += reason =>
             {
                 IsConnected = false;
-                OnDisconnected?.Invoke("Join rejected: " + reason);
+                StopHeartbeat();
+                NotifyDisconnectedOnce("Join rejected: " + reason);
             };
 
             _joiner.OnDisconnected += () =>
             {
                 IsConnected = false;
-                OnDisconnected?.Invoke("Disconnected");
+                _ = ForceDisconnectAsync("Disconnected");
             };
 
             _joiner.OnMessage += HandleIncoming;
@@ -290,8 +398,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         public async Task LeaveAsync(string reason = "Leave")
         {
             try { await SendAsync(new AbortMsg { Reason = reason }).ConfigureAwait(false); } catch { }
+            StopHeartbeat();
             await ShutdownAsync(reason).ConfigureAwait(false);
-            OnDisconnected?.Invoke(reason);
+            NotifyDisconnectedOnce(reason);
         }
 
         // =========================
@@ -307,6 +416,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
         private void HandleIncoming(NetMsg msg)
         {
+            if (msg != null) MarkRx();
+
             if (msg is SelectSongMsg sel)
             {
                 LastSelectSongMsg = sel;
@@ -368,13 +479,22 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             if (msg is AbortMsg ab)
             {
                 IsConnected = false;
-                OnDisconnected?.Invoke(ab.Reason);
-                _ = ShutdownAsync("Remote abort");
+                _ = ForceDisconnectAsync(string.IsNullOrWhiteSpace(ab.Reason) ? "Remote abort" : ab.Reason);
                 return;
             }
 
             if (msg is SystemMsg sys)
             {
+                // ✅ 心跳：避免刷屏，不写 log
+                if (sys.Text != null && sys.Text.StartsWith(PingText, StringComparison.Ordinal))
+                {
+                    // 收到 ping -> 回 pong（异步即可）
+                    _ = SendAsync(new SystemMsg { Text = PongText });
+                    return;
+                }
+                if (sys.Text != null && sys.Text.StartsWith(PongText, StringComparison.Ordinal))
+                    return;
+
                 Log("[SYS] " + sys.Text);
                 return;
             }
@@ -420,6 +540,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         public async Task ShutdownAsync(string reason = "Shutdown")
         {
             if (Interlocked.Exchange(ref _shuttingDown, 1) == 1) return;
+
+            // ✅ 防止 shutdown 过程中心跳仍在发包
+            StopHeartbeat();
 
             try
             {

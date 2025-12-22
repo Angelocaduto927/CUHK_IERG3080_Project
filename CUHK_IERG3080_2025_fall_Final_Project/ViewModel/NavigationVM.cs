@@ -3,6 +3,7 @@ using CUHK_IERG3080_2025_fall_Final_Project.Networking;
 using CUHK_IERG3080_2025_fall_Final_Project.Shared;
 using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 using System;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 
@@ -11,6 +12,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
     class NavigationVM : Utility.ViewModelBase
     {
         private OnlineSession _hookedSession;
+        private int _disconnectPopupOnce = 0;
 
         private object _currentViewModel;
         public object CurrentViewModel
@@ -20,7 +22,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 if (ReferenceEquals(_currentViewModel, value)) return;
 
-                // ✅ 切页前 Dispose 旧 VM
                 try
                 {
                     if (_currentViewModel is IDisposable d)
@@ -42,8 +43,36 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public ICommand GameOverCommand { get; set; }
         public ICommand DifficultySelectionCommand { get; set; }
 
+        private void DisconnectOnlineAndClear(string reason = "Leave")
+        {
+            var s = GameModeManager.OnlineSession;
+            if (s == null) return;
+
+            try
+            {
+                if (_hookedSession == s)
+                {
+                    _hookedSession.OnStart -= OnOnlineStart;
+                    _hookedSession.OnDisconnected -= OnOnlineDisconnected;
+                    _hookedSession = null;
+                }
+            }
+            catch { }
+
+            try
+            {
+                _ = s.LeaveAsync(reason);
+            }
+            catch { }
+
+            try { GameModeManager.OnlineSession = null; } catch { }
+            try { GameModeManager.SetMode(GameModeManager.Mode.SinglePlayer); } catch { }
+        }
+
         private void TitleScreen(object obj)
         {
+            DisconnectOnlineAndClear("Leave");
+
             CurrentViewModel = new TitleScreenVM(() => SongSelection(null));
         }
 
@@ -67,10 +96,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         private void Setting(object obj)
         {
             var previous = CurrentViewModel;
-            CurrentViewModel = new SettingVM(() =>
-            {
-                CurrentViewModel = previous;
-            });
+            CurrentViewModel = new SettingVM(() => { CurrentViewModel = previous; });
             EnsureOnlineHooks();
         }
 
@@ -136,10 +162,57 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (_hookedSession != null)
             {
                 _hookedSession.OnStart -= OnOnlineStart;
+                _hookedSession.OnDisconnected -= OnOnlineDisconnected;
             }
 
             _hookedSession = s;
+            Interlocked.Exchange(ref _disconnectPopupOnce, 0);
             _hookedSession.OnStart += OnOnlineStart;
+            _hookedSession.OnDisconnected += OnOnlineDisconnected;
+        }
+
+        private static bool IsNormalLeaveReason(string reason)
+        {
+            if (string.IsNullOrWhiteSpace(reason)) return false;
+
+            if (reason == "Game finished" || reason == "Music ended" || reason == "Cleanup") return true;
+            if (reason == "Leave" || reason == "Dispose" || reason.StartsWith("Restart", StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
+        private void OnOnlineDisconnected(string reason)
+        {
+            if (IsNormalLeaveReason(reason)) return;
+            if (Interlocked.Exchange(ref _disconnectPopupOnce, 1) == 1) return;
+
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                try
+                {
+                    MessageBox.Show(
+                        "Online connection lost.\nReason: " + (string.IsNullOrWhiteSpace(reason) ? "Disconnected" : reason),
+                        "Disconnected",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+                catch { }
+
+                try { GameModeManager.OnlineSession = null; } catch { }
+                try { GameModeManager.SetMode(GameModeManager.Mode.SinglePlayer); } catch { }
+
+                try
+                {
+                    if (_hookedSession != null)
+                    {
+                        _hookedSession.OnStart -= OnOnlineStart;
+                        _hookedSession.OnDisconnected -= OnOnlineDisconnected;
+                        _hookedSession = null;
+                    }
+                }
+                catch { }
+
+                try { TitleScreen(null); } catch { }
+            }));
         }
 
         private void OnOnlineStart(StartMsg msg)

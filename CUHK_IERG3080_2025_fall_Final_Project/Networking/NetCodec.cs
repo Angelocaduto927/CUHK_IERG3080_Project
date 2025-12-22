@@ -54,7 +54,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                     break;
                 }
 
-                if (line == null) break;     // EOF
+                if (line == null) break;
                 if (line.Length == 0) continue;
 
                 NetMsg msg;
@@ -88,7 +88,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                 case MsgType.Start: return _json.Deserialize<StartMsg>(line);
                 case MsgType.Input: return _json.Deserialize<InputMsg>(line);
 
-                // ✅ 新增
                 case MsgType.HitResult: return _json.Deserialize<HitResultMsg>(line);
                 case MsgType.MatchSummary: return _json.Deserialize<MatchSummaryMsg>(line);
 

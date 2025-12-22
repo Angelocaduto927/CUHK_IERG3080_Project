@@ -14,7 +14,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         public int MissHitScore { get; set; }
         public ScoreSet()
         {
-            //default values
             PerfectHitScore = Hyperparameters.DefaultPerfectScore;
             GoodHitScore = Hyperparameters.DefaultGoodScore;
             BadHitScore = Hyperparameters.DefaultBadScore;

@@ -18,9 +18,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
         private int _shuttingDown = 0;
 
-        // =========================
-        // ✅ Heartbeat / disconnect detection
-        // =========================
         private CancellationTokenSource _hbCts;
         private Task _hbTask;
         private long _lastRxUtcMs = 0;
@@ -39,27 +36,22 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         public string RoomId { get; private set; } = "room1";
         public int Port { get; private set; } = 5050;
 
-        // ✅ 缓存：Joiner 晚订阅也不会丢 Start / 选歌
         public StartMsg LastStartMsg { get; private set; }
         public SelectSongMsg LastSelectSongMsg { get; private set; }
 
-        // ✅ 房间状态缓存
         public string Slot1Difficulty { get; private set; }
         public string Slot2Difficulty { get; private set; }
         public bool Slot1Ready { get; private set; }
         public bool Slot2Ready { get; private set; }
 
-        // ✅ GameOver 结算缓存（关键：Shutdown 不清空）
         public MatchSummaryMsg LastSummarySlot1 { get; private set; }
         public MatchSummaryMsg LastSummarySlot2 { get; private set; }
 
-        // ✅ Helper flags
         public bool HasSummarySlot1 => LastSummarySlot1 != null;
         public bool HasSummarySlot2 => LastSummarySlot2 != null;
         public bool HasBothSummaries => LastSummarySlot1 != null && LastSummarySlot2 != null;
 
 
-        // ✅ 只提供一个可分享地址（不再显示 localhost，也不列出多网卡）
         public string[] ShareAddresses
         {
             get
@@ -67,7 +59,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                 var ips = GetLanIPv4Addresses();
                 var best = ChooseBestShareIp(ips);
 
-                // 没拿到 LAN IP（极少数情况，比如无网卡/权限/奇怪环境），才 fallback
                 if (string.IsNullOrWhiteSpace(best))
                     best = "127.0.0.1";
 
@@ -86,17 +77,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         public event Action<StartMsg> OnStart;
         public event Action<InputMsg> OnInput;
 
-        // ✅ 实时权威判定/分数（InGame 显示用）
         public event Action<HitResultMsg> OnHitResult;
 
-        // ✅ 最终结算（GameOver 用）
         public event Action<MatchSummaryMsg> OnMatchSummary;
 
         public event Action<SharedUpdatePlayerSettingMsg> OnPlayerSetting;
 
-        // =========================
-        // Heartbeat helpers
-        // =========================
         private static long NowMs() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         private void ResetDisconnectGuard()
@@ -127,7 +113,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         {
             StopHeartbeat();
 
-            // 新连接：允许再次触发断线提示
             ResetDisconnectGuard();
 
             MarkRx();
@@ -154,7 +139,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
                     try
                     {
-                        // 发送 ping（对方会回 pong，双方都能刷新 lastRx）
                         await SendAsync(new SystemMsg { Text = PingText }).ConfigureAwait(false);
                     }
                     catch
@@ -176,17 +160,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             NotifyDisconnectedOnce(reason);
         }
 
-        // =========================
-        // Host / Join
-        // =========================
         public async Task StartHostAsync(int port, string name, string roomId = "room1")
         {
             await ShutdownAsync("Restart host").ConfigureAwait(false);
 
-            // 新 session：允许再次触发断线提示
             ResetDisconnectGuard();
 
-            // ✅ 新开房/新局：清结算
             LastSummarySlot1 = null;
             LastSummarySlot2 = null;
 
@@ -207,10 +186,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                 Log("[Session] Client '" + clientName + "' connected.");
                 OnConnected?.Invoke(LocalSlot);
 
-                // ✅ 连接建立后开始心跳检测（用于断网/进程被关的断联检测）
                 StartHeartbeat();
 
-                // ✅ Joiner 连上后，把当前状态补发（避免不同步）
                 _ = Task.Run(async () =>
                 {
                     try
@@ -230,7 +207,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                         var hostSpeed = PlayerSettingsManager.GetSettings(0).Speed;
                         await _host.SendAsync(new SharedUpdatePlayerSettingMsg { Slot = 1, Speed = hostSpeed }).ConfigureAwait(false);
 
-                        // ✅ 如果已经有结算，也补发（可选）
                         if (LastSummarySlot1 != null) await _host.SendAsync(LastSummarySlot1).ConfigureAwait(false);
                         if (LastSummarySlot2 != null) await _host.SendAsync(LastSummarySlot2).ConfigureAwait(false);
                     }
@@ -257,10 +233,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         {
             await ShutdownAsync("Restart join").ConfigureAwait(false);
 
-            // 新 session：允许再次触发断线提示
             ResetDisconnectGuard();
 
-            // ✅ 新连接：清结算
             LastSummarySlot1 = null;
             LastSummarySlot2 = null;
 
@@ -290,7 +264,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                     catch { }
                 });
 
-                // ✅ Join 成功后开始心跳
                 StartHeartbeat();
             };
 
@@ -312,15 +285,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             await _joiner.ConnectAndJoinAsync(hostIp, port, name).ConfigureAwait(false);
         }
 
-        // =========================
-        // Lobby sync
-        // =========================
         public Task SendSelectSongAsync(string songId, string difficulty)
         {
             var msg = new SelectSongMsg { SongId = songId, Difficulty = difficulty };
             LastSelectSongMsg = msg;
 
-            // 如果你这里是全局难度，也可同步写入
             if (!string.IsNullOrWhiteSpace(difficulty))
             {
                 Slot1Difficulty = difficulty;
@@ -351,9 +320,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             return SendAsync(new SharedUpdatePlayerSettingMsg { Slot = slot, Speed = speed });
         }
 
-        // =========================
-        // Game sync
-        // =========================
         public Task SendStartAsync(int startInMs = 1500)
         {
             long startAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + startInMs;
@@ -384,7 +350,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             });
         }
 
-        // ✅ GameOver：发送最终结算（本地先缓存）
         public Task SendMatchSummaryAsync(MatchSummaryMsg msg)
         {
             CacheSummary(msg);
@@ -398,9 +363,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             else if (msg.Slot == 2) LastSummarySlot2 = msg;
         }
 
-        // =========================
-        // Disconnect
-        // =========================
         public async Task LeaveAsync(string reason = "Leave")
         {
             try { await SendAsync(new AbortMsg { Reason = reason }).ConfigureAwait(false); } catch { }
@@ -409,9 +371,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             NotifyDisconnectedOnce(reason);
         }
 
-        // =========================
-        // Internal send / receive
-        // =========================
         private Task SendAsync(NetMsg msg)
         {
             if (IsHost)
@@ -491,10 +450,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
             if (msg is SystemMsg sys)
             {
-                // ✅ 心跳：避免刷屏，不写 log
                 if (sys.Text != null && sys.Text.StartsWith(PingText, StringComparison.Ordinal))
                 {
-                    // 收到 ping -> 回 pong（异步即可）
                     _ = SendAsync(new SystemMsg { Text = PongText });
                     return;
                 }
@@ -540,14 +497,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
         private void Log(string s) => OnLog?.Invoke(s);
 
-        // =========================
-        // Shutdown / Dispose
-        // =========================
         public async Task ShutdownAsync(string reason = "Shutdown")
         {
             if (Interlocked.Exchange(ref _shuttingDown, 1) == 1) return;
 
-            // ✅ 防止 shutdown 过程中心跳仍在发包
             StopHeartbeat();
 
             try
@@ -570,7 +523,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                 IsHost = false;
                 LocalSlot = 0;
 
-                // ✅ 注意：不清掉 LastSummarySlot1/2（GameOver 需要）
                 LastStartMsg = null;
                 LastSelectSongMsg = null;
 
@@ -590,18 +542,13 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             try { ShutdownAsync("Dispose").GetAwaiter().GetResult(); } catch { }
         }
 
-        // =========================
-        // IP picking helpers
-        // =========================
         private static string ChooseBestShareIp(string[] ips)
         {
             if (ips == null || ips.Length == 0) return null;
 
-            // 优先 RFC1918 私网段（最符合“发给朋友同一局域网连接”）
             var privateIp = ips.FirstOrDefault(IsRfc1918);
             if (!string.IsNullOrWhiteSpace(privateIp)) return privateIp;
 
-            // 其次就用第一个可用 IP（已经过滤 169.254）
             return ips[0];
         }
 

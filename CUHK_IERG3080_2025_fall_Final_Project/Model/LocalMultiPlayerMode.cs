@@ -31,7 +31,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         }
         public LocalMultiPlayerMode()
         {
-            PlayerCount = 2; // Default to 2 players for local multiplayer
+            PlayerCount = 2;
             _players = new List<PlayerManager>();
             CreatePlayers();
         }

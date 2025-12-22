@@ -23,7 +23,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             {
                 PlayerManager player = new PlayerManager(playerIndex: i, isLocalPlayer: false);
 
-                // ✅ 兜底：避免 difficulty 为空导致 Initialize() 崩
                 if (player?.Difficulty != null && string.IsNullOrWhiteSpace(player.Difficulty.CurrentDifficulty))
                     player.Difficulty.CurrentDifficulty = "Easy";
 
@@ -33,7 +32,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 
         public void Initialize()
         {
-            // ✅ 再兜一次（防止 Joiner 进 InGame 时还没同步到）
             for (int i = 0; i < _players.Count; i++)
             {
                 var p = _players[i];
@@ -49,14 +47,13 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 
                 string song = SongManager.CurrentSong;
                 if (string.IsNullOrWhiteSpace(song))
-                    song = Hyperparameters.Song1Name; // 最终兜底（理论上 SongSelection 会设置）
+                    song = Hyperparameters.Song1Name;
 
                 string chartPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Chart",
                     $"{song}_{diff}.json");
 
                 if (!File.Exists(chartPath))
                 {
-                    // 让报错更可读：直接告诉你它要找哪个文件
                     throw new FileNotFoundException("Chart file not found: " + chartPath, chartPath);
                 }
 

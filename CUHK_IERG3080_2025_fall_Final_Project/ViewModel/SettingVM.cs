@@ -37,10 +37,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void OnPlayerSettingFromNet(CUHK_IERG3080_2025_fall_Final_Project.Shared.UpdatePlayerSettingMsg msg)
         {
-            // ✅ 只在 Online 模式下需要刷新 Setting 页面的显示
             if (!IsOnlineMultiplayer) return;
 
-            // OnlineSession.ApplyPlayerSetting 已经写入 PlayerSettingsManager，这里只需要刷新 VM->UI
             Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
             {
                 RefreshSpeedFromSettings();
@@ -53,7 +51,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             get => _player1Speed;
             set
             {
-                // ✅ Online：P1 只能由 Host(=slot1) 改；Joiner 在 UI 上强制回滚显示
                 if (!CanEditSpeedForPlayerIndex(0))
                 {
                     RefreshSpeedFromSettings();
@@ -78,7 +75,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             get => _player2Speed;
             set
             {
-                // ✅ Online：P2 只能由 Joiner(=slot2) 改；Host 在 UI 上强制回滚显示
                 if (!CanEditSpeedForPlayerIndex(1))
                 {
                     RefreshSpeedFromSettings();
@@ -117,7 +113,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void SyncOnlineSpeedIfLocal(int playerIndex, double speed)
         {
-            // ✅ 只在 Online Multiplayer 模式同步速度
             if (!IsOnlineMultiplayer) return;
 
             int localIdx = LocalPlayerIndex;
@@ -126,7 +121,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             _ = _session.SendUpdatePlayerSettingAsync(_session.LocalSlot, speed);
         }
 
-        // Player 1 Key Bindings (display)
         public string P1Blue1 => _listeningFor == "P1Blue1" ? "Enter a key..." : GetBindingDisplay(0, "Blue1", "J");
         public string P1Blue2 => _listeningFor == "P1Blue2" ? "Enter a key..." : GetBindingDisplay(0, "Blue2", "K");
         public string P1Red1 => _listeningFor == "P1Red1" ? "Enter a key..." : GetBindingDisplay(0, "Red1", "D");
@@ -162,13 +156,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             _player1Speed = PlayerSettingsManager.GetSettings(0).Speed;
             _player2Speed = PlayerSettingsManager.GetSettings(1).Speed;
 
-            // ✅ 只在 Online Multiplayer 才订阅网络设置更新
             if (IsOnlineMultiplayer)
             {
                 _session.OnPlayerSetting += OnPlayerSettingFromNet;
             }
 
-            // Setup commands
             RebindP1Blue1Command = new RelayCommand(o => StartListening("P1Blue1"));
             RebindP1Blue2Command = new RelayCommand(o => StartListening("P1Blue2"));
             RebindP1Red1Command = new RelayCommand(o => StartListening("P1Red1"));
@@ -194,7 +186,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         public void Dispose()
         {
-            // ✅ NavigationVM 切页会 Dispose 旧 VM
             if (_session != null)
             {
                 try { _session.OnPlayerSetting -= OnPlayerSettingFromNet; } catch { }

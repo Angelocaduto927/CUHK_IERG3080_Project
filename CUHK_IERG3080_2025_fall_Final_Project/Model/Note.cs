@@ -47,25 +47,20 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         private readonly List<Note> _activeNotes;
         private readonly PlayerManager _player;
 
-        // ✅ CHANGED: 用 spawn 指针，避免每帧 Where/ToList
         private int _nextSpawnIndex = 0;
 
-        // ✅ CHANGED: List 本身就实现 IReadOnlyList，避免每帧 AsReadOnly 产生包装开销
         public IReadOnlyList<Note> ActiveNotes => _activeNotes;
 
-        // ✅ CHANGED: O(1) 判断是否还有未生成/正在飞的 note（给 GameEngine.IsGameFinished 用）
         public bool HasPendingNotes => _nextSpawnIndex < _allNotes.Count || _activeNotes.Count > 0;
 
         public NoteManager(List<Note> notes, PlayerManager player)
         {
-            // ✅ CHANGED: 保证按 SpawnTime 排序，spawn 指针才能正确推进
             _allNotes = (notes ?? new List<Note>()).OrderBy(n => n.SpawnTime).ToList();
             _activeNotes = new List<Note>();
             _player = player;
             _nextSpawnIndex = 0;
         }
 
-        // ✅ CHANGED: 设置新谱面时要排序 + reset 指针
         public void Set_allNotes(List<Note> notes)
         {
             _allNotes = (notes ?? new List<Note>()).OrderBy(n => n.SpawnTime).ToList();
@@ -79,7 +74,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             CheckMissedNotes(currentTime);
         }
 
-        // ✅ CHANGED: 用 while + 指针推进，替代 Where(...).ToList()
         private void SpawnNotes(double currentTime)
         {
             while (_nextSpawnIndex < _allNotes.Count && _allNotes[_nextSpawnIndex].SpawnTime <= currentTime)
@@ -101,7 +95,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             }
         }
 
-        // ✅ CHANGED: 倒序 RemoveAt，替代 Where(...).ToList() 再 Remove
         private void CheckMissedNotes(double currentTime)
         {
             for (int i = _activeNotes.Count - 1; i >= 0; i--)
@@ -117,7 +110,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 
         public void HitNote(double currentTime, Note.NoteType noteType)
         {
-            // 这段不是每帧跑（只在按键时），保留 LINQ 问题不大
             var targetNote = _activeNotes
                 .Where(n => n.Type == noteType)
                 .OrderBy(n => Math.Abs(n.HitTime - currentTime))
@@ -146,7 +138,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         {
             _activeNotes.Clear();
 
-            // ✅ CHANGED: reset spawn 指针
             _nextSpawnIndex = 0;
 
             if (_allNotes != null)

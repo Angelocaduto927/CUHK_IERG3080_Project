@@ -21,9 +21,9 @@
         <Grid Width="1536" Height="1024">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" MinHeight="123"/>
+                    <RowDefinition Height="Auto" MinHeight="120"/>
                     <RowDefinition/>
-                    <RowDefinition Height="Auto" MinHeight="218"/>
+                    <RowDefinition Height="Auto" MinHeight="200"/>
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0"

@@ -217,6 +217,10 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             _host.OnClientDisconnected += () =>
             {
                 IsConnected = false;
+
+                // If we are intentionally shutting down, don't overwrite the intended reason.
+                if (Volatile.Read(ref _shuttingDown) == 1) return;
+
                 _ = ForceDisconnectAsync("Client disconnected");
             };
 
@@ -277,6 +281,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             _joiner.OnDisconnected += () =>
             {
                 IsConnected = false;
+
+                // If we are intentionally shutting down (e.g., normal leave / match finished),
+                // the outer caller (LeaveAsync/ShutdownAsync) will notify with the correct reason.
+                if (Volatile.Read(ref _shuttingDown) == 1) return;
+
                 _ = ForceDisconnectAsync("Disconnected");
             };
 

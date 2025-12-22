@@ -175,10 +175,24 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             if (string.IsNullOrWhiteSpace(reason)) return false;
 
-            if (reason == "Game finished" || reason == "Music ended" || reason == "Cleanup") return true;
-            if (reason == "Leave" || reason == "Dispose" || reason.StartsWith("Restart", StringComparison.OrdinalIgnoreCase)) return true;
+            var r = reason.Trim();
+
+            if (r.Equals("Game finished", StringComparison.OrdinalIgnoreCase)) return true;
+            if (r.Equals("Music ended", StringComparison.OrdinalIgnoreCase)) return true;
+
+            // common "intentional shutdown" reasons (case/spacing tolerant)
+            if (r.Equals("Cleanup", StringComparison.OrdinalIgnoreCase)) return true;
+            if (r.Equals("clean up", StringComparison.OrdinalIgnoreCase)) return true;
+            if (r.Equals("cleanup", StringComparison.OrdinalIgnoreCase)) return true;
+
+            if (r.Equals("Leave", StringComparison.OrdinalIgnoreCase)) return true;
+            if (r.Equals("Dispose", StringComparison.OrdinalIgnoreCase)) return true;
+
+            if (r.StartsWith("Restart", StringComparison.OrdinalIgnoreCase)) return true;
+
             return false;
         }
+
 
         private void OnOnlineDisconnected(string reason)
         {

@@ -63,7 +63,7 @@
                                            FontSize="27"
                                            FontWeight="SemiBold"
                                            HorizontalAlignment="Center"
-                                           Margin="0,0,0,8"
+                                           Margin="0,0,0,0"
                                            Visibility="{Binding Player2Visible, Converter={StaticResource BoolToVis}}"/>
 
                                 <TextBlock Text="{Binding Grade1}"
@@ -140,7 +140,7 @@
                                            FontSize="27"
                                            FontWeight="SemiBold"
                                            HorizontalAlignment="Center"
-                                           Margin="0,0,0,8"
+                                           Margin="0,0,0,0"
                                            Visibility="{Binding Player2Visible, Converter={StaticResource BoolToVis}}"/>
 
                                 <TextBlock Text="{Binding Grade2}"

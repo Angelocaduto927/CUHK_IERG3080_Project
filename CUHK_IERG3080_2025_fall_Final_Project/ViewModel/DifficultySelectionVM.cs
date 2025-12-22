@@ -47,6 +47,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 if (_isP1EasySelected == value) return;
                 if (!CanEditP1 && !_handlingRemote) return;
 
+                // Prevent unselect: clicking the already-selected button shouldn't turn it off.
+                if (!value && _isP1EasySelected) return;
+
                 _isP1EasySelected = value;
                 if (value)
                 {
@@ -69,6 +72,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 if (_isP1HardSelected == value) return;
                 if (!CanEditP1 && !_handlingRemote) return;
+
+                // Prevent unselect
+                if (!value && _isP1HardSelected) return;
 
                 _isP1HardSelected = value;
                 if (value)
@@ -96,6 +102,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 if (_isP2EasySelected == value) return;
                 if (!CanEditP2 && !_handlingRemote) return;
 
+                // Prevent unselect
+                if (!value && _isP2EasySelected) return;
+
                 _isP2EasySelected = value;
                 if (value)
                 {
@@ -118,6 +127,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 if (_isP2HardSelected == value) return;
                 if (!CanEditP2 && !_handlingRemote) return;
+
+                // Prevent unselect
+                if (!value && _isP2HardSelected) return;
 
                 _isP2HardSelected = value;
                 if (value)

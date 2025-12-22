@@ -24,17 +24,13 @@
                 <RowDefinition Height="{Binding P2Coordinate}"/>
             </Grid.RowDefinitions>
 
-            <!-- Player 1 -->
                 <Border Grid.Row="0" Background="#66000000" BorderBrush="#FF6B4E" BorderThickness="0,2" Height="{Binding BandWidth}" 
                         Margin="0,20,0,10" VerticalAlignment="Center">
-                    <!-- Dummy to fix focus issue -->
                     <Canvas ClipToBounds="True" Width="1600">
-                        <!-- Hit Line -->
                     <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
                                 Fill="#FF6B4E" Canvas.Left="270"/>
                         <TextBlock Text="Player 1" FontSize="20" FontWeight="Bold" Canvas.Left="90" Canvas.Top="10" Foreground="#FF6B4E">
                         </TextBlock>
-                        <!-- Hit Text (above ellipse) -->
                     <TextBlock Text="{Binding P1HitText}" FontSize="20" FontWeight="Bold" Width="70" TextAlignment="Center"
                                Canvas.Left="235" Canvas.Top="10" Visibility="{Binding P1HitVisible, Converter={StaticResource BoolToVis}}"
                                Foreground="{Binding P1HitBrush}">
@@ -43,7 +39,6 @@
                             </TextBlock.Effect>
                     </TextBlock>
 
-                    <!-- Hit Circle -->
                     <Ellipse Width="60" Height="60" Stroke="{Binding P1EllipseStroke}" StrokeThickness="6" Fill="{Binding P1EllipseFill}"
                                 Canvas.Left="242" Canvas.Top="45">
                         <Ellipse.Effect>
@@ -51,11 +46,9 @@
                         </Ellipse.Effect>
                     </Ellipse>
 
-                    <!-- Score Display -->
                     <TextBlock Text="{Binding P1Score}" FontSize="36" FontWeight="Bold" FontFamily="Segoe UI" VerticalAlignment="Top"
                                 Foreground="#FFD700" Canvas.Left="50" Canvas.Top="45"/>
 
-                    <!-- Flying Notes -->
                     <ItemsControl ItemsSource="{Binding Player1Notes}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -82,18 +75,14 @@
                 </Canvas>
             </Border>
 
-            <!-- Player 2 -->
             <Border Grid.Row="1" Background="#66000000" BorderBrush="#4E9AFF" BorderThickness="0,2" Height="{Binding BandWidth}" 
                         Margin="0,10,0,20" VerticalAlignment="Center"
                         Visibility="{Binding IsMultiplayer, Converter={StaticResource BoolToVis}}">
                 <Canvas ClipToBounds="True" Width="1600">
-                    <!-- Hit Line -->
-                    <!-- Hit Line -->
                     <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
                               Fill="#4E9AFF" Canvas.Left="270"/>
                         <TextBlock Text="Player 2" FontSize="20" FontWeight="Bold" Canvas.Left="90" Canvas.Top="10" Foreground="#4E9AFF">
                         </TextBlock>
-                    <!-- Hit Text (above ellipse) -->
                     <TextBlock Text="{Binding P2HitText}" FontSize="20" FontWeight="Bold" Width="70" TextAlignment="Center"
                                Canvas.Left="235" Canvas.Top="10" Visibility="{Binding P2HitVisible, Converter={StaticResource BoolToVis}}"
                                Foreground="{Binding P2HitBrush}">
@@ -102,7 +91,6 @@
                         </TextBlock.Effect>
                     </TextBlock>
 
-                    <!-- Hit Circle -->
                     <Ellipse Width="60" Height="60" Stroke="{Binding P2EllipseStroke}" StrokeThickness="6" Fill="{Binding P2EllipseFill}"
                             Canvas.Left="242" Canvas.Top="45">
                         <Ellipse.Effect>
@@ -110,11 +98,9 @@
                         </Ellipse.Effect>
                     </Ellipse>
 
-                    <!-- Score Display -->
                     <TextBlock Text="{Binding P2Score}" FontSize="36" FontWeight="Bold" FontFamily="Segoe UI" VerticalAlignment="Top"
                               Foreground="#FFD700" Canvas.Left="50" Canvas.Top="45"/>
 
-                    <!-- Flying Notes -->
                     <ItemsControl ItemsSource="{Binding Player2Notes}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>

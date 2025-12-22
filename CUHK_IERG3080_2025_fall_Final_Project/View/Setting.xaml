@@ -40,7 +40,6 @@
                         <ColumnDefinition Width="49*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Player 1 -->
                     <Border Grid.Column="0" Margin="-19,-145,30,142" Background="#FF1E1E1E" BorderBrush="#FFFFD700"
 							BorderThickness="2" CornerRadius="6" Padding="12">
                         <StackPanel>
@@ -98,7 +97,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Player 2 -->
                     <Border Grid.Column="1" Margin="26,-145,-13,142" Background="#FF1E1E1E" BorderBrush="#FFFFD700"
 							BorderThickness="2" CornerRadius="6" Padding="12" Grid.ColumnSpan="2">
                         <StackPanel>

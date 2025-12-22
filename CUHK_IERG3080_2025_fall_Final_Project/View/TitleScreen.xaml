@@ -11,20 +11,17 @@
     <Viewbox Stretch="UniformToFill">
         <Grid Width="1536" Height="1024" RenderTransformOrigin="0.507,0.516">
             <Grid.Background>
-                <!-- Background image -->
                 <ImageBrush ImageSource="/CUHK_IERG3080_2025_fall_Final_Project;component/Assets/Image/TitleBG.png"
 			               Stretch="Fill"/>
             </Grid.Background>
 
 
-            <!-- Foreground content -->
             <Grid.RowDefinitions>
                 <RowDefinition Height="2*"/>
                 <RowDefinition Height="9*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Menu buttons -->
             <StackPanel Grid.Row="1"
                             Orientation="Vertical"
                             HorizontalAlignment="Center"

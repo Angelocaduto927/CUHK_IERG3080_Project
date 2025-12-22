@@ -22,14 +22,10 @@
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" MinHeight="80"/>
-                <!-- Title -->
                 <RowDefinition/>
-                <!-- Content -->
                 <RowDefinition Height="Auto" MinHeight="365"/>
-                <!-- Buttons -->
             </Grid.RowDefinitions>
 
-            <!-- Title -->
             <TextBlock Grid.Row="0"
                        Text="{Binding SongDisplayName}"
                        Foreground="#FFFFFF"
@@ -38,18 +34,13 @@
                        HorizontalAlignment="Center"
                        Margin="0,4,0,12" Width="0"/>
 
-            <!-- Content -->
             <Grid Grid.Row="1" Margin="100,20,100,20">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <!-- Player 1 -->
                     <ColumnDefinition Width="Auto" MinWidth="300"/>
-                    <!-- Cover -->
                     <ColumnDefinition Width="*"/>
-                    <!-- Player 2 (if multiplayer) -->
                 </Grid.ColumnDefinitions>
 
-                <!-- Player 1 Difficulty Selection -->
                 <Border Grid.Column="0"
                         
                         Background="#80000000"
@@ -94,7 +85,6 @@
                 </Border>
 
 
-                <!-- Song Cover (Center) -->
                 <Border Grid.Column="1"
                         Width="300"
                         Height="450"
@@ -110,7 +100,6 @@
                            Stretch="Uniform"/>
                 </Border>
 
-                <!-- Player 2 Difficulty Selection (Only in Multiplayer) -->
                 <Border Grid.Column="2"
                         
                         Background="#80000000"
@@ -156,7 +145,6 @@
                 </Border>
             </Grid>
 
-            <!-- Buttons -->
             <StackPanel Grid.Row="2"
                         Orientation="Horizontal"
                         HorizontalAlignment="Center"

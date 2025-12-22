@@ -76,7 +76,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         public event Action<bool> RequestClose;
 
-        // ✅ 防止断线事件重复触发导致重复 Close/弹窗
         private int _autoCloseOnce = 0;
 
         public LobbyViewModel()
@@ -100,15 +99,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     IsConnected = false;
                     Logs.Add("[Lobby] Disconnected: " + reason);
 
-                    // ✅ 如果是用户主动 Close/Leave，不要再弹窗/自动关（避免“我点关闭还提示断线”）
                     if (IsNormalLeaveReason(reason)) return;
 
-                    // ✅ 关键：LobbyWindow 期间断线 -> 立刻关 LobbyWindow，让 UI 回到 TitleScreen
                     if (Interlocked.Exchange(ref _autoCloseOnce, 1) == 1) return;
 
                     try
                     {
-                        // 可选：你如果不想弹窗，把下面 MessageBox 整段删掉也行
                         string title = "Disconnected";
                         string msg = Session.IsHost
                             ? "Joiner disconnected.\nReason: " + (string.IsNullOrWhiteSpace(reason) ? "Disconnected" : reason)
@@ -118,7 +114,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     }
                     catch { }
 
-                    // 关闭对话框（TitleScreenVM.ShowDialog() 返回 false，然后停留在 Title）
                     try { RequestClose?.Invoke(false); } catch { }
                 });
             };

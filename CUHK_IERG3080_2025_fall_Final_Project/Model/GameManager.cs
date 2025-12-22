@@ -13,9 +13,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 {
     public static class GameModeManager
     {
-        //the current game mode
         public static IGameMode CurrentMode { get; private set; }
-        public static OnlineSession OnlineSession { get; set; } // online 模式连接成功后赋值，其他时候为 null
+        public static OnlineSession OnlineSession { get; set; }
 
         public enum Mode
         {
@@ -223,7 +222,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             ScoreSet = new ScoreSet();
             Score = new ScoreManager(ScoreSet);
             Difficulty = new DifficultyManager();
-            //Speed = Hyperparameters.DefaultSpeed;
             Speed = PlayerSettingsManager.GetSettings(playerIndex).Speed;
             KeysDict = PlayerSettingsManager.GetSettings(playerIndex).KeyBindings;
             Chart = new List<Note>();
@@ -235,7 +233,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
 
             Speed = newSpeed;
 
-            // ✅ 重新计算所有 Note 的 Speed 和 SpawnTime
             if (Chart != null)
             {
                 foreach (var note in Chart)

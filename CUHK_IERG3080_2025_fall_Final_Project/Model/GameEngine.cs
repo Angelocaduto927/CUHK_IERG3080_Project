@@ -42,7 +42,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             if (State != GameState.NotStarted)
                 return;
 
-            _stopwatch.Restart(); // ✅ CHANGED: 用 Restart 确保从 0 开始且运行
+            _stopwatch.Restart();
             State = GameState.Playing;
         }
 
@@ -101,9 +101,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
             }
         }
 
-        // ✅ CHANGED: 不再每帧扫整张 Chart.Any(...)
-        // 结束条件应该是：没有待生成的 note 且没有 active note
-        // NoteManager.HasPendingNotes 是 O(1)
         public bool IsGameFinished()
         {
             if (_players == null || _players.Count == 0)

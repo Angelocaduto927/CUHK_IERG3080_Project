@@ -14,7 +14,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         private CancellationTokenSource _cts;
         private Task _readTask;
 
-        private int _disconnecting = 0; // ✅ single-flight guard
+        private int _disconnecting = 0;
 
         public bool IsConnected => _client != null && _client.Connected;
 
@@ -47,14 +47,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
             Log("[Joiner] Connected to " + hostIp + ":" + port + ", sending Join...");
 
-            // ✅ Read loop in background; completion triggers disconnect cleanup (no UI block)
             _readTask = _codec.ReadLoopAsync(HandleIncomingAsync, _cts.Token);
             _readTask.ContinueWith(t =>
             {
-                // observe faults
                 try { _ = t.Exception; } catch { }
 
-                // EOF / network error -> disconnect without sending Abort
                 _ = DisconnectAsync("Disconnected", sendAbort: false);
             }, TaskScheduler.Default);
 
@@ -69,7 +66,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
         private Task HandleIncomingAsync(NetMsg msg)
         {
-            // JoinOk
             if (msg is JoinOkMsg ok)
             {
                 Log("[Joiner] JoinOk: slot=" + ok.Slot + " room=" + ok.RoomId);
@@ -77,23 +73,19 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                 return Task.CompletedTask;
             }
 
-            // JoinReject
             if (msg is JoinRejectMsg rej)
             {
                 Log("[Joiner] JoinRejected: " + rej.Reason);
                 OnJoinRejected?.Invoke(rej.Reason);
 
-                // ✅ server already decided, just disconnect (no Abort back)
                 _ = DisconnectAsync("Join rejected: " + rej.Reason, sendAbort: false);
                 return Task.CompletedTask;
             }
 
-            // Abort from remote
             if (msg is AbortMsg ab)
             {
                 Log("[Joiner] Abort: " + ab.Reason);
 
-                // ✅ 关键：收到 Abort 不要回发 Abort（避免乒乓/重入）
                 _ = DisconnectAsync("Remote abort: " + ab.Reason, sendAbort: false);
                 return Task.CompletedTask;
             }
@@ -109,7 +101,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             var cts = _cts;
             var codec = _codec;
 
-            // ✅ 先把字段置空，避免重入时继续用旧对象
             _cts = null;
             _codec = null;
 
@@ -124,7 +115,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
                 try { cts?.Cancel(); } catch { }
 
-                // ✅ 关闭 socket 让 ReadLineAsync 立刻退出
                 CleanupSocket();
 
                 if (_readTask != null)
@@ -139,7 +129,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             }
             finally
             {
-                // 不要恢复 _disconnecting，避免同一次对象被重复 disconnect
             }
         }
 
@@ -151,7 +140,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
         private void Log(string s) => OnLog?.Invoke(s);
 
-        // ✅ 关键：Dispose 不允许阻塞 UI 线程
         public void Dispose()
         {
             _ = DisconnectAsync("Dispose", sendAbort: false);

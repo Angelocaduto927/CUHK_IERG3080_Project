@@ -16,9 +16,6 @@ using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.View
 {
-    /// <summary>
-    /// TitleScreen.xaml 的交互逻辑
-    /// </summary>
     public partial class TitleScreen : UserControl
     {
         public TitleScreen()

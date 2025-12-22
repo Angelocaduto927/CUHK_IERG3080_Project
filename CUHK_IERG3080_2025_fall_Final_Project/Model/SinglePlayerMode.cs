@@ -35,7 +35,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
         {
             PlayerCount = 1;
             _players = new List<PlayerManager>();
-            //_engine = new GameEngine();
             CreatePlayers();
         }
         public void CreatePlayers()

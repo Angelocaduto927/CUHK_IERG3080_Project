@@ -1,11 +1,13 @@
-﻿using CUHK_IERG3080_2025_fall_Final_Project.Shared;
+﻿using CUHK_IERG3080_2025_fall_Final_Project.Model;
+using CUHK_IERG3080_2025_fall_Final_Project.Shared;
 using System;
 using System.Linq;
-using System.Net; // ✅ add
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using SharedUpdatePlayerSettingMsg = CUHK_IERG3080_2025_fall_Final_Project.Shared.UpdatePlayerSettingMsg;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 {
@@ -71,6 +73,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         // ✅ 最终结算（GameOver 用）
         public event Action<MatchSummaryMsg> OnMatchSummary;
 
+        public event Action<SharedUpdatePlayerSettingMsg> OnPlayerSetting;
+
         // =========================
         // Host / Join
         // =========================
@@ -115,6 +119,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
 
                         await _host.SendAsync(new ReadyMsg { Slot = 1, IsReady = Slot1Ready }).ConfigureAwait(false);
                         await _host.SendAsync(new ReadyMsg { Slot = 2, IsReady = Slot2Ready }).ConfigureAwait(false);
+
+                        var hostSpeed = PlayerSettingsManager.GetSettings(0).Speed;
+                        await _host.SendAsync(new SharedUpdatePlayerSettingMsg { Slot = 1, Speed = hostSpeed }).ConfigureAwait(false);
 
                         // ✅ 如果已经有结算，也补发（可选）
                         if (LastSummarySlot1 != null) await _host.SendAsync(LastSummarySlot1).ConfigureAwait(false);
@@ -163,6 +170,15 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                 RoomId = ok.RoomId;
                 IsConnected = true;
                 OnConnected?.Invoke(LocalSlot);
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var localSpeed = PlayerSettingsManager.GetSettings(Math.Max(0, LocalSlot - 1)).Speed;
+                        await SendUpdatePlayerSettingAsync(LocalSlot, localSpeed).ConfigureAwait(false);
+                    }
+                    catch { }
+                });
             };
 
             _joiner.OnJoinRejected += reason =>
@@ -214,6 +230,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             if (slot == 2) Slot2Ready = isReady;
 
             return SendAsync(new ReadyMsg { Slot = slot, IsReady = isReady });
+        }
+
+        public Task SendUpdatePlayerSettingAsync(int slot, double speed)
+        {
+            return SendAsync(new SharedUpdatePlayerSettingMsg { Slot = slot, Speed = speed });
         }
 
         // =========================
@@ -356,6 +377,38 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             {
                 Log("[SYS] " + sys.Text);
                 return;
+            }
+
+            if (msg is SharedUpdatePlayerSettingMsg ups)
+            {
+                ApplyPlayerSetting(ups);
+                OnPlayerSetting?.Invoke(ups);
+                return;
+            }
+        }
+
+        private static void ApplyPlayerSetting(SharedUpdatePlayerSettingMsg msg)
+        {
+            if (msg == null) return;
+            int idx = msg.Slot - 1;
+            if (idx < 0) return;
+            var settings = PlayerSettingsManager.GetSettings(idx);
+            settings.Speed = msg.Speed;
+            PlayerSettingsManager.UpdateSettings(idx, settings);
+
+            try
+            {
+                var mode = GameModeManager.CurrentMode;
+                if (mode == null) return;
+
+                var playersField = mode.GetType().GetField("_players");
+                var players = playersField?.GetValue(mode) as System.Collections.Generic.List<PlayerManager>;
+                if (players == null || idx >= players.Count || idx < 0) return;
+
+                players[idx]?.UpdateSpeed(msg.Speed);
+            }
+            catch
+            {
             }
         }
 

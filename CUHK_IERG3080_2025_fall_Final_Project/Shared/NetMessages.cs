@@ -25,6 +25,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Shared
         public const string HitResult = "HitResult";
 
         public const string MatchSummary = "MatchSummary";
+        public const string UpdatePlayerSetting = "UpdatePlayerSetting";
     }
 
     // === 基类 ===
@@ -152,5 +153,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Shared
         public double Accuracy { get; set; } = 0;
 
         public MatchSummaryMsg() { Type = MsgType.MatchSummary; }
+    }
+
+    public sealed class UpdatePlayerSettingMsg : NetMsg
+    {
+        public int Slot { get; set; } = 1;          // 1 or 2
+        public double Speed { get; set; } = 1.0;
+        public UpdatePlayerSettingMsg() { Type = MsgType.UpdatePlayerSetting; }
     }
 }

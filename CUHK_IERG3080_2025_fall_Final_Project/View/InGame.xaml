@@ -25,10 +25,11 @@
             </Grid.RowDefinitions>
 
             <!-- Player 1 -->
-            <Border Grid.Row="0" Background="#66000000" BorderBrush="#FF6B4E" BorderThickness="0,2" Height="{Binding BandWidth}" 
+                <Border Grid.Row="0" Background="#66000000" BorderBrush="#FF6B4E" BorderThickness="0,2" Height="{Binding BandWidth}" 
                         Margin="0,20,0,10" VerticalAlignment="Center">
-                <Canvas ClipToBounds="True" Width="1600">
-                    <!-- Hit Line -->
+                    <!-- Dummy to fix focus issue -->
+                    <Canvas ClipToBounds="True" Width="1600">
+                        <!-- Hit Line -->
                     <Rectangle Width="4" Height="{Binding RelativeSource={RelativeSource AncestorType=Canvas}, Path=ActualHeight}"
                                 Fill="#FF6B4E" Canvas.Left="270"/>
 

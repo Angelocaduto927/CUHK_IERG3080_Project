@@ -3,15 +3,50 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
-using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 using CUHK_IERG3080_2025_fall_Final_Project.Model;
+using CUHK_IERG3080_2025_fall_Final_Project.Networking;
+using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 
 namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 {
-    internal class SettingVM : ViewModelBase
+    internal class SettingVM : ViewModelBase, IDisposable
     {
         // Player 1 Speed
         private readonly Action _navigationBack;
+        private readonly OnlineSession _session;
+
+        private bool IsOnlineMultiplayer =>
+            GameModeManager.CurrentMode is OnlineMultiPlayerMode
+            && _session != null
+            && _session.IsConnected;
+
+        private int LocalPlayerIndex => (_session != null) ? (_session.LocalSlot - 1) : -1;
+
+        private bool CanEditSpeedForPlayerIndex(int playerIndex)
+        {
+            if (!IsOnlineMultiplayer) return true;
+            return playerIndex == LocalPlayerIndex;
+        }
+
+        private void RefreshSpeedFromSettings()
+        {
+            _player1Speed = PlayerSettingsManager.GetSettings(0).Speed;
+            _player2Speed = PlayerSettingsManager.GetSettings(1).Speed;
+            OnPropertyChanged(nameof(Player1Speed));
+            OnPropertyChanged(nameof(Player2Speed));
+        }
+
+        private void OnPlayerSettingFromNet(CUHK_IERG3080_2025_fall_Final_Project.Shared.UpdatePlayerSettingMsg msg)
+        {
+            // ✅ 只在 Online 模式下需要刷新 Setting 页面的显示
+            if (!IsOnlineMultiplayer) return;
+
+            // OnlineSession.ApplyPlayerSetting 已经写入 PlayerSettingsManager，这里只需要刷新 VM->UI
+            Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
+            {
+                RefreshSpeedFromSettings();
+            }));
+        }
 
         private double _player1Speed;
         public double Player1Speed
@@ -19,30 +54,47 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             get => _player1Speed;
             set
             {
+                // ✅ Online：P1 只能由 Host(=slot1) 改；Joiner 在 UI 上强制回滚显示
+                if (!CanEditSpeedForPlayerIndex(0))
+                {
+                    RefreshSpeedFromSettings();
+                    return;
+                }
+
                 _player1Speed = value;
+
                 var settings = PlayerSettingsManager.GetSettings(0);
                 settings.Speed = value;
                 PlayerSettingsManager.UpdateSettings(0, settings);
                 OnPropertyChanged(nameof(Player1Speed));
 
                 UpdateRunningGameSpeed(0, value);
+                SyncOnlineSpeedIfLocal(0, value);
             }
         }
 
-        // Player 2 Speed
         private double _player2Speed;
         public double Player2Speed
         {
             get => _player2Speed;
             set
             {
+                // ✅ Online：P2 只能由 Joiner(=slot2) 改；Host 在 UI 上强制回滚显示
+                if (!CanEditSpeedForPlayerIndex(1))
+                {
+                    RefreshSpeedFromSettings();
+                    return;
+                }
+
                 _player2Speed = value;
+
                 var settings = PlayerSettingsManager.GetSettings(1);
                 settings.Speed = value;
                 PlayerSettingsManager.UpdateSettings(1, settings);
                 OnPropertyChanged(nameof(Player2Speed));
 
                 UpdateRunningGameSpeed(1, value);
+                SyncOnlineSpeedIfLocal(1, value);
             }
         }
 
@@ -63,6 +115,17 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     }
                 }
             }
+        }
+
+        private void SyncOnlineSpeedIfLocal(int playerIndex, double speed)
+        {
+            // ✅ 只在 Online Multiplayer 模式同步速度
+            if (!IsOnlineMultiplayer) return;
+
+            int localIdx = LocalPlayerIndex;
+            if (localIdx != playerIndex) return;
+
+            _ = _session.SendUpdatePlayerSettingAsync(_session.LocalSlot, speed);
         }
 
         // Player 1 Key Bindings (display)
@@ -94,15 +157,22 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         // All binding names we manage
         private static readonly string[] BindingNames = new[] { "Blue1", "Blue2", "Red1", "Red2" };
 
-
         public SettingVM() : this(null) { }
+
         public SettingVM(Action navigationBack)
         {
             _navigationBack = navigationBack;
+            _session = GameModeManager.OnlineSession;
 
             // Load current speeds
             _player1Speed = PlayerSettingsManager.GetSettings(0).Speed;
             _player2Speed = PlayerSettingsManager.GetSettings(1).Speed;
+
+            // ✅ 只在 Online Multiplayer 才订阅网络设置更新
+            if (IsOnlineMultiplayer)
+            {
+                _session.OnPlayerSetting += OnPlayerSettingFromNet;
+            }
 
             // Setup commands
             RebindP1Blue1Command = new RelayCommand(o => StartListening("P1Blue1"));
@@ -115,17 +185,26 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             RebindP2Red2Command = new RelayCommand(o => StartListening("P2Red2"));
 
             BackCommand = new RelayCommand(o =>
+            {
+                if (_navigationBack != null)
                 {
-                    if (_navigationBack != null)
-                    {
-                        _navigationBack();
-                    }
-                    else
-                    {
-                        var navVM = Application.Current.MainWindow?.DataContext as NavigationVM;
-                        navVM?.TitleScreenCommand.Execute(null);
-                    }
-                });
+                    _navigationBack();
+                }
+                else
+                {
+                    var navVM = Application.Current.MainWindow?.DataContext as NavigationVM;
+                    navVM?.TitleScreenCommand.Execute(null);
+                }
+            });
+        }
+
+        public void Dispose()
+        {
+            // ✅ NavigationVM 切页会 Dispose 旧 VM
+            if (_session != null)
+            {
+                try { _session.OnPlayerSetting -= OnPlayerSettingFromNet; } catch { }
+            }
         }
 
         public void AttachWindow(Window window)
@@ -180,10 +259,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             RefreshBindings(); // show "Enter a key..."
         }
 
-        /// <summary>
-        /// Returns the display string for a binding: if a stored binding exists and is not Key.None, show it;
-        /// if stored and Key.None, show "None"; otherwise show the default fallback string.
-        /// </summary>
         private string GetBindingDisplay(int playerIdx, string bindingName, string fallback)
         {
             var settings = PlayerSettingsManager.GetSettings(playerIdx);
@@ -195,14 +270,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             return fallback;
         }
 
-        /// <summary>
-        /// Returns the default Key for a given player and binding name.
-        /// These defaults are used for collision detection even when not stored.
-        /// </summary>
         private Key GetDefaultKey(int playerIdx, string bindingName)
         {
-            // Player 1 defaults: J K D F
-            // Player 2 defaults: O P Q W
             if (playerIdx == 0)
             {
                 switch (bindingName)
@@ -226,10 +295,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             return Key.None;
         }
 
-        /// <summary>
-        /// Set a binding with global collision detection that includes defaults.
-        /// Resolution: assign to target and explicitly clear (persist Key.None) every conflicting binding (stored or default).
-        /// </summary>
         private void SetBinding(Key newKey)
         {
             if (_listeningFor == null) return;
@@ -239,13 +304,11 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                                    _listeningFor.Contains("Blue2") ? "Blue2" :
                                    _listeningFor.Contains("Red1") ? "Red1" : "Red2";
 
-            // Load target settings and current stored key (if any)
             var targetSettings = PlayerSettingsManager.GetSettings(targetPlayer);
             Key? oldKey = targetSettings.KeyBindings.ContainsKey(targetBinding)
                 ? (Key?)targetSettings.KeyBindings[targetBinding]
                 : null;
 
-            // No-op if pressing same key already stored on target
             if (oldKey.HasValue && oldKey.Value == newKey)
             {
                 _listeningFor = null;
@@ -253,8 +316,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 return;
             }
 
-            // Build a stable snapshot that includes defaults for bindings that are not stored.
-            // Snapshot entries: (playerIdx, bindingName, keyValue, wasStored)
             var snapshot = new List<Tuple<int, string, Key, bool>>();
             for (int p = 0; p <= 1; p++)
             {
@@ -262,32 +323,24 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 foreach (var bn in BindingNames)
                 {
                     if (s.KeyBindings.ContainsKey(bn))
-                    {
                         snapshot.Add(Tuple.Create(p, bn, s.KeyBindings[bn], true));
-                    }
                     else
-                    {
-                        // include default as a virtual binding (wasStored = false)
                         snapshot.Add(Tuple.Create(p, bn, GetDefaultKey(p, bn), false));
-                    }
                 }
             }
 
-            // Find conflicts in snapshot (exclude the target binding itself)
             var conflicts = snapshot
                 .Where(t => t.Item3 == newKey && !(t.Item1 == targetPlayer && t.Item2 == targetBinding))
-                .Select(t => Tuple.Create(t.Item1, t.Item2, t.Item4)) // (player, binding, wasStored)
+                .Select(t => Tuple.Create(t.Item1, t.Item2, t.Item4))
                 .ToList();
 
             if (conflicts.Count == 0)
             {
-                // No conflict: assign directly to target and persist
                 targetSettings.KeyBindings[targetBinding] = newKey;
                 PlayerSettingsManager.UpdateSettings(targetPlayer, targetSettings);
             }
             else
             {
-                // Build readable conflict list
                 var conflictList = string.Join("\n", conflicts.Select(c =>
                     $"- Player {c.Item1 + 1} - {c.Item2}"));
 
@@ -300,7 +353,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
                 if (result == MessageBoxResult.Yes)
                 {
-                    // For each conflict (stored or default), persist an explicit cleared state by setting Key.None
                     foreach (var c in conflicts)
                     {
                         int pIdx = c.Item1;
@@ -308,29 +360,17 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
                         var s = PlayerSettingsManager.GetSettings(pIdx);
 
-                        // Persist explicit cleared state (Key.None) so the default no longer applies
                         if (!s.KeyBindings.ContainsKey(bName))
-                        {
-                            // add explicit cleared entry
                             s.KeyBindings.Add(bName, Key.None);
-                        }
                         else
-                        {
-                            // overwrite stored binding with Key.None
                             s.KeyBindings[bName] = Key.None;
-                        }
 
                         PlayerSettingsManager.UpdateSettings(pIdx, s);
                     }
 
-                    // Assign new key to target (reload target in case it was changed above)
                     targetSettings = PlayerSettingsManager.GetSettings(targetPlayer);
                     targetSettings.KeyBindings[targetBinding] = newKey;
                     PlayerSettingsManager.UpdateSettings(targetPlayer, targetSettings);
-                }
-                else
-                {
-                    // Cancel: do nothing
                 }
             }
 
@@ -338,9 +378,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             RefreshBindings();
         }
 
-        /// <summary>
-        /// Returns all current conflicts (live) for compatibility if needed elsewhere.
-        /// </summary>
         private List<Tuple<int, string>> FindKeyConflicts(Key key, int excludePlayerIdx, string excludeBindingKey)
         {
             var conflicts = new List<Tuple<int, string>>();
@@ -357,7 +394,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                         conflicts.Add(Tuple.Create(playerIdx, kvp.Key));
                 }
 
-                // Also check defaults for bindings that are not stored
                 foreach (var bn in BindingNames)
                 {
                     if (!settings.KeyBindings.ContainsKey(bn))
@@ -387,10 +423,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             OnPropertyChanged(nameof(P2Red2));
         }
 
-        /// <summary>
-        /// Disallow modifier-only keys (Ctrl/Alt/Shift) and Key.None from being assigned interactively.
-        /// Key.None is still used internally as a persisted "cleared" sentinel.
-        /// </summary>
         private bool IsAssignableKey(Key key)
         {
             if (key == Key.None) return false;

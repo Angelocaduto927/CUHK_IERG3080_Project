@@ -99,6 +99,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                 case MsgType.SelectDifficulty: return _json.Deserialize<SelectDifficultyMsg>(line);
                 case MsgType.Ready: return _json.Deserialize<ReadyMsg>(line);
 
+                case MsgType.UpdatePlayerSetting: return _json.Deserialize<UpdatePlayerSettingMsg>(line);
+
                 default:
                     return baseMsg;
             }

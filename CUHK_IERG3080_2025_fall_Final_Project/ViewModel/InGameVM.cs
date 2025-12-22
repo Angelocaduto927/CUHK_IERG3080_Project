@@ -505,7 +505,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             if (_disposed) return;
             if (!_isOnline) return;
-            if (_localFinished) return;
             if (msg == null) return;
 
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>
@@ -519,24 +518,32 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         {
             await _engineReadyTcs.Task;
             if (_disposed) return;
+            if (msg == null) return;
 
-            int waitGuard = 0;
-            while (!_disposed && (_engine == null || _engine.State != GameEngine.GameState.Playing))
-            {
-                await Task.Delay(10);
-                if (++waitGuard > 2000) return;
-            }
-            if (_disposed) return;
-
+            // ignore echo of our own messages
             if (_session != null && msg.Slot == _session.LocalSlot) return;
 
-            double targetMs = msg.AtMs;
-            double nowMs = _engine.CurrentTime;
-            int delay = (int)Math.Max(0, targetMs - nowMs);
-            if (delay > 0) await Task.Delay(delay);
+            // If we are still playing locally, align timing with our engine.
+            // If we already finished locally (waiting state), we still accept score updates,
+            // but we don't try to time-align or show hit effects.
+            if (!_localFinished)
+            {
+                int waitGuard = 0;
+                while (!_disposed && (_engine == null || _engine.State != GameEngine.GameState.Playing))
+                {
+                    await Task.Delay(10);
+                    if (++waitGuard > 2000) return;
+                }
+                if (_disposed) return;
 
-            if (_disposed) return;
-            if (_engine?.State != GameEngine.GameState.Playing) return;
+                double targetMs = msg.AtMs;
+                double nowMs = _engine.CurrentTime;
+                int delay = (int)Math.Max(0, targetMs - nowMs);
+                if (delay > 0) await Task.Delay(delay);
+
+                if (_disposed) return;
+                if (_engine?.State != GameEngine.GameState.Playing) return;
+            }
 
             int slot = msg.Slot;
             if (slot != 1 && slot != 2) return;
@@ -559,18 +566,23 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                 OnPropertyChanged(nameof(P2Accuracy));
             }
 
-            int playerIdx = slot - 1;
-            var noteTypeEnum = ParseNoteType(msg.NoteType);
-
-            TriggerHitEffect(playerIdx, noteTypeEnum);
-
-            var result = msg.Result ?? "Tap";
-            if (!result.Equals("Tap", StringComparison.OrdinalIgnoreCase))
+            // visuals only during active play
+            if (!_localFinished && _engine?.State == GameEngine.GameState.Playing)
             {
-                var brush = BrushForResult(result);
-                ShowHitText(playerIdx, result, brush);
+                int playerIdx = slot - 1;
+                var noteTypeEnum = ParseNoteType(msg.NoteType);
+
+                TriggerHitEffect(playerIdx, noteTypeEnum);
+
+                var result = msg.Result ?? "Tap";
+                if (!result.Equals("Tap", StringComparison.OrdinalIgnoreCase))
+                {
+                    var brush = BrushForResult(result);
+                    ShowHitText(playerIdx, result, brush);
+                }
             }
         }
+
 
         private static Brush BrushForResult(string result)
         {
@@ -956,42 +968,14 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void OnMusicEnded(object sender, EventArgs e)
         {
-            _onGameOver?.Invoke();
-
-            if (_engine != null && _engine.State == GameEngine.GameState.Playing)
-            {
-                _engine.StopGame();
-            }
-
-            AudioManager.StopBackgroundMusic();
-            _disposed = true;
-
-            _onGameOver?.Invoke();
-
-            if (_engine != null && _engine.State == GameEngine.GameState.Playing)
-            {
-                _engine.StopGame();
-            }
-
-            AudioManager.StopBackgroundMusic();
-            _disposed = true;
-
-            _onGameOver?.Invoke();
-
-            if (_engine != null && _engine.State == GameEngine.GameState.Playing)
-            {
-                _engine.StopGame();
-            }
-
-            AudioManager.StopBackgroundMusic();
-            _disposed = true;
-
-            _onGameOver?.Invoke();
+            // ✅ 不要在这里直接跳 GameOver / Dispose。
+            // 只标记本地结束并发送 summary，等待对方结束后再一起结算。
             Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
             {
                 OnLocalGameFinished("Music ended");
             }));
         }
+
 
         public event PropertyChangedEventHandler PropertyChanged;
         private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

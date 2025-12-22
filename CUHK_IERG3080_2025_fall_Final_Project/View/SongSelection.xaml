@@ -269,6 +269,17 @@
                                 IsEnabled="{Binding IsPlayButtonEnabled}" /> -->
                 </StackPanel>
 
+                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top">
+                    <Button Content="SETTINGS"
+                         Width="200"
+                         Height="60"
+                         Margin="0,0,16,0"
+                         FontSize="20"
+                         HorizontalAlignment="Center"
+                         Command="{Binding DataContext.SettingCommand,
+                                             RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </StackPanel>
+
                 <Grid Grid.Column="3" />
             </Grid>
         </Grid>

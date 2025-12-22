@@ -11,6 +11,8 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
     internal class SettingVM : ViewModelBase
     {
         // Player 1 Speed
+        private readonly Action _navigationBack;
+
         private double _player1Speed;
         public double Player1Speed
         {
@@ -84,6 +86,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         public ICommand RebindP2Blue2Command { get; }
         public ICommand RebindP2Red1Command { get; }
         public ICommand RebindP2Red2Command { get; }
+        public ICommand BackCommand { get; }
 
         private string _listeningFor = null;
         private Window _window;
@@ -91,8 +94,12 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
         // All binding names we manage
         private static readonly string[] BindingNames = new[] { "Blue1", "Blue2", "Red1", "Red2" };
 
-        public SettingVM()
+
+        public SettingVM() : this(null) { }
+        public SettingVM(Action navigationBack)
         {
+            _navigationBack = navigationBack;
+
             // Load current speeds
             _player1Speed = PlayerSettingsManager.GetSettings(0).Speed;
             _player2Speed = PlayerSettingsManager.GetSettings(1).Speed;
@@ -106,6 +113,19 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             RebindP2Blue2Command = new RelayCommand(o => StartListening("P2Blue2"));
             RebindP2Red1Command = new RelayCommand(o => StartListening("P2Red1"));
             RebindP2Red2Command = new RelayCommand(o => StartListening("P2Red2"));
+
+            BackCommand = new RelayCommand(o =>
+                {
+                    if (_navigationBack != null)
+                    {
+                        _navigationBack();
+                    }
+                    else
+                    {
+                        var navVM = Application.Current.MainWindow?.DataContext as NavigationVM;
+                        navVM?.TitleScreenCommand.Execute(null);
+                    }
+                });
         }
 
         public void AttachWindow(Window window)

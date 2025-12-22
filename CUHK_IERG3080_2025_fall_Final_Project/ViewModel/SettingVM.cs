@@ -319,61 +319,63 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
                     else
                     {
                         snapshot.Add(Tuple.Create(p, bn, GetDefaultKey(p, bn), false));
-                }
-            }
-
-            var conflicts = snapshot
-                .Where(t => t.Item3 == newKey && !(t.Item1 == targetPlayer && t.Item2 == targetBinding))
-                .Select(t => Tuple.Create(t.Item1, t.Item2, t.Item4))
-                .ToList();
-
-            if (conflicts.Count == 0)
-            {
-                targetSettings.KeyBindings[targetBinding] = newKey;
-                PlayerSettingsManager.UpdateSettings(targetPlayer, targetSettings);
-            }
-            else
-            {
-                var conflictList = string.Join("\n", conflicts.Select(c =>
-                    $"- Player {c.Item1 + 1} - {c.Item2}"));
-
-                var result = MessageBox.Show(
-                    $"Key '{newKey}' is already bound to:\n{conflictList}\n\n" +
-                    $"Do you want to assign it to Player {targetPlayer + 1} - {targetBinding} and clear it from the others?",
-                    "Key Conflict",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-
-                if (result == MessageBoxResult.Yes)
-                {
-                    foreach (var c in conflicts)
-                    {
-                        int pIdx = c.Item1;
-                        string bName = c.Item2;
-
-                        var s = PlayerSettingsManager.GetSettings(pIdx);
-
-                        if (!s.KeyBindings.ContainsKey(bName))
-                        {
-                            s.KeyBindings.Add(bName, Key.None);
-                        else
-                        {
-                            s.KeyBindings[bName] = Key.None;
-
-                        PlayerSettingsManager.UpdateSettings(pIdx, s);
                     }
+                }
 
-                    targetSettings = PlayerSettingsManager.GetSettings(targetPlayer);
+                var conflicts = snapshot
+                    .Where(t => t.Item3 == newKey && !(t.Item1 == targetPlayer && t.Item2 == targetBinding))
+                    .Select(t => Tuple.Create(t.Item1, t.Item2, t.Item4))
+                    .ToList();
+
+                if (conflicts.Count == 0)
+                {
                     targetSettings.KeyBindings[targetBinding] = newKey;
                     PlayerSettingsManager.UpdateSettings(targetPlayer, targetSettings);
                 }
                 else
                 {
-                }
-            }
+                    var conflictList = string.Join("\n", conflicts.Select(c =>
+                        $"- Player {c.Item1 + 1} - {c.Item2}"));
 
-            _listeningFor = null;
-            RefreshBindings();
+                    var result = MessageBox.Show(
+                        $"Key '{newKey}' is already bound to:\n{conflictList}\n\n" +
+                        $"Do you want to assign it to Player {targetPlayer + 1} - {targetBinding} and clear it from the others?",
+                        "Key Conflict",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        foreach (var c in conflicts)
+                        {
+                            int pIdx = c.Item1;
+                            string bName = c.Item2;
+
+                            var t = PlayerSettingsManager.GetSettings(pIdx);
+
+                            if (!t.KeyBindings.ContainsKey(bName))
+                            {
+                                t.KeyBindings.Add(bName, Key.None);
+                            }
+                            else
+                            {
+                                t.KeyBindings[bName] = Key.None;
+                            }
+                            PlayerSettingsManager.UpdateSettings(pIdx, t);
+                        }
+
+                        targetSettings = PlayerSettingsManager.GetSettings(targetPlayer);
+                        targetSettings.KeyBindings[targetBinding] = newKey;
+                        PlayerSettingsManager.UpdateSettings(targetPlayer, targetSettings);
+                    }
+                    else
+                    {
+                    }
+                }
+
+                _listeningFor = null;
+                RefreshBindings();
+            }
         }
 
         private List<Tuple<int, string>> FindKeyConflicts(Key key, int excludePlayerIdx, string excludeBindingKey)

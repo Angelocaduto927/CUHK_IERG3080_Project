@@ -925,7 +925,6 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             {
                 try { _ = _session.LeaveAsync("Cleanup"); } catch { }
             }
-
             StopRenderLoop();
 
             if (_session != null)
@@ -957,7 +956,36 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
 
         private void OnMusicEnded(object sender, EventArgs e)
         {
-            LeaveOnlineOnce("Music ended", sendSummary: true);
+            _onGameOver?.Invoke();
+
+            if (_engine != null && _engine.State == GameEngine.GameState.Playing)
+            {
+                _engine.StopGame();
+            }
+
+            AudioManager.StopBackgroundMusic();
+            _disposed = true;
+
+            _onGameOver?.Invoke();
+
+            if (_engine != null && _engine.State == GameEngine.GameState.Playing)
+            {
+                _engine.StopGame();
+            }
+
+            AudioManager.StopBackgroundMusic();
+            _disposed = true;
+
+            _onGameOver?.Invoke();
+
+            if (_engine != null && _engine.State == GameEngine.GameState.Playing)
+            {
+                _engine.StopGame();
+            }
+
+            AudioManager.StopBackgroundMusic();
+            _disposed = true;
+
             _onGameOver?.Invoke();
             Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
             {

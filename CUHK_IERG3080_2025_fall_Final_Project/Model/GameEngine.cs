@@ -115,7 +115,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Model
                     return false;
             }
 
-            return true;
+            return false;
         }
 
         private Note.NoteType? GetNoteTypeFromKey(System.Windows.Input.Key key, int playerIndex)

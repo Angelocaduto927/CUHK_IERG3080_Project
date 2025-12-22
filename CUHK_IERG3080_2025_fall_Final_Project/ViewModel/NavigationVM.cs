@@ -3,6 +3,7 @@ using CUHK_IERG3080_2025_fall_Final_Project.Networking;
 using CUHK_IERG3080_2025_fall_Final_Project.Shared;
 using CUHK_IERG3080_2025_fall_Final_Project.Utility;
 using System;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 
@@ -11,6 +12,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
     class NavigationVM : Utility.ViewModelBase
     {
         private OnlineSession _hookedSession;
+        private int _disconnectPopupOnce = 0;
 
         private object _currentViewModel;
         public object CurrentViewModel
@@ -132,10 +134,61 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.ViewModel
             if (_hookedSession != null)
             {
                 _hookedSession.OnStart -= OnOnlineStart;
+                _hookedSession.OnDisconnected -= OnOnlineDisconnected;
             }
 
             _hookedSession = s;
+            Interlocked.Exchange(ref _disconnectPopupOnce, 0);
             _hookedSession.OnStart += OnOnlineStart;
+            _hookedSession.OnDisconnected += OnOnlineDisconnected;
+        }
+
+        private static bool IsNormalLeaveReason(string reason)
+        {
+            if (string.IsNullOrWhiteSpace(reason)) return false;
+
+            // InGameVM 主动 Leave 的 reason（不要弹窗，不要强制回 Title）
+            if (reason == "Game finished" || reason == "Music ended" || reason == "Cleanup") return true;
+            if (reason == "Leave" || reason == "Dispose" || reason.StartsWith("Restart", StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
+        private void OnOnlineDisconnected(string reason)
+        {
+            if (IsNormalLeaveReason(reason)) return;
+            if (Interlocked.Exchange(ref _disconnectPopupOnce, 1) == 1) return;
+
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                try
+                {
+                    MessageBox.Show(
+                        "Online connection lost.\nReason: " + (string.IsNullOrWhiteSpace(reason) ? "Disconnected" : reason),
+                        "Disconnected",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+                catch { }
+
+                // ✅ 清理全局 session，避免还在 Online 模式下出各种空引用
+                try { GameModeManager.OnlineSession = null; } catch { }
+                try { GameModeManager.SetMode(GameModeManager.Mode.SinglePlayer); } catch { }
+
+                // ✅ 解绑事件，避免旧 session 残留触发
+                try
+                {
+                    if (_hookedSession != null)
+                    {
+                        _hookedSession.OnStart -= OnOnlineStart;
+                        _hookedSession.OnDisconnected -= OnOnlineDisconnected;
+                        _hookedSession = null;
+                    }
+                }
+                catch { }
+
+                // ✅ 强制回到 TitleScreen
+                try { TitleScreen(null); } catch { }
+            }));
         }
 
         private void OnOnlineStart(StartMsg msg)

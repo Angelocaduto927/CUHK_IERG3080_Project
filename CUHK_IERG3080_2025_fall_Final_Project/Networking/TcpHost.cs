@@ -17,6 +17,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         private Task _acceptTask;
         private Task _readTask;
 
+        // ✅ 防止 StopAsync / ReadLoop completion 同时触发多次断线通知
+        private int _dropOnce = 0;
+
         public int Port { get; private set; }
         public bool IsRunning { get { return _listener != null; } }
         public bool HasClient { get { return _client != null && _client.Connected; } }
@@ -31,6 +34,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
         public Task StartAsync(int port)
         {
             if (_listener != null) return Task.CompletedTask;
+
+            // 新一轮监听，允许之后新的 client 反复连接
+            Interlocked.Exchange(ref _dropOnce, 0);
 
             Port = port;
             _cts = new CancellationTokenSource();
@@ -61,6 +67,9 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             _client = null;
             _codec = null;
             _listener = null;
+
+            // 释放 drop guard（允许下次 StartAsync 后再次连接）
+            Interlocked.Exchange(ref _dropOnce, 0);
 
             if (_acceptTask != null) { try { await _acceptTask; } catch { } _acceptTask = null; }
             if (_readTask != null) { try { await _readTask; } catch { } _readTask = null; }
@@ -105,9 +114,24 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
                 _client = incoming;
                 _codec = new NetCodec(_client.GetStream());
 
+                // 新 client 进来，重置 drop guard
+                Interlocked.Exchange(ref _dropOnce, 0);
+
                 Log("[Host] Client connected, waiting for Join...");
 
                 _readTask = _codec.ReadLoopAsync(async msg => { await HandleIncomingAsync(msg).ConfigureAwait(false); }, ct);
+
+                // ✅ 关键：客户端进程被关/断网 -> ReadLineAsync 会 EOF/异常退出
+                // 需要在这里把 client 清理掉并触发 OnClientDisconnected
+                _readTask.ContinueWith(t =>
+                {
+                    // observe faults
+                    try { _ = t.Exception; } catch { }
+
+                    // 如果是 StopAsync 导致的取消，就不再额外 Drop
+                    if (_cts == null || _cts.IsCancellationRequested) return;
+                    DropClientOnce();
+                }, TaskScheduler.Default);
             }
         }
 
@@ -140,14 +164,19 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Networking
             if (OnMessage != null) OnMessage(msg);
         }
 
-        private void DropClient()
+        private void DropClientOnce()
         {
+            if (Interlocked.Exchange(ref _dropOnce, 1) == 1) return;
+
             try { if (_client != null) _client.Close(); } catch { }
             _client = null;
             _codec = null;
             Log("[Host] Client disconnected");
             if (OnClientDisconnected != null) OnClientDisconnected();
         }
+
+        // 保持兼容：Abort 时也走 once
+        private void DropClient() => DropClientOnce();
 
         private void Log(string s)
         {

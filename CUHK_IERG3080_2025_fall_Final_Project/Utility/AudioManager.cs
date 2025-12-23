@@ -14,7 +14,7 @@ namespace CUHK_IERG3080_2025_fall_Final_Project.Utility
         private static bool _bgmOpened = false;
 
         private const double BackgroundVolume = 0.1; 
-        private const double EffectVolume = 0.8; 
+        private const double EffectVolume = 1.0; 
 
 
         public static void Initialize()
